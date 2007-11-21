@@ -1,0 +1,346 @@
+(in-package :clcb-utils)
+
+(defconstant +empty-interval+ '+empty-interval+)
+
+(defclass simple-interval ()
+  ((lower-bound :accessor lower-bound
+                :initarg :lower-bound)
+   (upper-bound :accessor upper-bound
+                :initarg :upper-bound)
+   (lower-bound-included-p :accessor lower-bound-included-p
+                           :initarg :lower-bound-included-p
+                           :initform t)
+   (upper-bound-included-p :accessor upper-bound-included-p
+                           :initarg :upper-bound-included-p
+                           :initform t)))
+
+(defmethod print-object ((int simple-interval) (stream stream))
+  (print-unreadable-object (int stream :type t)
+    (format stream "~:[]~;[~]~A,~A~:[[~;]~]"
+            (lower-bound-included-p int)
+            (lower-bound int)
+            (upper-bound int)
+            (upper-bound-included-p int))))
+
+(defclass multi-interval ()
+  ((intervals :accessor intervals
+              :initarg :intervals)))
+
+(defmethod print-object ((multint multi-interval) (stream stream))
+  (print-unreadable-object (multint stream :type t)
+    (format stream "(~{~A ~})"
+            (intervals multint))))
+
+(defgeneric make-interval (interval-class lower upper
+                           lower-bound-included-p upper-bound-included-p)
+  (:documentation "Create a new interval of type `interval-class'."))
+
+(defmethod make-interval :around (interval-class lower upper 
+                                  lower-included upper-included)
+  (if (or (< upper lower)
+          (and (= lower upper)
+               (or (not upper-included) (not lower-included))))
+      +empty-interval+
+      (call-next-method)))
+
+(defmethod make-interval ((interval-class symbol) lower upper
+                          lower-included upper-included)
+  (make-interval (find-class interval-class) lower upper
+                  lower-included upper-included))
+
+;; 
+(defmethod make-interval ((interval-class (eql (find-class 'simple-interval)))
+                          lower upper lower-included upper-included)
+  (make-instance interval-class
+                 :lower-bound lower
+                 :upper-bound upper
+                 :lower-bound-included-p lower-included
+                 :upper-bound-included-p upper-included))
+
+;; (defun make-closed-interval (lower upper)
+;;   "Make a new interval in which the lower and upper bounds are included."
+;;   (make-interval lower upper t t))
+
+;; (defun make-open-interval (lower upper)
+;;   "Make a new interval in which does not include neither lower
+;; nor upper bound."
+;;   (make-interval lower upper nil nil))
+
+(defun interval-p (x)
+  (or (typep x 'simple-interval)
+      (eq x +empty-interval+)))
+(deftype interval () '(satisfies interval-p))
+
+
+(defun singleton-p (interval)
+  (= (lower-bound interval) (upper-bound interval)))
+
+
+
+(defun lower-bound-= (interval1 interval2)
+  (and (= (lower-bound interval1) (lower-bound interval2))
+       (eql (lower-bound-included-p interval1)
+            (lower-bound-included-p interval2))))
+(defun lower-bound-< (interval1 interval2)
+  (cond  ((< (lower-bound interval1) (lower-bound interval2)) t)
+         ((and (= (lower-bound interval1) (lower-bound interval2))
+               (lower-bound-included-p interval1))
+          (if (lower-bound-included-p interval2) t nil))
+         (t nil)))
+(defun lower-bound-> (interval1 interval2) (lower-bound-< interval2 interval1))
+(defun lower-bound-<= (interval1 interval2)
+  (or (lower-bound-< interval1 interval2) (lower-bound-= interval1 interval2)))
+
+
+(defun upper-bound-< (interval1 interval2)
+  (cond  ((< (upper-bound interval1) (upper-bound interval2)) t)
+         ((and (= (upper-bound interval1) (upper-bound interval2))
+               (upper-bound-included-p interval1))
+          (if (upper-bound-included-p interval2) t nil))
+         (t nil)))
+
+(defun upper-bound-= (interval1 interval2)
+  (and (= (upper-bound interval1) (upper-bound interval2))
+       (eql (upper-bound-included-p interval1)
+            (upper-bound-included-p interval2))))
+
+(defun upper-bound-> (i1 i2) (upper-bound-< i2 i1))
+
+(defun interval-fusion (int1 int2)
+  "fuse those into a single interval, assuming that int1's lower
+bound is smaller than int2s and the intervals are overlapping."
+  (make-interval (type-of int1)
+                 (lower-bound int1)
+                 (max (upper-bound int1) (upper-bound int2))
+                 (lower-bound-included-p int1)
+                 (upper-bound-included-p
+                  (if (< (upper-bound int1) (upper-bound int2)) int2 int1))))
+
+;;; ------------------------------------
+;;; Multi-Interval support
+(defun merge-sorted-intervals (intervals)
+  (let* ((intervals (remove-if #'interval-empty-p intervals))
+         (res (list (elt intervals 0))))
+    (iter (for interval in (subseq intervals 1))
+          ; FIXME: incorrect for open intervals
+          (if (<= (lower-bound interval) (upper-bound (car res)))
+              (setf (car res) (interval-fusion (car res) interval))
+              (push interval res)))
+    (nreverse res)))
+
+(defun merge-intervals (intervals)
+  (merge-sorted-intervals (sort (remove-if #'interval-empty-p intervals)
+                                #'lower-bound-<)))
+
+(defmethod initialize-instance :after ((mi multi-interval) &key)
+  (setf (slot-value mi 'intervals)
+        (merge-intervals  (slot-value mi 'intervals))))
+
+(defun interval-empty-p (interval) (eql interval +empty-interval+))
+
+
+;;; ------------------------------------
+;;; Interval combination
+(defgeneric interval-intersection (interval1 interval2)
+  (:documentation "Intersection of two intervals."))
+
+(defmethod interval-intersection (i1 i2)
+  (let ((lower (if (lower-bound-> i1 i2) i1 i2))
+        (upper (if (upper-bound-< i1 i2) i1 i2)))
+    (if (and (<= (lower-bound lower) (upper-bound upper)))
+        (make-interval (type-of i1)
+                       (lower-bound lower)
+                       (upper-bound upper)
+                       (lower-bound-included-p lower)
+                       (upper-bound-included-p upper))
+        +empty-interval+)))
+
+(defmethod interval-intersection ((i1 simple-interval) (i2 simple-interval))
+  (let ((lower (if (lower-bound-> i1 i2) i1 i2))
+        (upper (if (upper-bound-< i1 i2) i1 i2)))
+    (if (and (< (lower-bound lower) (upper-bound upper)))
+        (make-interval (type-of i1)
+                       (lower-bound lower)
+                       (upper-bound upper)
+                       (lower-bound-included-p lower)
+                       (upper-bound-included-p upper))
+        +empty-interval+)))
+
+(defmethod interval-intersection (si (mi multi-interval))
+  (reduce #'interval-union
+          (mapcar #'(lambda (x) (interval-intersection si x))
+                  (intervals mi))))
+
+(defmethod interval-intersection ((mi multi-interval) si)
+  (reduce #'interval-union
+         (mapcar #'(lambda (x) (interval-intersection si x))
+                 (intervals mi))
+         :initial-value +empty-interval+))
+
+(defmethod interval-intersection (i1 (i2 (eql +empty-interval+)))
+  +empty-interval+)
+
+(defmethod interval-intersection ((i1 (eql +empty-interval+)) i2)
+  +empty-interval+)
+
+;;; ------------------------------------
+
+
+(defgeneric interval-union (interval1 interval2)
+  (:documentation "Build the union of two intervals.  If the
+  intervals are overlapping, a new interval with the type of
+  interval1 is returned. Otherwise, the intervals are combined to
+  a multi-interval."))
+;; if one of the intervals is empty, we can simply return the other
+(defmethod interval-union ((i1 (eql +empty-interval+)) i2) i2)
+(defmethod interval-union (i1 (i2 (eql +empty-interval+))) i1)
+
+(defmethod interval-union (interval1 interval2)
+  (let ((lower (if (lower-bound-< interval1 interval2) interval1 interval2))
+        (upper (if (upper-bound-> interval1 interval2) interval1 interval2)))
+    (if (interval-empty-p (interval-intersection lower upper))
+        (make-instance 'multi-interval :intervals (list lower upper))
+        (interval-fusion lower upper))))
+
+(defmethod interval-union ((i1 simple-interval) (i2 simple-interval))
+  (let ((lower (if (lower-bound-< i1 i2) i1 i2))
+        (upper (if (upper-bound-> i1 i2) i1 i2)))
+    (if (interval-empty-p (interval-intersection lower upper))
+        (make-instance 'multi-interval :intervals (list lower upper))
+        (interval-fusion lower upper))))
+
+(defmethod interval-union ((i1 multi-interval) i2)
+  (make-instance 'multi-interval
+                 :intervals (cons i2 (copy-list (intervals i1)))))
+(defmethod interval-union (i2 (i1 multi-interval))
+  (make-instance 'multi-interval
+                 :intervals (cons i2 (copy-list (intervals i1)))))
+(defmethod interval-union ((i1 multi-interval) (i2 multi-interval))
+  (let ((res (make-instance 'multi-interval :intervals
+                            (nconc (copy-list (intervals i1))
+                                   (copy-list (intervals i2))))))
+    (if (null (cdr (intervals res)))
+        (car (intervals res))
+        res)))
+
+
+;;; ------------------------------------
+
+(defgeneric interval-subset-p (subset superset)
+  (:documentation "Return T iff every element of subset is also
+  in superset, nil otherwise."))
+
+(defmethod interval-subset-p (subset superset)
+  (let ((intersection (interval-intersection subset superset)))
+    (and (lower-bound-= superset intersection)
+         (upper-bound-= superset intersection))))
+
+
+(defgeneric interval-complement (interval complement-in)
+  (:documentation "Complement of interval relative to a superset-interval."))
+
+(defmethod interval-complement (interval complement-in)
+  (interval-union (make-interval (class-of interval)
+                                 (lower-bound complement-in)
+                                 (lower-bound interval)
+                                 (lower-bound-included-p complement-in)
+                                 (not (lower-bound-included-p interval)))
+                  (make-interval (class-of interval)
+                                 (upper-bound interval)
+                                 (upper-bound complement-in)
+                                 (not (upper-bound-included-p interval))
+                                 (upper-bound-included-p complement-in))))
+
+(defmethod interval-complement ((mi multi-interval) complement-in)
+  (reduce #'interval-intersection
+          (mapcar #'(lambda (x) (interval-complement x complement-in))
+                  (intervals mi))
+          :initial-value complement-in))
+
+(defmethod lower-bound ((mi multi-interval))
+  (lower-bound (car (intervals mi))))
+(defmethod lower-bound-included-p ((mi multi-interval))
+  (lower-bound-included-p (car (intervals mi))))
+
+(defun interval-length (int)
+  (if (singleton-p int)
+      1
+      (abs (1+ (- (upper-bound int) (lower-bound int))))))
+
+(defmethod interval-measure (si)
+  (interval-length si))
+(defmethod interval-measure ((mi multi-interval))
+  (reduce #'+ (intervals mi) :key #'interval-length))
+
+
+;; FIXME: Buggy
+(defun interval-steps (interval steps &optional absolute-start)
+  (if (null absolute-start)
+      (setf absolute-start (lower-bound interval)))
+  (typecase interval
+    (multi-interval
+     (iter (for si in (intervals interval))
+           (if (< steps (interval-length si))
+               (return (+ (lower-bound si) steps))
+               (setf steps (- steps (interval-length si))))))
+    (t (if (< steps (interval-length interval))
+           (+ steps absolute-start)))))
+
+(defun subinterval (interval steps &optional start (relative nil))
+  (let ((abs-start (cond ((null start) (lower-bound interval))
+                         ((null relative) start)
+                         (t (+ (lower-bound interval) start)))))
+    (interval-intersection
+     (make-interval interval abs-start (interval-steps interval steps abs-start)
+                    (lower-bound-included-p interval) t)
+     interval)))
+
+
+
+;;;; -------------------------------------------------------------------------
+;;;; Genomic Interval (TESTING)
+;;;; -------------------------------------------------------------------------
+
+(defclass genomic-interval ()
+  ((seq-start :accessor seq-start :initarg :seq-start)
+   (seq-end   :accessor seq-end   :initarg :seq-end)))
+
+(defmethod print-object ((gi genomic-interval) (stream stream))
+  (print-unreadable-object (gi stream :type t)
+    (format stream ":start ~A :end ~A" (seq-start gi) (seq-end gi))))
+
+(defmethod lower-bound ((gi genomic-interval)) (seq-start gi))
+(defmethod upper-bound ((gi genomic-interval)) (seq-end gi))
+(defmethod lower-bound-included-p ((gi genomic-interval))
+  (declare (ignore gi)) t)
+(defmethod upper-bound-included-p ((gi genomic-interval))
+  (declare (ignore gi)) t)
+
+(defun simple-interval->genomic-interval (si)
+  (make-instance 'genomic-interval
+                 :seq-start (+ (lower-bound si)
+                               (if (lower-bound-included-p si) 0 1))
+                 :seq-end   (- (upper-bound si)
+                               (if (upper-bound-included-p si) 0 1))))
+
+(defmethod make-interval ((interval-class (eql (find-class 'genomic-interval)))
+                          lower upper lower-included upper-included)
+  (make-instance interval-class
+                 :seq-start (+ lower (if lower-included 0 1))
+                 :seq-end   (- upper (if upper-included 0 1))))
+
+;;;; -------------------------------------------------------------------------
+;;;; TESTS!!!!
+;;;; -------------------------------------------------------------------------
+(defparameter *interval1* 
+  (make-interval 'simple-interval 0 100 t nil))
+
+(defparameter *interval2*
+  (make-interval 'simple-interval 23 42 t t))
+
+(defparameter *multi-interval*
+  (make-instance 'multi-interval :intervals
+                 (mapcar #'(lambda (start end) (make-interval 'simple-interval
+                                                              start end t t))
+                         '(5  50 70 65)
+                         '(13 60 90 70))))

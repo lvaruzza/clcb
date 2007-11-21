@@ -1,0 +1,114 @@
+The Common Lisp Computational Biology (CLCB) package is intended
+to be a comprehensive, flexible and easy to use library for
+bioinformatics and computational biology.  It aims at competing with
+Bio{Perl,Java,Python,Ruby} in terms of modularity and scope. The
+intertwined handling of data and control structures in lisp shall
+render this packages as an ideal source for active research in
+biological sequence analysis, combining the commodity of readily
+available functionality with the lisp-intrinsic dynamics to work with
+new structures.
+
+=================================
+Common Lisp Computational Biology
+=================================
+
+Scope and Motivation
+====================
+
+Common Lisp has the outstanding feature to intertwine control structures
+and data.  This appeals particularly to Bioinformatics which is data
+driven and deals with structures of enormous complexity. The here
+presented ground work provides a coherent access to
+
+ * objects representing biological sequences
+ * the public database Ensembl
+
+The Common Lisp Computational Biology package is intended to be a
+comprehensive, flexible and easy to use library for bioinformatics and
+computational biology.  It (hopefully) will be comparable to
+Bio{Perl,Java,Python,Ruby} in terms of modularity and scope.  It is
+not a competitor to BioLisp/BioBike, since this effort aims at
+providing complete working environments. CLCB instead addresses rather
+low-level tools, but in a modular fashion.  In fact, we'd like to make
+it comperatible with BioBike in a later stage of the project.  Also,
+CLCB will be independent of the Common Lisp implementation used.
+
+
+
+Modularity
+==========
+
+Molecules
+---------
+
+A package assisting in modeling molecular biology should firstly provide
+molecule-primitives. Today implemented are the classes molecule and
+amino-acid.  Secondly one requires means to represent combinations of
+molecules (sequence) and operations on these (to caclulate the mass
+and other chemical properties).  Every biological object below organelle
+level should inherit from the molecule base class.  The definition for
+different kinds of molecules plus the fundamental `molecule' class are
+bundled in molecule folder named molecule.
+
+
+Biological Sequences
+--------------------
+
+In most other Bio packages, biological sequences are represented
+by strings.  Only BioJava uses objects instead of characters for
+this purpose.  We believe the latter approach to be much more flexible
+and extensible than using just strings: This way, we can model certain
+characteristics that would be required to be stored in separate feature
+tables, e.g. methylation of Bases in DNA, esoteric nucleotides in RNA
+and post-transcriptional modifications of proteins and single amino acids.
+
+The base classes for biological sequences are defined in
+`seq/bio-sequences.lisp'
+
+
+RNA->Protein Translation and Genetic code
+-----------------------------------------
+
+The translation of mRNA to proteins is done of the basis of the so
+called genetic code.  While the eucaryotic genome is encoded using the
+Standard Genetic Code, there are organisms that use a slightly
+different code.  To allow for different codes, there is a global
+(special) variable *default-genetic-code* that can be set
+accordingly. (It has to hold one of the codon-tables that are defined
+by default.  The list genetic codes is incomplete but will be
+updated.)
+
+
+EnsEMBL
+-------
+
+The EnsEMBL genome database is one of the most comprehensive and
+valuable sources for biological data in these days.  The directory
+`ensembl' contains a package build atop of the CLCB package to enable
+access to this resource.  It depends on CLSQL, an SQL engine interface
+that supports a number of RDBMS, including MySQL, which is used by
+EnsEMBL.
+
+For now, there are only two files with poorly chosen names:
+
+* ensembl/ensembl-classes.lisp: Contains the class definitions.  All
+  classes inherit from standard-db-object, which comes from using
+  `def-view-class' for defining them.  Those definitions are wrapped
+  in additional macros to provide a higher level of abstraction.
+  `def-ensembl-view' behaves similar to `dev-view-class', but accepts
+  additional keywords to specify if an object has a stable-id or
+  provides some sequence information.  The macro badly needs
+  documentation (and maybe a partial rewrite).
+
+* ensembl/ensembl-methods.lisp: Contains methods specialized on ensembl
+  objects.  Accessing EnsEMBL methods should exclusively be done using
+  those methods.  We also included some easy ways to retrieve objects
+  from the database using their stable id [There is a _long_ TODO list
+  for this file.] 
+;; (Since we don't have any other objects similar to those from ensembl
+;;  just now, the generic method definitions are included in this file.
+;;  They will have to go to another location directly in the CLCB
+;;  package as soon as we add gene and protein classes that do not
+;;  relate to EnsEMBL.)
+
+Albert Krewinkel
