@@ -1,0 +1,63 @@
+\documentclass{book}
+\begin{document}
+\chapter{Introduction}
+
+
+
+\section{Motivation for CLCB}
+
+Lisp is fun. And it was felt that for a particular problem at hand, 
+there was little gained over using Bio* libraries for Java, Python or Perl.
+Hence, the decision was made to implement in Lisp and from day one kept in
+mind to offer the fun to others, too.
+
+But exactly {\em why} is it so much fun? There are probably many answers
+to this questions.  For one, the language is very clean, even for concepts
+that came into fashion twenty years after Lisp's conception. Take
+for instance the overloading of methods when introducing a subclass.
+When interating over a set of zoo animals, there is no need for the
+typical switch statement to learn about the object's real type and then a
+cast to call the real method. If in C or Java you would do something alike
+
+	for(animal *a= alist->first(); a->next();) {
+		if ("dog"==typeof(a)) {
+			dog *d = (dog *)a;
+			d->speak();
+		}
+		else if ("cat"==typeof(a)) {
+		...
+		}
+	}
+
+to hear the miows and barks.  In Lisp, you'd get the sound directly for
+any animal, also for the ones not originally anticipated in that zoo loop.
+For bioinformatics, with its zoo of sequence types and their subtypes,
+the genes and what was formerly known as "junk", such cleanliness is essential.
+
+There are other reasons....
+
+\section{How to learn Lisp}
+
+The Net is full of tutorials that introduce to the language
+Lisp. We found the instructions at the GMU very good to follow
+(http://www.cs.gmu.edu/~sean/lisp/LispTutorial.html). A much recommended
+text book is
+
+	Peter Seibel\\
+	Practical Common Lisp\\
+	ISBN 1-59059-239-5\\
+	Apress
+
+A more biologically inclined reader of this document may decide
+to leave the syntax of the language aside while first passing through
+this document and instead concentrate more on the understanding
+of the classes that represent biological entities in CLCB.
+
+\section{Instant access to CLCB without reading this documentation}
+
+CLCB is developed with SBCL but should be compatible with other implementations with Lisp.
+
+Start the interpreter and type "...." to import all of CLCB libraries.
+
+
+\end{document}
