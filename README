@@ -74,11 +74,10 @@ called genetic code.  While the eucaryotic genome is encoded using the
 Standard Genetic Code, there are organisms that use a slightly
 different code.  To allow for different codes, there is a global
 (special) variable *default-genetic-code* that can be set
-accordingly. (It has to hold one of the codon-tables that are defined
+accordingly. It has to hold one of the codon-tables that are defined
 by default.  The list genetic codes is incomplete but will be
-updated. The handbook to the EMBL sequence database offers as formal
-representation here:
-http://www.ebi.ac.uk/embl/Documentation/FT_definitions/feature_table.html#_Toc180488156)
+updated. The file data/genetic-code.prt lists genetic codes from the
+genetic code database.
 
 
 EnsEMBL
