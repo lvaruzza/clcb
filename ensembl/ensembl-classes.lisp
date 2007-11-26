@@ -67,9 +67,10 @@ intended to be used in conjuction with stable ids.")
     (let ((stable-id-view (table-concat '-stable-id))
           (object-type (table-concat))
           (db-id (table-concat '-id)))
-      `(defmethod fetch-by-stable-id-and-type
-                  (stable-id (obj-type (eql ',object-type)))
-         (let ((fetched-object
+      `(progn
+        (defmethod fetch-by-stable-id-and-type
+            ((stable-id string) (obj-type (eql ',object-type)))
+          (let ((fetched-object
                  (car
                   (select ',object-type :where
                           (sql-and
@@ -78,20 +79,20 @@ intended to be used in conjuction with stable ids.")
                            (sql-= (sql-slot-value ',stable-id-view 'stable-id)
                                   stable-id))
                           :flatp t))))
-           (if fetched-object
-               fetched-object
-               (error 'ensembl-fetch-error :object-to-fetch stable-id))))
-      `(defmethod fetch-by-stable-id-and-type
-                  ((stable-ids list) (obj-type (eql ',object-type)))
-         (let ((fetched-objects
-                (select ',object-type :where
-                        (sql-and
-                         (sql-= (sql-slot-value ',stable-id-view ',db-id)
-                                (sql-slot-value ',object-type ',db-id))
-                         (sql-in (sql-slot-value ',stable-id-view 'stable-id)
-                                 stable-ids))
-                        :flatp t)))
-           fetched-objects)))))
+            (if fetched-object
+                fetched-object
+                (error 'ensembl-fetch-error :object-to-fetch stable-id))))
+        (defmethod fetch-by-stable-id-and-type
+            ((stable-ids list) (obj-type (eql ',object-type)))
+          (let ((fetched-objects
+                 (select ',object-type :where
+                         (sql-and
+                          (sql-= (sql-slot-value ',stable-id-view ',db-id)
+                                 (sql-slot-value ',object-type ',db-id))
+                          (sql-in (sql-slot-value ',stable-id-view 'stable-id)
+                                  stable-ids))
+                         :flatp t)))
+            fetched-objects))))))
 
 
 ;;; Ensembl Object definitions
