@@ -1,4 +1,6 @@
 \documentclass{book}
+\usepackage{listings}
+
 \begin{document}
 \chapter{Introduction}
 
@@ -19,6 +21,8 @@ When interating over a set of zoo animals, there is no need for the
 typical switch statement to learn about the object's real type and then a
 cast to call the real method. If in C or Java you would do something alike
 
+\lstset{language=C}
+\begin{lstlisting}
 	for(animal *a= alist->first(); a->next();) {
 		if ("dog"==typeof(a)) {
 			dog *d = (dog *)a;
@@ -28,6 +32,7 @@ cast to call the real method. If in C or Java you would do something alike
 		...
 		}
 	}
+\end{lstlisting}
 
 to hear the miows and barks.  In Lisp, you'd get the sound directly for
 any animal, also for the ones not originally anticipated in that zoo loop.
