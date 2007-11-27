@@ -31,6 +31,7 @@
 ;;; -------------------------------------
 (declaim (inline select1))
 (defun select1 (&rest select-args)
+  "Select exactly one."
   (car (apply #'select (nconc select-args '(:limit 1 :flatp t)))))
 
 (defgeneric fetch-by-name (name object-type)
@@ -159,10 +160,10 @@ this info is not available.")
               'coord-system))
 
 ;; This causes problems for some reason I coudn't figure out.
-#||(defmethod print-object ((seq dna-sequence) (stream stream))
+(defmethod print-object ((seq dna-sequence) (stream stream))
   (print-unreadable-object (seq stream :type t)
     (format stream "~A:[~A,~A]"
-             (chromosome seq) (lower-bound seq) (upper-bound seq))))||#
+             (chromosome seq) (lower-bound seq) (upper-bound seq))))
 
 
 

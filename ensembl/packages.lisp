@@ -52,5 +52,6 @@
            ;; Stuff that will go into bio-sequence eventually
            #:dna-sequence-interval
            #:aa->nt
-           #:nt->aa))
+           #:nt->aa)
+  (:documentation ""))
 
