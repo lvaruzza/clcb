@@ -60,9 +60,61 @@ of the classes that represent biological entities in CLCB.
 
 \section{Instant access to CLCB without reading this documentation}
 
-CLCB is developed with SBCL but should be compatible with other implementations with Lisp.
+CLCB is developed with SBCL but should be compatible with other
+implementations with Lisp.
 
 Start the interpreter and type "...." to import all of CLCB libraries.
+
+\lstset{language=lisp}
+\begin{lstlisting}
+(pushnew <path/to/CLCB> asdf:*central-registry*)
+(pushnew <path/to/CLCB/ensembl> asdf:*central-registry*)
+(asdf:oos 'asdf:load-op :clcb) or
+(asdf:oos 'asdf:load-op :clcb-ensembl)
+(in-package :ensembl)
+ENSEMBL> (fetch-by-stable-id ``ENSG00000000005'')
+=> #<GENE {C974EC1}>
+
+(defparameter *gene* (fetch-by-stable-id ``ENSG00000000005''))
+
+ENSEMBL> (transcripts *gene*)
+=> (#<TRANSCRIPT {CAB4751}>)
+
+ENSEMBL> (translation (car *))
+=> #<TRANSLATION {CAF4C49}>
+
+ENSEMBL> (exons (first (transcripts *gene*)))
+=> 
+(#<EXON {CB4F9E9}> #<EXON {CB5C809}> #<EXON {CB69539}> #<EXON {CB76249}>
+ #<EXON {CB831E9}> #<EXON {CB8FF09}> #<EXON {CB9CC09}> #<EXON {CBA98E9}>
+ #<EXON {CBB6619}> #<EXON {CBC3329}> #<EXON {CBD0011}> #<EXON {CBDCD09}>
+ #<EXON {CBE9A09}> #<EXON {CBF6729}> #<EXON {CC03421}> #<EXON {CC10149}>
+ #<EXON {CC1CE61}> #<EXON {CC2BB61}> #<EXON {CC3A8A9}> #<EXON {CC47AD1}>
+ #<EXON {CC56809}>)
+
+
+ENSEMBL> (protein-features (translation (car (transcripts *gene*))))
+(#<PROTEIN-FEATURE {CD15729}> #<PROTEIN-FEATURE {CD178C9}>
+ #<PROTEIN-FEATURE {CD18591}> #<PROTEIN-FEATURE {CD19269}>
+ #<PROTEIN-FEATURE {CD19F31}> #<PROTEIN-FEATURE {CD1ABF9}>
+ #<PROTEIN-FEATURE {CD1B8C9}> #<PROTEIN-FEATURE {CD1C591}>)
+ENSEMBL> (mapcar #'protein-feature-type
+                 (protein-features (translation (car (transcripts *gene*)))))
+("Pfam" "Superfamily" "Superfamily" "Smart" "low_complexity" "low_complexity"
+ "low_complexity" "Prosite_profiles")
+(mapcar #'dna-sequence-interval
+                 (protein-features (translation (car (transcripts *gene*)))))
+(#<DNA-SEQUENCE {D1DF909}>
+ #<MULTI-INTERVAL (#<DNA-SEQUENCE {D1FD389}> #<DNA-SEQUENCE {D1FE011}>)>
+ #<MULTI-INTERVAL (#<DNA-SEQUENCE {D21BEF1}> #<DNA-SEQUENCE {D21CB71}> #<DNA-SEQUENCE {D21D7F1}>)>
+ #<DNA-SEQUENCE {D2D2A01}> #<DNA-SEQUENCE {D2EA241}> #<DNA-SEQUENCE {D3019E1}>
+ #<MULTI-INTERVAL (#<DNA-SEQUENCE {D320179}> #<DNA-SEQUENCE {D320DF9}>)>
+ #<DNA-SEQUENCE {D342429}>)
+ENSEMBL> (mapcar #'(lambda (x) (genomic-coordinates (dna-sequence-interval x)))
+                 (protein-features (translation (car (transcripts *gene*)))))
+((204639 . 204885) (204630 . 205434) (250229 . 255355) (204639 . 204918)
+ (242551 . 242602) (216822 . 216855) (204921 . 205473) (204639 . 204888))
+\end{lstlisting}
 
 
 \end{document}
