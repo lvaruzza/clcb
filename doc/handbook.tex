@@ -18,12 +18,12 @@ One can program Lisp as if it was Perl, which is referred to as
 programming. Everyone has experienced what functional programming is alike
 who has specified the first argument to the {\em sort} routine in Perl,
 which is the expression deciding if the objects \$a or \$b is larger, with
-a non-trivial expression that possibly called another function.  In Lisp,
+a non-trivial expression.  In Lisp,
 such functions that do not need a name are called $\lambda$ expressions.
-One take such, optionally gives them a name to make them real functions,
-and applies them to lists of objects. To the biologically minded in us,
+One takes such, optionally gives them a name to make them real functions,
+and applies them to lists (or another structure) of objects. To the biologically minded in us,
 such functions are much like an enzyme that is acting on some sequence of
-nucleotides. Other languages have constructs that allow for a functional
+nucleotides. In other languages one only ''calls'' functions by name. In Lisp, functions are something tangible. Admittedly, these other languages do offer constructs that allow for a functional
 programming to some degree. But with Lisp it is the other way around.
 
 But exactly {\em why} is it so much fun? There are probably many answers
@@ -52,7 +52,7 @@ any animal, also for the ones not originally anticipated in that zoo loop.
 For bioinformatics, with its zoo of sequence types and their subtypes,
 the genes and what was formerly known as "junk", such cleanliness is essential.
 
-There are other reasons....
+There are other reasons $\ldots$
 
 \section{How to learn Lisp}
 
@@ -75,7 +75,10 @@ of the classes that represent biological entities in CLCB.
 
 CLCB is developed with SBCL but should be compatible with other
 implementations with Lisp. This section gives you a head start into the
-code. Frankly, since the real documentation is only worked on.
+code. Frankly, the real documentation is in the code, literally, this is
+where '':documentation'' slots allow for the annotation of what was
+programmed and we prepare to parse that information from the code into
+this document. But this is only now being worked on.
 Unless you have a colleague who is already proficient in CLCB, 
 there is no alternative to jumping right in.
 
@@ -83,9 +86,13 @@ there is no alternative to jumping right in.
 
 In your UNIX shell change the directory to where the README 
 of CLCB is. The UNIX command ''pwd'' informs about the current
-working directory. Then start the Lisp interpreter. In the lines below
+working directory. Then start the Lisp interpreter, possibly just
+by typing ''sbcl''. The interpreted now needs to learn about 
+where to find your CLCB source code. To achieve that, in the lines below
 substitute ''path/to/CLCB'' with that the command ''pwd'' just sent to
-the screen.
+the screen and type it into the interpreter. You'd need to do this
+every time you start up. Your interpreter will have files it reads at
+startup and you should in the longer run move these lines there.
 
 \lstset{language=lisp}
 \begin{lstlisting}
@@ -97,8 +104,19 @@ the screen.
 \end{lstlisting}
 
 \subsection{First hands on experience}
-The code below retrieves a gene from Ensembl, retrieves its transcripts and finally 
-that first's protein protein product.
+
+When looking at the examples given below you need to keep in mind that
+computer scientists try hard to distinguish between the data and the
+way it is presented to the user. The reason is that the same data
+is interpreted differently in different contexts and there is hence
+no way to know for sure how the data shall be shown to meet the user's
+expectations. The examples below give references to the data, indicating
+that all data is available to the programmer. This is great to the
+programmer, saving lots of work. An abstract way to present the data,
+i.e, as LaTeX tables, ASCII with white space or tab delimited, is still
+being designed.
+
+The code below retrieves a gene from Ensembl, retrieves its transcripts and finally the first transcript's protein protein product. Be aware that the translation process uses ''*'' to refer to the result of the previous command.
 
 \begin{lstlisting}
 ENSEMBL> (fetch-by-stable-id ``ENSG00000000005'')
@@ -142,7 +160,8 @@ ENSEMBL> (mapcar #'protein-feature-type
 Genomic coordinates of the protein features. But where is the chromosome
 and where the organism? Well, normally you know about these already and they
 are invariant whenever one is inspecting a particular protein that is not
-a product of a translocation .... hm .... that said ....
+a product of a translocation $\ldots$ hm $\ldots$ . It is the gene that can
+be queries for the chromosome.
 
 \begin{lstlisting}
 (mapcar #'dna-sequence-interval

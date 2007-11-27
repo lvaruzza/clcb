@@ -25,11 +25,15 @@
 
 (defclass codon ()
   ((triplet :initarg :triplet
+	    :documentation "describes three nucleotides that need to be matched on the mRNA"
             :accessor codon-triplet)
    (start-aa :initarg :start-aa
+             :documentation "set if the codon may initiate a translation."
              :accessor codon-start-aa)
    (aa :initarg :aa
-       :accessor codon-aa)))
+       :documentation "the amino acid that is transferred"
+       :accessor codon-aa))
+   (:documentation "Codons can be though of units of translation from RNA to protein. Every codon is assigned to a particular tRNA, which may recognise multiple codons. There are two types of special codons, one that may initiate the translation process (see slot start-aa), the other that certainly stops it. In some organism under some special conditions such stop codons may also code for the 21st amino acid, seleno-cystein, but this is not modelled here."))
 
 (defmethod print-object ((codon codon) (s stream))
   (with-accessors ((aa codon-aa) (saa codon-start-aa)) codon
@@ -41,11 +45,15 @@
 
 (defclass genetic-code-table ()
   ((id :accessor genetic-code-id
+       :documentation "A number to which is commonly referred when addressing a particular coding table."
        :initarg :id)
    (name :accessor genetic-code-name
+	 :documentation "The human-understandable description of the range of species that features this translation"
          :initarg :name)
    (codons :initarg :codons
-           :accessor genetic-code-codons)))
+	   :documentation "List of objects of the codon class that assign nucleotides to amino acids."
+           :accessor genetic-code-codons))
+   (:documentation "Species possibly differ in their assignments of nucleotides to amino acids. Actually, our mitochondria have a different (bacterial) coding from our nucleus. The assignment is referred to as the genetic code and this class knows about multiple such codes that it represents in a table."))
 
 (defmethod print-object ((gct genetic-code-table) (s stream))
   (print-unreadable-object (gct s :type t)
