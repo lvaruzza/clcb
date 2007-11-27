@@ -9,9 +9,22 @@
 \section{Motivation for CLCB}
 
 Lisp is fun. And it was felt that for a particular problem at hand, 
-there was little gained over using Bio* libraries for Java, Python or Perl.
+there was little gained by using Bio* libraries for Java, Python or Perl.
 Hence, the decision was made to implement in Lisp and from day one kept in
 mind to offer the fun to others, too.
+
+One can program Lisp as if it was Perl, which is referred to as
+''declarative''. What Lisp once was special for is the {\em fun}ctional
+programming. Everyone has experienced what functional programming is alike
+who has specified the first argument to the {\em sort} routine in Perl,
+which is the expression deciding if the objects \$a or \$b is larger, with
+a non-trivial expression that possibly called another function.  In Lisp,
+such functions that do not need a name are called $\lambda$ expressions.
+One take such, optionally gives them a name to make them real functions,
+and applies them to lists of objects. To the biologically minded in us,
+such functions are much like an enzyme that is acting on some sequence of
+nucleotides. Other languages have constructs that allow for a functional
+programming to some degree. But with Lisp it is the other way around.
 
 But exactly {\em why} is it so much fun? There are probably many answers
 to this questions.  For one, the language is very clean, even for concepts
@@ -61,9 +74,18 @@ of the classes that represent biological entities in CLCB.
 \section{Instant access to CLCB without reading this documentation}
 
 CLCB is developed with SBCL but should be compatible with other
-implementations with Lisp.
+implementations with Lisp. This section gives you a head start into the
+code. Frankly, since the real documentation is only worked on.
+Unless you have a colleague who is already proficient in CLCB, 
+there is no alternative to jumping right in.
 
-Start the interpreter and type "...." to import all of CLCB libraries.
+\subsection{Setting up the interpreter}
+
+In your UNIX shell change the directory to where the README 
+of CLCB is. The UNIX command ''pwd'' informs about the current
+working directory. Then start the Lisp interpreter. In the lines below
+substitute ''path/to/CLCB'' with that the command ''pwd'' just sent to
+the screen.
 
 \lstset{language=lisp}
 \begin{lstlisting}
@@ -72,6 +94,13 @@ Start the interpreter and type "...." to import all of CLCB libraries.
 (asdf:oos 'asdf:load-op :clcb) or
 (asdf:oos 'asdf:load-op :clcb-ensembl)
 (in-package :ensembl)
+\end{lstlisting}
+
+\subsection{First hands on experience}
+The code below retrieves a gene from Ensembl, retrieves its transcripts and finally 
+that first's protein protein product.
+
+\begin{lstlisting}
 ENSEMBL> (fetch-by-stable-id ``ENSG00000000005'')
 => #<GENE {C974EC1}>
 
@@ -82,7 +111,10 @@ ENSEMBL> (transcripts *gene*)
 
 ENSEMBL> (translation (car *))
 => #<TRANSLATION {CAF4C49}>
+\end{lstlisting}
 
+Retrieval of exons that contribute to the first transcript.
+\begin{lstlisting}
 ENSEMBL> (exons (first (transcripts *gene*)))
 => 
 (#<EXON {CB4F9E9}> #<EXON {CB5C809}> #<EXON {CB69539}> #<EXON {CB76249}>
@@ -91,8 +123,11 @@ ENSEMBL> (exons (first (transcripts *gene*)))
  #<EXON {CBE9A09}> #<EXON {CBF6729}> #<EXON {CC03421}> #<EXON {CC10149}>
  #<EXON {CC1CE61}> #<EXON {CC2BB61}> #<EXON {CC3A8A9}> #<EXON {CC47AD1}>
  #<EXON {CC56809}>)
+\end{lstlisting}
 
+Retrieval of features of the first transcript's protein product.
 
+\begin{lstlisting}
 ENSEMBL> (protein-features (translation (car (transcripts *gene*))))
 (#<PROTEIN-FEATURE {CD15729}> #<PROTEIN-FEATURE {CD178C9}>
  #<PROTEIN-FEATURE {CD18591}> #<PROTEIN-FEATURE {CD19269}>
@@ -102,6 +137,14 @@ ENSEMBL> (mapcar #'protein-feature-type
                  (protein-features (translation (car (transcripts *gene*)))))
 ("Pfam" "Superfamily" "Superfamily" "Smart" "low_complexity" "low_complexity"
  "low_complexity" "Prosite_profiles")
+\end{lstlisting}
+
+Genomic coordinates of the protein features. But where is the chromosome
+and where the organism? Well, normally you know about these already and they
+are invariant whenever one is inspecting a particular protein that is not
+a product of a translocation .... hm .... that said ....
+
+\begin{lstlisting}
 (mapcar #'dna-sequence-interval
                  (protein-features (translation (car (transcripts *gene*)))))
 (#<DNA-SEQUENCE {D1DF909}>
