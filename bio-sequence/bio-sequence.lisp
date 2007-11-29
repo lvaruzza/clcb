@@ -45,7 +45,14 @@ of any type, but will normally be of type `string'.")
                 :initform 1)
    (upper-bound :accessor seq-end
                 :initarg :seq-end))
-   (:documentation "A biological sequence is a polymeric macromolecule of nucelic acids (with a phorsphor-sugar backbone) or of amino acids with various side-chaines. In daily routine, one does not use the full genome but some fraction of it. And in this fraction we are interested in smaller fractions that have (or are presumed to have) properties of our interest. These regions, consecutive stretches within something larger, may handily be understood as intervals and CLCB offers such an interface to them."))
+   (:documentation "A biological sequence is a polymeric macromolecule
+of nucelic acids (with a phorsphor-sugar backbone) or of amino acids
+with various side-chaines. In daily routine, one does not use the full
+genome but some fraction of it. And in this fraction we are interested
+in smaller fractions that have (or are presumed to have) properties of
+our interest. These regions, consecutive stretches within something
+larger, may handily be understood as intervals and CLCB offers such an
+interface to them."))
 
 
 (defmethod initialize-instance :after ((seq bio-sequence) &rest args)
@@ -70,8 +77,14 @@ of any type, but will normally be of type `string'.")
            :initarg :strand
            :initform 0
            :type (integer -1 1)
-	   :documentation "The direction in which the feature is found on the genome, if applicable. The number 1 denotes the direction from the small chromosomal arm (p like petit) to the larger (q)."))
-  (:documentation "Nucleotide sequences can be retrieved from genomic databases (like Ensembl) which is implemented in CBCL. From Ensembl, nucleotides can also be retrieved as genes (with exons and introns) or transcripts. Specialised databases offer information on expressed sequence tags (ESTs)."))
+	   :documentation "The direction in which the feature is found
+on the genome, if applicable. The number 1 denotes the direction from
+the small chromosomal arm (p like petit) to the larger (q)."))
+  (:documentation "Nucleotide sequences can be retrieved from genomic
+databases (like Ensembl) which is implemented in CBCL. From Ensembl,
+nucleotides can also be retrieved as genes (with exons and introns) or
+transcripts. Specialised databases offer information on expressed
+sequence tags (ESTs)."))
 
 (defclass amino-acid-sequence (bio-sequence) ()
   (:documentation "A real protein or at least some smallish peptide."))
@@ -99,7 +112,9 @@ of any type, but will normally be of type `string'.")
 
 
 (defmethod print-object ((seq bio-sequence) stream)
-  "The sequence object is printed to an output stream. This is fairly handy but somehow we feel that some more abstract and more generic mechanism is required."
+  "The sequence object is printed to an output stream. This is fairly
+handy but somehow we feel that some more abstract and more generic
+mechanism is required."
   (print-unreadable-object (seq stream :type t)
     (with-slots (id name seq) seq
       (format stream ":id ~A :name ~S :seq ~A~:[...~]"
@@ -117,7 +132,8 @@ of any type, but will normally be of type `string'.")
 (defclass feature ()
   ((feature-type :accessor feature-type
                  :initarg :feature-type))
-  (:documentation "A property of interest that is referred to from a biological entity, i.e, a biological sequence."))
+  (:documentation "A property of interest that is referred to from a
+biological entity, i.e, a biological sequence."))
 
 (defgeneric shuffle-sequence (seq)
   (:documentation "Return a randomly shuffled copy of the sequence." )
@@ -129,7 +145,13 @@ of any type, but will normally be of type `string'.")
 
 
 (defun orthogonal-coded (char)
-  "Albert, please describe."
+  "Return the character as an orthogonal coded vector.  Vectors are
+orthogonal iff their scalar product equals zero. The scalar product of
+concatenations of othogonal coded bases gives the number of
+nucleotides that the sequences have in common.
+
+http://en.wikipedia.org/wiki/Orthogonal_array
+"
   (declare (type character char))
   (flet ((char-eq (c)
            (char-equal char c)))
@@ -139,17 +161,23 @@ of any type, but will normally be of type `string'.")
                         ((char-eq #\c) #(0f0 1f0 0f0 0f0))
                         ((char-eq #\g) #(0f0 0f0 1f0 0f0))
                         ((char-eq #\t) #(0f0 0f0 0f0 1f0))
-                        (t (error "Unknown nucleotide character.")))
+                        (t (error "Unknown nucleotide
+character. Please extend `orthogonal-coded' to support this character.
+")))
                   :element-type 'single-float))))
 
 (defgeneric orthogonal-coded-seq (seq)
+  ;;FIXME: Missing documentation
   (:documentation "Take an nucleotide sequence and generate an
-  orthogonal coded copy of the sequence. Albert, please describe what orthogonal coded means and when it is used."))
+orthogonal coded copy of the sequence.  Albert, please describe what
+orthogonal coded means and when it is used."))
 
 (defmethod orthogonal-coded-seq ((seq string))
+  ;;FIXME: Missing documentation
   "Albert"
   (loop
-     with orth-seq = (make-array (* (length seq) 4) :element-type 'single-float)
+     with orth-seq = (make-array (* (length seq) 4)
+                                 :element-type 'single-float)
      for cur-pos fixnum from 0 below (length orth-seq) by 4
      for char character across seq do
      (setf (subseq orth-seq cur-pos (+ cur-pos 4))
