@@ -34,7 +34,9 @@
                         :initarg :previous-element-fn)
    (element-member-fn :accessor element-member-fn
                       :initarg :element-member-fn))
-  (:documentation "A list that cannot conain doublettes. The order is given by the property of the objects, not by the order of insertion into the set."))
+  (:documentation "A list that cannot conain doublettes. The order is
+given by the property of the objects, not by the order of insertion
+into the set."))
 
 (defgeneric next-element-in-set (set element)
   (:documentation "The smallest element x in set, for which element < x.")
@@ -48,7 +50,7 @@
 
 (defgeneric element-member-p (set element)
   (:documentation "Return T iff the element is in the set.")
-  (:method (set element) (funcall (element-member-fn set) element)))
+  (:method (set element) (funcall (element-member-fn set) set element)))
 
 
 ;;; Interval Class definitions
@@ -58,8 +60,7 @@
 
 An interval is a subset of a set with an total order defined on
 it.  The interval is defined by two values x,y and contains all
-numbers z so that x <= z <= y.  '<' can be used instead of
-
+numbers z so that x <= z <= y.  '<' can be used instead of <=
 
 http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 "))
@@ -110,9 +111,9 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
                         :initform #'1-)
    (element-member-fn :initform #'(lambda (interval element)
                                     (and (integerp element)
-                                         (< (lower-bound interval)
-                                            element
-                                            (1+ (upper-bound interval))))))))
+                                         (<= (lower-bound interval)
+                                             element
+                                             (upper-bound interval)))))))
 
 
 ;;; -------------------------------------
@@ -126,11 +127,23 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
   (lower-bound (car (intervals mi))))
 (defmethod upper-bound ((mi multi-interval))
   (upper-bound (car (last (intervals mi)))))
-(defmethod lower-bound-included-p ((mi multi-interval))
-  (lower-bound-included-p (car (intervals mi))))
-(defmethod upper-bound-included-p ((mi multi-interval))
-  (upper-bound-included-p (car (last (intervals mi)))))
 
+(defmethod element-member-p ((mi multi-interval) element)
+  (some (rcurry #'element-member-p element) (intervals mi)))
+
+(defmethod next-element-in-set ((mi multi-interval) element)
+  (iter (generate interval in (intervals mi))
+        (when (<= element (upper-bound (next interval)))
+            (if (< element (upper-bound interval))
+                (return (next-element-in-set interval element))
+                (return (lower-bound (next interval)))))))
+
+(defmethod previous-element-in-set ((mi multi-interval) element)
+  (iter (generate interval in (reverse (intervals mi)))
+        (when (<= (lower-bound (next interval)) element)
+          (if (= element (lower-bound interval))
+              (return (upper-bound (next interval)))
+              (return (previous-element-in-set interval element))))))
 
 
 ;;; ------------------------------------
@@ -168,8 +181,10 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
     (iter (initially (setf i (lower-bound interval)))
           (repeat (1- n))
           (for i = (next-element-in-set interval i))
-          (finally (return (if (funcall (element-member-fn interval) interval i)
-                               i nil)))))
+          (finally 
+           (return (if (funcall (element-member-fn interval) interval i)
+                       i
+                       nil)))))
 
   (:method ((mi multi-interval) (n integer))
     (iter (for interval in (intervals mi))
@@ -203,7 +218,8 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 ;; isn't standard use of an interval and could be an error. On the
 ;; other hand, I do rely on this behavior to easily do interval
 ;; operations. But it will break code if we try to define intervals on
-;; circular sets.
+;; circular sets. (Sounds like a job for the condition systems and
+;; restarts.)
 (defmethod make-interval :around (interval lower upper &rest args)
   (declare (ignore args interval))
   (if (< upper lower)
