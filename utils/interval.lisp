@@ -25,7 +25,7 @@
 
 ;;; Some Set definitions
 ;;; --------------------
-(defclass abstract-set () ())
+(defclass abstract-set () () (:documentation "base class for set operations"))
 
 (defclass discrete-ordered-set (abstract-set)
   ((next-element-fn :accessor next-element-fn
@@ -33,7 +33,8 @@
    (previous-element-fn :accessor previous-element-fn
                         :initarg :previous-element-fn)
    (element-member-fn :accessor element-member-fn
-                      :initarg :element-member-fn)))
+                      :initarg :element-member-fn))
+  (:documentation "A list that cannot conain doublettes. The order is given by the property of the objects, not by the order of insertion into the set."))
 
 (defgeneric next-element-in-set (set element)
   (:documentation "The smallest element x in set, for which element < x.")

@@ -27,13 +27,16 @@
 (defclass amino-acid (molecule)
   ((1-letter-code
     :accessor 1-letter-code     :initarg :1-letter-code 
-    :initform #\X               :type    character)
+    :initform #\X               :type    character
+    :documentation "Single letter denoting an amino acid.")
    (3-letter-code
     :accessor 3-letter-code     :initarg :3-letter-code
-    :initform "Xaa"             :type    string)
+    :initform "Xaa"             :type    string
+    :documentation "Three letters denoting an amino acid.")
    (isoelectric-point
     :accessor isoelectric-point :initarg :isoelectric-point
-    :initform 7f0               :type    utils::number-or-nil)
+    :initform 7f0               :type    utils::number-or-nil
+    :documentation "The pH at which an amino acids becomes neutral.")
    (pk1COOH    :accessor pk1COOH    :initarg :pk1COOH    :initform nil
                :type     utils::number-or-nil)
    (pk2COOH    :accessor pk2COOH    :initarg :pk2COOH    :initform nil
@@ -43,23 +46,29 @@
    (pk2NH2     :accessor pk2NH2     :initarg :pk2NH2     :initform nil
                :type     utils::number-or-nil)
    (hydropathy :accessor hydropathy :initarg :hydropathy :initform nil
-               :type     utils::number-or-nil)))
+               :type     utils::number-or-nil
+	       :documentation "The Kyte-Doolitle scoring of amino acids for their compatibility with polar water or apolar fatty acids. Albert."))
+  (:documentation "The data directory of CLCB describes the naturally occuring amino acids with respect to their notation (1-letter and 3-letter codes) and biochemical properties. The individual lines are accessible as instances of this class."))
 
 (defmethod print-object ((aa amino-acid) (s stream))
+  "Print amino acid."
   (print-unreadable-object (aa s :type t :identity nil)
     (format s "~A" (3-letter-code aa))))
 
 
 (defun read-amino-acids (aa-table-file)
+  "Albert. "
   (with-open-file (in aa-table-file)
     (read-objects-from-table in 'amino-acid)))
 
 (defparameter *amino-acids*
+  "Albert. "
   (read-amino-acids
    (make-pathname :name "amino-acids" :type "txt"
                   :defaults *data-directory-pathname*)))
 
 (defparameter *1-letter-aa-hash* 
+  "The objects that are representing amino acids are stored in a hash from which they can be retrieved on demand, i.e, when reading and interpreting a sequence string."
   (let ((1-letter-hash (make-hash-table)))
     (dolist (aa *amino-acids* 1-letter-hash)
       (setf (gethash (1-letter-code aa) 1-letter-hash)
@@ -68,6 +77,7 @@
             aa))))
 
 (defparameter *3-letter-aa-hash*
+  "The objects representing amino acids are stored in a hash from which they can be retrieved via their 3-letter code, i.e., 'Ala will give your the object for Alanine. This function is used less frequently in everyday's practice, but, once one is working with artificial amino acids or those modifications performed by enzymes as post-translational modifications, to have more than the 26 letters of the alphabet becomes handy."
   (let ((3-letter-hash (make-hash-table :test #'equal)))
     (dolist (aa *amino-acids* 3-letter-hash)
       (setf (gethash (3-letter-code aa) 3-letter-hash) aa))))

@@ -28,7 +28,9 @@
          :initarg :name)
    (mol-weight :accessor mol-weight
                :initarg :mol-weight
-               :initform 0)))
+               :initform 0))
+  (:documentation "Base class for biological sequences and all the substances that are yet not accessible in CLCB."))
 
 (defmethod print-object ((mol molecule) stream)
+  "String representation of the molecule object."
   (format stream "#<MOLECULE ~A>" (molecule-name mol)))

@@ -24,10 +24,12 @@
 (in-package #:clcb)
 
 (defun read-fasta-header (stream)
+  "FASTA files may comprise many separate sequences. Each starts with a single line prefixed with a greate sign '>'. It first lists the accession number (or other sensible identifier) and optionally shows  some human readable additional information."
   (read-line stream))
 
 
 (defun read-sequence-data (stream)
+  "The sequence information is read from the stream. The header of the fasta file is expected to be removed before this function is called. Otherwise, an empty string is returned."
   (apply #'concatenate 'string
     (loop for line = (read-line stream nil nil)
           while (and line

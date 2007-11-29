@@ -24,6 +24,7 @@
 (in-package :clcb-utils)
 
 (defun select-samples (n max)
+  "Albert."
   (loop :for seen from 0
         :do (format t "~A " seen)
         :when (< (* (- max seen) (random 1.0)) n)
@@ -32,6 +33,7 @@
 
 ;; FIXME: Slow and crap. rewrite
 (defun unique-random-ints (n max)
+  "Selection of n integers in the range of 0 to max."
   (when (> n max) (error "n > max, can't create that many unique integers"))
   (let ((result nil))
     (do ((i 0)
@@ -45,7 +47,7 @@
 (defun sqr (n)
   "Return the square of the number."
   (declare (type number n))
-  (expt n 2))
+  (* n n))
 
 (defun factorial (n)
   "Returns the factorial of the number n"

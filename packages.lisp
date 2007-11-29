@@ -149,4 +149,7 @@
            #:genetic-code-codons
            #:read-genetic-code-tables
            #:*genetic-code-tables*)
-  (:documentation "The Common Lisp Computational Biology package."))
+  (:documentation "The Common Lisp Computational Biology package
+=============================================
+
+This effort collects routines for sequence-based biological data."))

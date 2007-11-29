@@ -44,7 +44,8 @@ of any type, but will normally be of type `string'.")
                 :initarg :seq-start
                 :initform 1)
    (upper-bound :accessor seq-end
-                :initarg :seq-end)))
+                :initarg :seq-end))
+   (:documentation "A biological sequence is a polymeric macromolecule of nucelic acids (with a phorsphor-sugar backbone) or of amino acids with various side-chaines. In daily routine, one does not use the full genome but some fraction of it. And in this fraction we are interested in smaller fractions that have (or are presumed to have) properties of our interest. These regions, consecutive stretches within something larger, may handily be understood as intervals and CLCB offers such an interface to them."))
 
 
 (defmethod initialize-instance :after ((seq bio-sequence) &rest args)
@@ -68,9 +69,12 @@ of any type, but will normally be of type `string'.")
    (strand :accessor strand
            :initarg :strand
            :initform 0
-           :type (integer -1 1))))
+           :type (integer -1 1)
+	   :documentation "The direction in which the feature is found on the genome, if applicable. The number 1 denotes the direction from the small chromosomal arm (p like petit) to the larger (q)."))
+  (:documentation "Nucleotide sequences can be retrieved from genomic databases (like Ensembl) which is implemented in CBCL. From Ensembl, nucleotides can also be retrieved as genes (with exons and introns) or transcripts. Specialised databases offer information on expressed sequence tags (ESTs)."))
 
-(defclass amino-acid-sequence (bio-sequence) ())
+(defclass amino-acid-sequence (bio-sequence) ()
+  (:documentation "A real protein or at least some smallish peptide."))
 
 (defun copy-bio-sequence (seq)
   "Return a fresh copy of the bio-sequence object."
@@ -95,6 +99,7 @@ of any type, but will normally be of type `string'.")
 
 
 (defmethod print-object ((seq bio-sequence) stream)
+  "The sequence object is printed to an output stream. This is fairly handy but somehow we feel that some more abstract and more generic mechanism is required."
   (print-unreadable-object (seq stream :type t)
     (with-slots (id name seq) seq
       (format stream ":id ~A :name ~S :seq ~A~:[...~]"
@@ -111,7 +116,8 @@ of any type, but will normally be of type `string'.")
 
 (defclass feature ()
   ((feature-type :accessor feature-type
-                 :initarg :feature-type)))
+                 :initarg :feature-type))
+  (:documentation "A property of interest that is referred to from a biological entity, i.e, a biological sequence."))
 
 (defgeneric shuffle-sequence (seq)
   (:documentation "Return a randomly shuffled copy of the sequence." )
@@ -123,6 +129,7 @@ of any type, but will normally be of type `string'.")
 
 
 (defun orthogonal-coded (char)
+  "Albert, please describe."
   (declare (type character char))
   (flet ((char-eq (c)
            (char-equal char c)))
@@ -137,9 +144,10 @@ of any type, but will normally be of type `string'.")
 
 (defgeneric orthogonal-coded-seq (seq)
   (:documentation "Take an nucleotide sequence and generate an
-  orthogonal coded copy of the sequence."))
+  orthogonal coded copy of the sequence. Albert, please describe what orthogonal coded means and when it is used."))
 
 (defmethod orthogonal-coded-seq ((seq string))
+  "Albert"
   (loop
      with orth-seq = (make-array (* (length seq) 4) :element-type 'single-float)
      for cur-pos fixnum from 0 below (length orth-seq) by 4
@@ -149,6 +157,7 @@ of any type, but will normally be of type `string'.")
      finally (return orth-seq)))
 
 (defun score-word (word scoring-word)
+  "Albert"
   (reduce #'+ (map 'vector #'* word scoring-word)))
 
 
