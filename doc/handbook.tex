@@ -1,9 +1,17 @@
 \documentclass{book}
+
+\usepackage[english]{babel}
 \usepackage{listings}
 
-\begin{document}
-\chapter{Introduction}
+\newcommand\ensembl{EnsEMBL }
 
+\title{Common Lisp Computational Biologiy - Handbook}
+
+\begin{document}
+
+\titlepage
+
+\chapter{Introduction}
 
 
 \section{Motivation for CLCB}
@@ -116,7 +124,7 @@ programmer, saving lots of work. An abstract way to present the data,
 i.e, as LaTeX tables, ASCII with white space or tab delimited, is still
 being designed.
 
-The code below retrieves a gene from Ensembl, retrieves its transcripts and finally the first transcript's protein protein product. Be aware that the translation process uses ''*'' to refer to the result of the previous command.
+The code below retrieves a gene from \ensembl, retrieves its transcripts and finally the first transcript's protein protein product. Be aware that the translation process uses ''*'' to refer to the result of the previous command.
 
 \begin{lstlisting}
 ENSEMBL> (fetch-by-stable-id ``ENSG00000000005'')
@@ -180,6 +188,156 @@ ENSEMBL> (chromosome *gene*)
 "18"
 
 \end{lstlisting}
+
+\chapter{Packages}
+
+\section{\ensembl}
+
+The \ensembl database provides insights into 
+\begin{itemize}
+\item genomic sequences,
+\item genes,
+\item transcripts,
+\item proteins,
+\item sequence variation and
+\item intergenomic comparisons.
+\end{itemize}
+The initiative comes with a Perl-generated web site, an \ensembl Perl
+API and was instrumental for the development of BioPerl. So, if they
+are all using Perl, why Lisp? Well, \ensembl uses an old release of
+BioPerl and has experimented with a Java interface \ensembl, which was
+dumped again. For an easier access to the data on the database level,
+the effort BioMart was initiated.
+
+BioMart takes the core data of \ensembl and prepares views on the data that
+facilitate dramatically the preparationof everyday's analyses. However,
+for anything out of the row, it is not prepared. The \ensembl classes
+presented here take a different approach. They follow the same logic of
+BioMart and some of the \ensembl API classes to retrieve data from the core
+tables. Other than BioMart, all interactions are dynamically determined
+and new interactions are evolving just as they are needed. Other than
+BioPerl, only minimal code is needed for that effort and the results
+are immediately accessible to further analyses. Add to that all the
+differences that Lisp makes by itself.
+
+\subsection{Preparation of \ensembl classes}
+
+The classes in the clcb-ensembl package basically represent the tables of
+the \ensembl core MySQL tables. An instance of that class shall represent 
+a single entry in the table of the same name. With possibly a few transient
+exceptions, the unique identifiers of a row have a single attribute with the 
+name which is a concatenation of the table name and the suffix 'id'. Other
+tables refer to entries of the prior table with an attribute of the same name.
+Consequently, the formulation of queries in Ensembl databases seems straight
+forward.
+
+Lisp has the flexibility to utilise that straight-forwardness with
+macros. One passes them a table name, the attributes, and the Lisp macros
+will figure out themselves what the class definition should look alike.
+In a way, at least for the standard attributes, it would not have benn required to
+specify the attributes manually since these could be read from the database dynamically.
+But it is fine as it is already.
+
+\subsubsection{Preparation of views on Ensembl}
+
+The first macro automates the specification views on the Ensembl data. These
+can be understood as resulting from an arbitrary SQL query and much like in 
+SQL, the results get the character of a class themselves.
+
+\begin{lstlisting}
+(defmacro def-ensembl-view (name superclasses slots &rest options)
+  "Define an EnsEMBL class."
+  (let ((supers (remove-duplicates (append superclasses '(ensembl-object))))
+        (cl-options
+         (nconc (list :base-table (substitute #\_ #\- (string-downcase name)))
+                options)))
+    `(def-view-class ,name ,supers ,slots ,cl-options)))
+\end{lstlisting}
+
+Below you see the macro applied to specify an abstract view on DNA sequence data:
+\begin{lstlisting}
+(def-ensembl-view dna-sequence ()
+  ((seq-region-id :type integer
+                  :db-constraints :not-null
+                  :initarg :seq-region-id)
+   (seq-region-start :type integer
+                     :db-constraints :not-null
+                     :initarg :seq-region-start)
+   (seq-region-end :type integer
+                   :db-constraints :not-null
+                   :initarg :seq-region-end)
+   (seq-region-strand :type integer
+                      :db-constraints :not-null
+                      :initarg :seq-region-strand)
+   (seq-region :accessor seq-region
+               :db-kind :join
+               :db-info (:join-class seq-region
+                         :home-key seq-region-id
+                         :foreign-key seq-region-id
+                         :set nil))
+   (previous-element-fn :accessor previous-element-fn
+                        :initform #'1-
+                        :db-kind :virtual
+                        :allocation :class)
+   (next-element-fn :accessor next-element-fn
+                    :initform #'1+
+                    :allocation :class
+                    :db-kind :virtual)
+   (element-member-fn :accessor element-member-fn
+                      :initform
+                      #'(lambda (set x)
+                          (with-slots (seq-region-start seq-region-end) set
+                            (and (integerp x)
+                                 (<= seq-region-start x seq-region-end))))
+                      :allocation :class
+                      :db-kind :virtual)))
+\end{lstlisting}
+
+And for more 1:1 links between classes and tables, the def-ensembl-class is available.
+
+\begin{lstlisting}
+(defmacro def-ensembl-class (class-name slots &key dna-sequence stable-id-char)
+  (with-symbol-prefixing-function (table-concat class-name)
+    `(progn
+       ,(when stable-id-char
+              `(progn
+                (def-ensembl-stable-id-view ,class-name)
+                (def-fetch-by-stable-id-method ,class-name)
+                (push (cons ,stable-id-char ',class-name) *char-class-alist*)))
+       (def-ensembl-view ,class-name (,@(when dna-sequence '(dna-sequence)))
+          ,(append ;; If the object has a stable id, we need to link
+                   ;; to the appropriate table.
+                   (when stable-id-char
+                     `((stable-id
+                        :db-kind :join
+                        :db-info (:join-class ,(table-concat "-STABLE-ID")
+                                  :home-key ,(table-concat "-ID")
+                                  :foreign-key ,(table-concat "-ID")
+                                  :set nil))))
+                   ;; The slot definitions for the table.
+                   slots)))))
+\end{lstlisting}
+
+The lines below show the representation of the exon class:
+\begin{lstlisting}
+(def-ensembl-class exon
+  ((exon-id :type integer
+            :db-type :key
+            :db-constraints (:primary-key :not-null))
+   (phase :type integer
+          :accessor exon-phase)
+   (end-phase :type integer
+              :accessor exon-end-phase)
+   (is-current :type integer)
+   (exon-transcript :db-kind :join
+                    :db-info (:join-class exon-transcript
+                              :home-key exon-id
+                              :foreign-key exon-id
+                              :set nil)))
+  :stable-id-char #\e
+  :dna-sequence t)
+\end{lstlisting}
+
 
 
 \end{document}
