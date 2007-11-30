@@ -32,7 +32,6 @@
 
 
 (defparameter *nucleobases*
-  "IUPAC single letter code for nucleotides (source: http://www.bioinformatics.org/sms/iupac.html). Those entries that represent an ambiguity should probably be modelled with a different object. These are essential though for working with SNPs and hence should be in."
   (mapcar #'(lambda (x)
               (apply #'make-instance 'nucleobase x))
           '((:name "Adenine"     :1-letter-code #\A)
@@ -52,7 +51,12 @@
             (:name "A or G or T" :1-letter-code #\D)
             (:name "A or C or T" :1-letter-code #\H)
             (:name "A or C or G" :1-letter-code #\V)
-	    )))
+	    ))
+  "IUPAC single letter code for nucleotides (source:
+http://www.bioinformatics.org/sms/iupac.html). Those entries that
+represent an ambiguity should probably be modelled with a different
+object. These are essential though for working with SNPs and hence
+should be in.")
 
 
 (defgeneric get-nucleobase (identifier)
@@ -78,7 +82,13 @@ identifier.")
 
 
 (defmethod num-hydrogen-bonds ((nuc1 nucleobase) (nuc2 nucleobase))
-  "The Watson-Crick pairing of nuleotides on opposite strands is supported by hydrogen bonds. A-T have 2 and G-C show 3. This influences the annealing temperature of DNA and is said to influence the accessibility of a genomic region to the polymerases. For RNA structure prediction the here presented quick routine is not sufficient since non-Watson-Crick pairings are also frequently observed and a single base may have contacts with two others."
+  "The Watson-Crick pairing of nuleotides on opposite strands is
+supported by hydrogen bonds. A-T have 2 and G-C show 3. This
+influences the annealing temperature of DNA and is said to influence
+the accessibility of a genomic region to the polymerases. For RNA
+structure prediction the here presented quick routine is not
+sufficient since non-Watson-Crick pairings are also frequently
+observed and a single base may have contacts with two others."
   (flet ((bases-eq (base1 base2)
            (or (and (eq base1 nuc1) (eq base2 nuc2))
                (and (eq base2 nuc1) (eq base1 nuc2)))))
