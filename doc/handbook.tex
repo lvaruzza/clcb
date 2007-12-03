@@ -5,6 +5,7 @@
 
 \newcommand\ensembl{EnsEMBL }
 \newcommand\CLCB{CLCB }
+\newcommand\eg{e.\,g.}
 
 
 \title{Common Lisp Computational Biologiy - Handbook}
@@ -31,10 +32,13 @@ which is the expression deciding if the objects \$a or \$b is larger, with
 a non-trivial expression.  In Lisp,
 such functions that do not need a name are called $\lambda$ expressions.
 One takes such, optionally gives them a name to make them real functions,
-and applies them to lists (or another structure) of objects. To the biologically minded in us,
-such functions are much like an enzyme that is acting on some sequence of
-nucleotides. In other languages one only ''calls'' functions by name. In Lisp, functions are something tangible. Admittedly, these other languages do offer constructs that allow for a functional
-programming to some degree. But with Lisp it is the other way around.
+and applies them to lists (or another structure) of objects. To the
+biologically minded in us, such functions are much like an enzyme
+that is acting on some sequence of nucleotides. In other languages
+one only ''calls'' functions by name. In Lisp, functions are something
+tangible. Admittedly, these other languages do offer constructs that
+allow for a functional programming to some degree. But with Lisp it is
+the other way around.
 
 But exactly {\em why} is it so much fun? There are probably many answers
 to this questions.  For one, the language is very clean, even for concepts
@@ -46,15 +50,15 @@ cast to call the real method. If in C or Java you would do something alike
 
 \lstset{language=C}
 \begin{lstlisting}
-	for(animal *a= alist->first(); a->next();) {
-		if ("dog"==typeof(a)) {
-			dog *d = (dog *)a;
-			d->speak();
-		}
-		else if ("cat"==typeof(a)) {
-		...
-		}
+for(animal *a= alist->first(); a->next();) {
+	if ("dog"==typeof(a)) {
+		dog *d = (dog *)a;
+		d->speak();
 	}
+	else if ("cat"==typeof(a)) {
+	...
+	}
+}
 \end{lstlisting}
 
 to hear the miows and barks.  In Lisp, you'd get the sound directly for
@@ -126,7 +130,10 @@ programmer, saving lots of work. An abstract way to present the data,
 i.e, as LaTeX tables, ASCII with white space or tab delimited, is still
 being designed.
 
-The code below retrieves a gene from \ensembl, retrieves its transcripts and finally the first transcript's protein protein product. Be aware that the translation process uses ''*'' to refer to the result of the previous command.
+The code below retrieves a gene from \ensembl, retrieves its transcripts
+and finally the first transcript's protein protein product. Be aware
+that the translation process uses ''*'' to refer to the result of the
+previous command.
 
 \begin{lstlisting}
 ENSEMBL> (fetch-by-stable-id ``ENSG00000000005'')
@@ -145,50 +152,74 @@ Retrieval of exons that contribute to the first transcript.
 \begin{lstlisting}
 ENSEMBL> (exons (first (transcripts *gene*)))
 => 
-(#<EXON {CB4F9E9}> #<EXON {CB5C809}> #<EXON {CB69539}> #<EXON {CB76249}>
- #<EXON {CB831E9}> #<EXON {CB8FF09}> #<EXON {CB9CC09}> #<EXON {CBA98E9}>
- #<EXON {CBB6619}> #<EXON {CBC3329}> #<EXON {CBD0011}> #<EXON {CBDCD09}>
- #<EXON {CBE9A09}> #<EXON {CBF6729}> #<EXON {CC03421}> #<EXON {CC10149}>
- #<EXON {CC1CE61}> #<EXON {CC2BB61}> #<EXON {CC3A8A9}> #<EXON {CC47AD1}>
- #<EXON {CC56809}>)
+(#<EXON {CB4F9E9}> #<EXON {CB5C809}> #<EXON {CB69539}>
+ #<EXON {CB76249}> #<EXON {CB831E9}> #<EXON {CB8FF09}>
+ #<EXON {CB9CC09}> #<EXON {CBA98E9}> #<EXON {CBB6619}>
+ #<EXON {CBC3329}> #<EXON {CBD0011}> #<EXON {CBDCD09}>
+ #<EXON {CBE9A09}> #<EXON {CBF6729}> #<EXON {CC03421}>
+ #<EXON {CC10149}> #<EXON {CC1CE61}> #<EXON {CC2BB61}>
+ #<EXON {CC3A8A9}> #<EXON {CC47AD1}> #<EXON {CC56809}>)
 \end{lstlisting}
 
 Retrieval of features of the first transcript's protein product.
 
 \begin{lstlisting}
-ENSEMBL> (protein-features (translation (car (transcripts *gene*))))
+ENSEMBL> (protein-features 
+	  (translation (car (transcripts *gene*))))
 (#<PROTEIN-FEATURE {CD15729}> #<PROTEIN-FEATURE {CD178C9}>
  #<PROTEIN-FEATURE {CD18591}> #<PROTEIN-FEATURE {CD19269}>
  #<PROTEIN-FEATURE {CD19F31}> #<PROTEIN-FEATURE {CD1ABF9}>
  #<PROTEIN-FEATURE {CD1B8C9}> #<PROTEIN-FEATURE {CD1C591}>)
 ENSEMBL> (mapcar #'protein-feature-type
-                 (protein-features (translation (car (transcripts *gene*)))))
-("Pfam" "Superfamily" "Superfamily" "Smart" "low_complexity" "low_complexity"
- "low_complexity" "Prosite_profiles")
+                 (protein-features 
+		  (translation (car (transcripts *gene*)))))
+("Pfam" "Superfamily" "Superfamily" "Smart" "low_complexity"
+ "low_complexity" "low_complexity" "Prosite_profiles")
 \end{lstlisting}
 
-Genomic coordinates of the protein features. But where is the chromosome
-and where the organism? Well, normally you know about these already and they
-are invariant whenever one is inspecting a particular protein that is not
-a product of a translocation $\ldots$ hm $\ldots$ . It is the gene that can
-be queries for the chromosome.
+Once the protein-features are available, \CLCB offers to 
+present their genomic coordinates. This way, one gets the
+exact bases that sign responsible for, say, the interface
+region of an receptor to a ligand.
 
 \begin{lstlisting}
 (mapcar #'dna-sequence-interval
                  (protein-features (translation (car (transcripts *gene*)))))
 (#<DNA-SEQUENCE {D1DF909}>
  #<MULTI-INTERVAL (#<DNA-SEQUENCE {D1FD389}> #<DNA-SEQUENCE {D1FE011}>)>
- #<MULTI-INTERVAL (#<DNA-SEQUENCE {D21BEF1}> #<DNA-SEQUENCE {D21CB71}> #<DNA-SEQUENCE {D21D7F1}>)>
+ #<MULTI-INTERVAL (#<DNA-SEQUENCE {D21BEF1}> #<DNA-SEQUENCE {D21CB71}>
+                   #<DNA-SEQUENCE {D21D7F1}>)>
  #<DNA-SEQUENCE {D2D2A01}> #<DNA-SEQUENCE {D2EA241}> #<DNA-SEQUENCE {D3019E1}>
  #<MULTI-INTERVAL (#<DNA-SEQUENCE {D320179}> #<DNA-SEQUENCE {D320DF9}>)>
  #<DNA-SEQUENCE {D342429}>)
+\end{lstlisting}
+
+But, something appears strange, it is abstract objects that define the sequence. The coordinates are
+not directly visible. All stretches of the genome are presented
+as intervals, something that BioPerl refers to as a slice. But here
+in \CLCB we have all the algebraic operations defined on these intervals,
+which the BioPerl slices (to our knowledge) do not know about. This way,
+you can, \eg,  intersect with other intervals like exons or intergenomic
+similarities.  One can also build the complements. Frankly, until the
+very end of the analysis, we do not give much about knowing the exact
+numbers of the location.  But then, we can have it:
+
+\begin{lstlisting}
 ENSEMBL> (mapcar #'(lambda (x) (genomic-coordinates (dna-sequence-interval x)))
                  (protein-features (translation (car (transcripts *gene*)))))
 ((204639 . 204885) (204630 . 205434) (250229 . 255355) (204639 . 204918)
  (242551 . 242602) (216822 . 216855) (204921 . 205473) (204639 . 204888))
+\end{lstlisting}
+
+But where is the chromosome
+and where the organism? Well, normally you know about these already and they
+are invariant whenever one is inspecting a particular protein that is not
+a product of a translocation $\ldots$ hm $\ldots$ . It is the gene that can
+be queried for the chromosome.
+
+\begin{lstlisting}
 ENSEMBL> (chromosome *gene*)
 "18"
-
 \end{lstlisting}
 
 \section{Acknowledgements}
