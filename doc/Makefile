@@ -1,6 +1,8 @@
 PDFVIEWERS = evince acroread kpdf xpdf open
 
-handbook.pdf: $(wildcard *.tex)
+handbook.pdf: $(wildcard *.tex) $(wildcard *.bib)
+	pdflatex handbook.tex
+	bibtex handbook
 	pdflatex handbook.tex
 
 look: handbook.pdf

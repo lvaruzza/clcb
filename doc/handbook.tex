@@ -4,6 +4,8 @@
 \usepackage{listings}
 
 \newcommand\ensembl{EnsEMBL }
+\newcommand\CLCB{CLCB }
+
 
 \title{Common Lisp Computational Biologiy - Handbook}
 
@@ -14,7 +16,7 @@
 \chapter{Introduction}
 
 
-\section{Motivation for CLCB}
+\section{Motivation for \CLCB}
 
 Lisp is fun. And it was felt that for a particular problem at hand, 
 there was little gained by using Bio* libraries for Java, Python or Perl.
@@ -77,26 +79,26 @@ text book is
 A more biologically inclined reader of this document may decide
 to leave the syntax of the language aside while first passing through
 this document and instead concentrate more on the understanding
-of the classes that represent biological entities in CLCB.
+of the classes that represent biological entities in \CLCB.
 
-\section{Instant access to CLCB without reading this documentation}
+\section{Instant access to \CLCB without reading this documentation}
 
-CLCB is developed with SBCL but should be compatible with other
+\CLCB is developed with SBCL but should be compatible with other
 implementations with Lisp. This section gives you a head start into the
 code. Frankly, the real documentation is in the code, literally, this is
 where '':documentation'' slots allow for the annotation of what was
 programmed and we prepare to parse that information from the code into
 this document. But this is only now being worked on.
-Unless you have a colleague who is already proficient in CLCB, 
+Unless you have a colleague who is already proficient in \CLCB, 
 there is no alternative to jumping right in.
 
 \subsection{Setting up the interpreter}
 
 In your UNIX shell change the directory to where the README 
-of CLCB is. The UNIX command ''pwd'' informs about the current
+of \CLCB is. The UNIX command ''pwd'' informs about the current
 working directory. Then start the Lisp interpreter, possibly just
 by typing ''sbcl''. The interpreted now needs to learn about 
-where to find your CLCB source code. To achieve that, in the lines below
+where to find your \CLCB source code. To achieve that, in the lines below
 substitute ''path/to/CLCB'' with that the command ''pwd'' just sent to
 the screen and type it into the interpreter. You'd need to do this
 every time you start up. Your interpreter will have files it reads at
@@ -189,7 +191,11 @@ ENSEMBL> (chromosome *gene*)
 
 \end{lstlisting}
 
-\chapter{Packages}
+\section{Acknowledgements}
+
+
+
+\chapter{Packages of \CLCB}
 
 \section{\ensembl}
 
@@ -203,7 +209,7 @@ The \ensembl database provides insights into
 \item intergenomic comparisons.
 \end{itemize}
 The initiative comes with a Perl-generated web site, an \ensembl Perl
-API and was instrumental for the development of BioPerl. So, if they
+API and was instrumental for the development of BioPerl \cite{bioperl:2002}. So, if they
 are all using Perl, why Lisp? Well, \ensembl uses an old release of
 BioPerl and has experimented with a Java interface \ensembl, which was
 dumped again. For an easier access to the data on the database level,
@@ -339,5 +345,63 @@ The lines below show the representation of the exon class:
 \end{lstlisting}
 
 
+\chapter{Use Cases}
+
+This section introduces to a couple of szenarios in which \CLCB may
+be handy. It is probably mostly evident that the functionality of CBCL
+is not complete. And it will never be complete. But it will always be
+nice. The challenge is hence to use it at its best and there will always
+be a traitoff between staying within Lisp and coming up with a mixture
+with related solutions in other languages.
+
+\section{Browsing \ensembl core database}
+
+In its current state, the CBCL is ahead of its time in its interaction with
+the Ensembl MySQL databases - but nowhere else, really. For large analyses
+it seems like a sensible idea to have a local mirror of the data since
+\CLCB (still) comes with a fairly high number of queries. The connections
+remain open between these queries.
+
+\subsection{Link between genomic and protein features}
+
+\section{Intergenomics}
+
+\subsection{\ensembl Mart}
+
+{\em Implemented while writing these lines.}
+
+\subsection{\ensembl Compara}
+
+Not implemented yet.
+
+\section{Communication with other Bioinformatics Suites}
+
+The orchestration of software programs to work towards the scientific
+or very pragmatic aims is an art per se. Tools like Taverna have become
+instrumental in this respect but we have not yet found the opportunity
+to provide an interface to this workflow suite. \CLCB should only be
+use for what it can do best, and this is the communication with Ensembl
+to retrieve data. Once the data is available, one needs to decide for
+oneself if the downstream analyses should become part of \CLCB or if
+there is another tool that is performing that task already. If so,
+then CBCL should already allow to store the data in a format that is
+suitable as input for later tools since the most common file formats
+are already implemented.
+
+The tool that is most commonly used to perform the orchestration is 
+the program {\em make}. The data files that every step of the analysis needs
+are communication and synchronisation points. Only after the process producing one
+data file has been completed, the downstream analyis programs are initiated.
+Also nice: Makefiles can implement a parallel execution of the analysis and 
+even some queuing systems are compatible with Makefiles to allow using a complete
+compute farm or a computational grid for the analysis.
+
+There is some ever-going work on applying agent technologies for
+Bioinformatics \cite{agents:2007}. Well, today this is mostly written
+in Java, but Lisp of course has a long lasting history in this field.
+
+
+\bibliographystyle{plain}
+\bibliography{clcb}
 
 \end{document}

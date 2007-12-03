@@ -53,5 +53,5 @@
            #:dna-sequence-interval
            #:aa->nt
            #:nt->aa)
-  (:documentation "Ensembl is a unique effort to organise the genomes animals. The effort, it is all Open Source, has also been adopted for plants by other initiatives. Every species comes with a separate MySQL database that can be accessed via a common schema. CLCB took that (today accessibly invariant)  schema and pressed into Lisp classes."))
+  (:documentation "Ensembl (accessible via http://www.ensembl.org) is a unique effort to organise the sequences of animal genomes and further related data on genes, proteins, sequence variation and intergenomic comparisons. The effort, it is all Open Source, has also been adopted for plants by other initiatives. Every species comes with a separate MySQL database that can be accessed via a common schema. CLCB took that (today accessibly invariant)  schema and pressed into Lisp classes."))
 

@@ -23,7 +23,8 @@
 
 (defpackage #:clcb-config
   (:use #:cl)
-  (:export #:*data-directory-pathname*))
+  (:export #:*data-directory-pathname*)
+  (:documentation "The config package allows for adapting the CLCB installation to the local setup."))
 
 (in-package #:clcb-config)
 
