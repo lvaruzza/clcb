@@ -40,11 +40,11 @@ of any type, but will normally be of type `string'.")
    (description :accessor bio-sequence-description
                 :initarg :description
                 :documentation "The descripitions of the object.")
-   (lower-bound :accessor seq-start
-                :initarg :seq-start
-                :initform 1)
-   (upper-bound :accessor seq-end
-                :initarg :seq-end))
+   (seq-start :accessor seq-start
+              :initarg :seq-start
+              :initform 1)
+   (seq-end :accessor seq-end
+            :initarg :seq-end))
    (:documentation "A biological sequence is a polymeric macromolecule
 of nucelic acids (with a phorsphor-sugar backbone) or of amino acids
 with various side-chaines. In daily routine, one does not use the full
@@ -57,8 +57,8 @@ interface to them."))
 
 (defmethod initialize-instance :after ((seq bio-sequence) &rest args)
   (declare (ignore args))
-  (unless (slot-boundp seq 'upper-bound)
-    (setf (upper-bound seq) (length (bio-sequence-seq seq)))))
+  (unless (slot-boundp seq 'seq-end)
+    (setf (seq-end seq) (length (bio-sequence-seq seq)))))
 
 
 (defclass nucleotide-sequence (bio-sequence)
@@ -79,7 +79,9 @@ interface to them."))
            :type (integer -1 1)
 	   :documentation "The direction in which the feature is found
 on the genome, if applicable. The number 1 denotes the direction from
-the small chromosomal arm (p like petit) to the larger (q)."))
+the small chromosomal arm (p like petit) to the larger (q). For
+bacterial chromosomes, it's a matter of convention which strand is
+named +1 and -1, respectively."))
   (:documentation "Nucleotide sequences can be retrieved from genomic
 databases (like Ensembl) which is implemented in CBCL. From Ensembl,
 nucleotides can also be retrieved as genes (with exons and introns) or
@@ -114,14 +116,13 @@ sequence tags (ESTs)."))
 (defmethod print-object ((seq bio-sequence) stream)
   "The sequence object is printed to an output stream. This is fairly
 handy but somehow we feel that some more abstract and more generic
-mechanism is required."
+mechanism is required."  
   (print-unreadable-object (seq stream :type t)
-    (with-slots (id name seq) seq
-      (format stream ":id ~A :name ~S :seq ~A~:[...~]"
-              id
-              name
-              (subseq seq 0 (min 15 (length seq)))
-              (<= (length seq) 15)))))
+    (flet ((print-slot-if-bound (slot-name)
+           (when (slot-boundp seq slot-name)
+             (format stream " ~(~A~): ~A" slot-name
+                     (slot-value seq slot-name)))))
+      (mapcar #'print-slot-if-bound '(id name)))))
 
 
 (defgeneric bio-sequence-length (seq)
@@ -188,4 +189,59 @@ orthogonal coded means and when it is used."))
   "Albert"
   (reduce #'+ (map 'vector #'* word scoring-word)))
 
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; Sequence objects to closely model real world molecules.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; For now those are very similar to ensembl objects. maybe I will
+;; change that later.
+(defclass transcript (nucleotide-sequence)
+  ((exons :accessor exons
+          :initarg :exons
+          :initform #()
+          :type sequence)
+   (protein :accessor protein
+            :initarg :protein
+            :initarg :translation
+            :documentation "The protein the transcript is coding for, if any."
+            :initform nil))
+   (:documentation "An transcript describes a RNA sequence that can be
+spliced into a mature mRNA.  Exons are the elements that make up the
+mRNA.  All sequence elements which are cut out in the splicing process
+are called introns and can be thought to be the relative complements of
+the exons within the transcript."))
+
+(defclass exon (nucleotide-sequence)
+  ((transcript :accessor transcript
+               :initarg transcript
+               :documentation "The transcript corresponding to this exon.")
+   (circular :allocation :class
+             :initform nil)))
+
+(defclass protein (amino-acid-sequence)
+  ((transcript :initarg :transcript
+               :accessor transcript
+               :documentation "The transcript which codes for this protein.")
+   (features :initarg :features
+             :accessor protein-features
+             :documentation "Protein features")))
+
+(defclass protein-feature (feature)
+  ((protein :initarg protein
+            :accessor protein
+            :accessor translation
+            :documentation "the protein to which this feature belongs.")
+   (feat-start :initarg :start
+               :accessor feat-start
+               :accessor lower-bound)
+   (feat-end :initarg :end
+             :accessor feat-end
+             :accessor upper-bound)))
+
+(defclass transmembrane-helix (protein-feature)
+  ())
 
