@@ -1,0 +1,8 @@
+digraph biosequence {
+  "bio-sequence" -> "molecule";
+  "bio-sequence" -> "integer-interval";
+  "nucleotide-sequence" -> "bio-sequence";
+  "amino-acid-sequence" -> "bio-sequence";
+  "feature";
+  "organism";
+}

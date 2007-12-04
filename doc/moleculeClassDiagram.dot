@@ -1,0 +1,4 @@
+digraph molecule {
+   "amino-acid" -> "molecule";
+   "nucleobase" -> "molecule";
+}

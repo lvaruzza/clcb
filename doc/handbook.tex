@@ -139,7 +139,7 @@ programmer, saving lots of work. An abstract way to present the data,
 i.e, as LaTeX tables, ASCII with white space or tab delimited, is still
 being designed.
 
-The code below retrieves a gene from \ensembl, links to its its
+The code below retrieves a gene from \ensembl \cite{BiAnCaChClCoCoCuCuCuDoDuFeFlGrHaHeHoHu06}, links to its its
 transcripts and finally the first transcript's protein product. The
 asterisk ($*$) is the prompt of the sbcl shell. If executed from within
 the Emacs smile environment, then the prompt is the name of the current
@@ -274,6 +274,28 @@ be queried for the chromosome.
 \section{Acknowledgements}
 
 \chapter{Packages of \CLCB}
+
+\section{molecule}
+
+The molecule class can be understood as the root of the biological interpretation of the data retrieved, much in the same way that the interval classes are the root of the analyses.
+
+\begin{figure}
+\begin{centering}
+\input{moleculeClassDiagram}
+\end{centering}
+\end{figure}
+
+\section{bio-sequence}
+
+Conceptionally, the bio-sequence class is the link between the abstract mathematical notion of an interval and the very hands-on data that one retrieves from Ensembl or possibly elsewhere.
+
+\begin{figure}
+\begin{centering}
+\input{biosequenceClassDiagram}
+\end{centering}
+\end{figure}
+
+The package describes several routines for the input and output of sequences to streams.
 
 \section{\ensembl}
 
@@ -520,7 +542,6 @@ compute farm or a computational grid for the analysis.
 There is some ever-going work on applying agent technologies for
 Bioinformatics \cite{agents:2007}. Well, today this is mostly written
 in Java, but Lisp of course has a long lasting history in this field.
-
 
 \bibliographystyle{plain}
 \bibliography{clcb}
