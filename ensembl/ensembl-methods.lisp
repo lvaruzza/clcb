@@ -159,15 +159,6 @@ this info is not available.")
   (slot-value (slot-value ens-obj 'seq-region)
               'coord-system))
 
-;; This causes problems for some reason I coudn't figure out.
-(defmethod print-object ((seq dna-sequence) (stream stream))
-  (print-unreadable-object (seq stream :type t)
-    (format stream "~A:[~A,~A]"
-             (chromosome seq) (lower-bound seq) (upper-bound seq))))
-
-
-
-
 
 ;;; Bio Sequences
 ;;; -------------
@@ -619,3 +610,11 @@ amino acids that should be added to the result."
 (defun coords (x) (cons (lower-bound x) (upper-bound x)))
 
 
+
+#||;; This causes problems for some reason I coudn't figure out.
+(defmethod print-object ((seq dna-sequence) (stream stream))
+  (print-unreadable-object (seq stream :type t)
+    (format stream "~A:[~A,~A]"
+             (chromosome seq) (lower-bound seq) (upper-bound seq))))
+
+||#
