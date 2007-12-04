@@ -77,18 +77,18 @@ identifier.")
 
 
 (defgeneric num-hydrogen-bonds (mol1 mol2)
-  (:documentation "Return the number of hydrogen bonds between 2 molecules.")
+  (:documentation "The Watson-Crick pairing of nuleotides on opposite
+strands is supported by hydrogen bonds. A-T have 2 and G-C show
+3. This influences the annealing temperature of DNA and is said to
+influence the accessibility of a genomic region to the
+polymerases. For RNA ustructure prediction the here presented quick
+routine is not sufficient since non-Watson-Crick pairings are also
+frequently observed and a single base may have contacts with two
+others."  )
   (:method (mol1 mol2) (declare (ignore mol1 mol2)) 0))
 
 
 (defmethod num-hydrogen-bonds ((nuc1 nucleobase) (nuc2 nucleobase))
-  "The Watson-Crick pairing of nuleotides on opposite strands is
-supported by hydrogen bonds. A-T have 2 and G-C show 3. This
-influences the annealing temperature of DNA and is said to influence
-the accessibility of a genomic region to the polymerases. For RNA
-structure prediction the here presented quick routine is not
-sufficient since non-Watson-Crick pairings are also frequently
-observed and a single base may have contacts with two others."
   (flet ((bases-eq (base1 base2)
            (or (and (eq base1 nuc1) (eq base2 nuc2))
                (and (eq base2 nuc1) (eq base1 nuc2)))))
