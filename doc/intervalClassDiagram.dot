@@ -1,0 +1,8 @@
+digraph interval {
+	"discrete-ordered-set" -> "abstract-set";
+	"interval" -> "discrete-ordered-set";
+	"multi-interval" -> "interval";
+	"elementary-interval" -> "interval";
+	"number-interval" -> "elementary-interval";
+	"integer-interval" -> "number-interval";
+}

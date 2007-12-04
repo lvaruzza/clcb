@@ -3,8 +3,17 @@
 \usepackage[english]{babel}
 \usepackage{listings}
 
+% for tikz images
+\usepackage[x11names, rgb]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{snakes,arrows,shapes}
+\usepackage{amsmath}
+
+
 \newcommand\ensembl{EnsEMBL }
 \newcommand\CLCB{CLCB }
+\newcommand\lisp{Lisp }
 \newcommand\eg{e.\,g.}
 
 
@@ -110,8 +119,8 @@ startup and you should in the longer run move these lines there.
 
 \lstset{language=lisp}
 \begin{lstlisting}
-(pushnew <path/to/CLCB> asdf:*central-registry*)
-(pushnew <path/to/CLCB/ensembl> asdf:*central-registry*)
+(pushnew '<path/to/CLCB> asdf:*central-registry*)
+(pushnew '<path/to/CLCB/ensembl> asdf:*central-registry*)
 (asdf:oos 'asdf:load-op :clcb) or
 (asdf:oos 'asdf:load-op :clcb-ensembl)
 (in-package :ensembl)
@@ -130,28 +139,53 @@ programmer, saving lots of work. An abstract way to present the data,
 i.e, as LaTeX tables, ASCII with white space or tab delimited, is still
 being designed.
 
-The code below retrieves a gene from \ensembl, retrieves its transcripts
-and finally the first transcript's protein protein product. Be aware
-that the translation process uses ''*'' to refer to the result of the
-previous command.
+The code below retrieves a gene from \ensembl, links to its its
+transcripts and finally the first transcript's protein product. The
+asterisk ($*$) is the prompt of the sbcl shell. If executed from within
+the Emacs smile environment, then the prompt is the name of the current
+package followed by the greater sign ($>$).  The commands at the prompt
+always start with an open parathesis and end with a matching closing
+one. The output appears right below the input and is sometimes not
+straight forward to distiguish from the when it was not entered by
+oneself.  Be aware that the translation process uses ''*'' to refer to
+the result of the previous command, not as a prompt. In the following,
+a commented interaction with the \lisp shell shown. It starts with the
+retrieval of a gene from \ensembl by its stable gene ID.
 
 \begin{lstlisting}
-ENSEMBL> (fetch-by-stable-id ``ENSG00000000005'')
-=> #<GENE {C974EC1}>
-
-(defparameter *gene* (fetch-by-stable-id ``ENSG00000000005''))
-
-ENSEMBL> (transcripts *gene*)
-=> (#<TRANSCRIPT {CAB4751}>)
-
-ENSEMBL> (translation (car *))
-=> #<TRANSLATION {CAF4C49}>
+* (fetch-by-stable-id ``ENSG00000000005'')
+#<GENE {C974EC1}>
 \end{lstlisting}
 
-Retrieval of exons that contribute to the first transcript.
+The gene is retrieved. The object itself is not directly shown to the
+screen as it contains quite a lot of internal inforamtion. Instead, by
+an \lisp-intrinsic automatism, the macro print-object is called which
+delivers these neat $\#<\ldots>$ construct. The contents themselves can
+be passed to a global variable $*gene*$.
+
 \begin{lstlisting}
-ENSEMBL> (exons (first (transcripts *gene*)))
-=> 
+(defparameter *gene* (fetch-by-stable-id ``ENSG00000000005''))
+\end{lstlisting}
+
+Other routines can perform transformations of this data, i.e. the retrieval of
+\begin{itemize}
+\item transcripts,
+
+\begin{lstlisting}
+* (transcripts *gene*)
+(#<TRANSCRIPT {CAB4751}>)
+\end{lstlisting}
+
+\item translations or
+
+\begin{lstlisting}
+* (translation (car *))
+#<TRANSLATION {CAF4C49}
+\end{lstlisting}
+
+\item exons. Below, only exons that contribute to the first transcript are retrieved:
+\begin{lstlisting}
+* (exons (first (transcripts *gene*)))
 (#<EXON {CB4F9E9}> #<EXON {CB5C809}> #<EXON {CB69539}>
  #<EXON {CB76249}> #<EXON {CB831E9}> #<EXON {CB8FF09}>
  #<EXON {CB9CC09}> #<EXON {CBA98E9}> #<EXON {CBB6619}>
@@ -160,21 +194,30 @@ ENSEMBL> (exons (first (transcripts *gene*)))
  #<EXON {CC10149}> #<EXON {CC1CE61}> #<EXON {CC2BB61}>
  #<EXON {CC3A8A9}> #<EXON {CC47AD1}> #<EXON {CC56809}>)
 \end{lstlisting}
+\end{itemize}
 
-Retrieval of features of the first transcript's protein product.
+The retrieval of features can also be applied to protein sequences. Features of
+genomic sequences are transcribed units, those of transcribed units could be the
+gene structure. Of proteins, it is protein domains of various sorts or
+post-translational modifications.
 
 \begin{lstlisting}
-ENSEMBL> (protein-features 
-	  (translation (car (transcripts *gene*))))
+* (protein-features (translation (car (transcripts *gene*))))
 (#<PROTEIN-FEATURE {CD15729}> #<PROTEIN-FEATURE {CD178C9}>
  #<PROTEIN-FEATURE {CD18591}> #<PROTEIN-FEATURE {CD19269}>
  #<PROTEIN-FEATURE {CD19F31}> #<PROTEIN-FEATURE {CD1ABF9}>
  #<PROTEIN-FEATURE {CD1B8C9}> #<PROTEIN-FEATURE {CD1C591}>)
-ENSEMBL> (mapcar #'protein-feature-type
-                 (protein-features 
-		  (translation (car (transcripts *gene*)))))
+\end{lstlisting}
+
+These featues are of different types, which can be queried individually:
+
+\begin{lstlisting}
+* (mapcar #'protein-feature-type
+          protein-features
+	    (translation
+	      (car (transcripts *gene*)))))
 ("Pfam" "Superfamily" "Superfamily" "Smart" "low_complexity"
- "low_complexity" "low_complexity" "Prosite_profiles")
+"low_complexity" "low_complexity" "Prosite_profiles")
 \end{lstlisting}
 
 Once the protein-features are available, \CLCB offers to 
@@ -184,7 +227,9 @@ region of an receptor to a ligand.
 
 \begin{lstlisting}
 (mapcar #'dna-sequence-interval
-                 (protein-features (translation (car (transcripts *gene*)))))
+       ((protein-features
+          (translation
+	     (car (transcripts *gene*)))))
 (#<DNA-SEQUENCE {D1DF909}>
  #<MULTI-INTERVAL (#<DNA-SEQUENCE {D1FD389}> #<DNA-SEQUENCE {D1FE011}>)>
  #<MULTI-INTERVAL (#<DNA-SEQUENCE {D21BEF1}> #<DNA-SEQUENCE {D21CB71}>
@@ -194,7 +239,8 @@ region of an receptor to a ligand.
  #<DNA-SEQUENCE {D342429}>)
 \end{lstlisting}
 
-But, something appears strange, it is abstract objects that define the sequence. The coordinates are
+But, something appears strange, it is abstract objects that define the sequence.
+The coordinates are
 not directly visible. All stretches of the genome are presented
 as intervals, something that BioPerl refers to as a slice. But here
 in \CLCB we have all the algebraic operations defined on these intervals,
@@ -205,26 +251,27 @@ very end of the analysis, we do not give much about knowing the exact
 numbers of the location.  But then, we can have it:
 
 \begin{lstlisting}
-ENSEMBL> (mapcar #'(lambda (x) (genomic-coordinates (dna-sequence-interval x)))
-                 (protein-features (translation (car (transcripts *gene*)))))
-((204639 . 204885) (204630 . 205434) (250229 . 255355) (204639 . 204918)
- (242551 . 242602) (216822 . 216855) (204921 . 205473) (204639 . 204888))
+* (mapcar #'(lambda (x)
+                    (genomic-coordinates (dna-sequence-interval x)))
+            (protein-features
+	       (translation (car (transcripts *gene*)))))
+((204639 . 204885) (204630 . 205434) (250229 . 255355)
+ (204639 . 204918) (242551 . 242602) (216822 . 216855)
+ (204921 . 205473) (204639 . 204888))
 \end{lstlisting}
 
-But where is the chromosome
-and where the organism? Well, normally you know about these already and they
-are invariant whenever one is inspecting a particular protein that is not
-a product of a translocation $\ldots$ hm $\ldots$ . It is the gene that can
+But where is the chromosome specified and where is the organism? Well,
+normally you know about these already and they are invariant whenever
+one is inspecting a particular protein that is not a product of a
+translocation $\ldots$ hm $\ldots$. It is the gene that can
 be queried for the chromosome.
 
 \begin{lstlisting}
-ENSEMBL> (chromosome *gene*)
+* (chromosome *gene*)
 "18"
 \end{lstlisting}
 
 \section{Acknowledgements}
-
-
 
 \chapter{Packages of \CLCB}
 
@@ -239,12 +286,12 @@ The \ensembl database provides insights into
 \item sequence variation and
 \item intergenomic comparisons.
 \end{itemize}
-The initiative comes with a Perl-generated web site, an \ensembl Perl
-API and was instrumental for the development of BioPerl \cite{bioperl:2002}. So, if they
-are all using Perl, why Lisp? Well, \ensembl uses an old release of
-BioPerl and has experimented with a Java interface \ensembl, which was
-dumped again. For an easier access to the data on the database level,
-the effort BioMart was initiated.
+The initiative comes with a Perl-generated web site, an \ensembl
+Perl API and was instrumental for the development of BioPerl
+\cite{bioperl:2002}. So, if they are all using Perl, why Lisp? Well,
+\ensembl uses an old release of BioPerl and has experimented with a Java
+interface \ensembl, which was dumped again. For an easier access to the
+data on the database level, the effort BioMart was initiated.
 
 BioMart takes the core data of \ensembl and prepares views on the data that
 facilitate dramatically the preparationof everyday's analyses. However,
@@ -381,6 +428,42 @@ A core principle of \CLCB is to retrieve data from Ensembl as easily as
 possible and then continue with the analysis with minimal and transparent
 access to the database. On major technical component to achieve such is
 by the introduction of intervals that represent subsequences.
+
+\begin{figure}
+\begin{center}
+\input{intervalClassDiagram}
+\end{center}
+\caption{Class diagram of intervals in \CLCB}
+\end{figure}
+
+To generate intervals, specify the type of interval at hand and specify its borders
+\begin{lstlisting}
+* (defparameter *interval1*
+  (make-interval 'integer-interval 0 100))
+\end{lstlisting}
+
+The function mapcar applies a function consecutively to all values of a list of attributes. 
+In the case below, the mapcar expression receives two lists as arguments and the lambda
+expression expects two values from the lists, like
+\begin{lstlisting}
+* (mapcar (lambda (x y) (list x y)) '(1 2 3) '(1 2 3))
+
+((1 1) (2 2) (3 3))
+\end{lstlisting}
+
+Hence, the quoted lists define one multi-intervals $[5;13]\cup[50;60]\cup[70;90]\cup[65;70]$.
+
+\begin{lstlisting}
+* (defparameter *multi-interval*
+     (make-instance 'multi-interval :intervals
+                    (mapcar #'(lambda (start end)
+		                      (make-interval
+                                          'integer-interval
+                                          start end))
+                            '(5  50 70 65)
+                            '(13 60 90 70))))
+\end{lstlisting}
+
 
 
 \chapter{Use Cases}

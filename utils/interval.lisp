@@ -89,7 +89,7 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 ;;; Some interval classes
 ;;; ---------------------
 
-(defclass elementary-interval (interval) ())
+(defclass elementary-interval (interval) () (:documentation "Superset of all kinds of intervals with atomic entries, this may for instance be a set of numbers."))
 
 (defmethod lower-bound-included-p ((i elementary-interval))
   (declare (ignore i)) t)
@@ -121,7 +121,8 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 (defclass multi-interval (interval)
   ((intervals :accessor intervals
               :initarg :intervals
-              :type list)))
+              :type list))
+  (:documentation "Sets of intervals. These may be constructed as a union of multiple intervals or by forming a complement of an interval."))
 
 (defmethod lower-bound ((mi multi-interval))
   (lower-bound (car (intervals mi))))
@@ -150,9 +151,11 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 ;;; Generic Interval methods
 (defun interval-p (x) (typep x 'interval))
 
-(defun interval-empty-p (interval) (eql interval +empty-interval+))
+(defun interval-empty-p (interval) 
+  "Check if interval is empty" (eql interval +empty-interval+))
 
 (defun singleton-p (interval)
+  "Check if an interval consists only of single element."
   (= (lower-bound interval) (upper-bound interval)))
 
 (defun convex-hull (interval)
@@ -419,10 +422,10 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 ;;;; TESTS!!!!
 ;;;; -------------------------------------------------------------------------
 (defparameter *interval1* 
-  (make-interval 'integer-interval 0 100 t nil))
+  (make-interval 'integer-interval 0 100))
 
 (defparameter *interval2*
-  (make-interval 'integer-interval 23 42 t t))
+  (make-interval 'integer-interval 23 42))
 
 (defparameter *multi-interval*
   (make-instance 'multi-interval :intervals
