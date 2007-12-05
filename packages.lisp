@@ -29,7 +29,8 @@
         #:cl-ppcre
         #:iterate
         #:split-sequence
-        #:alexandria)
+        #:alexandria
+	)
   (:nicknames #:utils #:clcb.utils)
   (:export ;; string utils
            #:string->type

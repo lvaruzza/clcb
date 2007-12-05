@@ -458,10 +458,29 @@ by the introduction of intervals that represent subsequences.
 \caption{Class diagram of intervals in \CLCB}
 \end{figure}
 
+To access the classes and functions defined for the intervals, one needs to attach onselves to the clcb-utils package:
+
+\begin{lstlisting}
+* (in-package :clcb-utils)
+
+#<PACKAGE "CLCB-UTILS">
+\end{lstlisting}
+
+
 To generate intervals, specify the type of interval at hand and specify its borders
 \begin{lstlisting}
 * (defparameter *interval1*
   (make-interval 'integer-interval 0 100))
+
+*INTERVAL1*
+\end{lstlisting}
+
+and to inspect its contents
+
+\begin{lstlisting}
+* *INTERVAL1*
+
+#<INTEGER-INTERVAL [0,100]>
 \end{lstlisting}
 
 The function mapcar applies a function consecutively to all values of a list of attributes. 
@@ -473,17 +492,36 @@ expression expects two values from the lists, like
 ((1 1) (2 2) (3 3))
 \end{lstlisting}
 
-Hence, the quoted lists define one multi-intervals $[5;13]\cup[50;60]\cup[70;90]\cup[65;70]$.
+Analogously, in the example below, the quoted lists define one multi-intervals $[5;13]\cup[50;60]\cup[70;90]\cup[65;70]$.
+
+\begin{lstlisting}
+* (defparameter *list-of-intervals*
+               (mapcar (lambda (start end)
+		               (make-interval
+			          'integer-interval
+			          start end))
+	               '(5  50 70 65)
+           	       '(13 60 90 70)))
+*LIST-OF-INTERVALS*
+\end{lstlisting}
+
+The result was hidden away in a variable to simplify
+the later expressions. To inspect it:
+
+\begin{lstlisting}
+* *LIST-OF-INTERVALS*
+
+(#<INTEGER-INTERVAL [5,13]> #<INTEGER-INTERVAL [50,60]>
+ #<INTEGER-INTERVAL [70,90]> #<INTEGER-INTERVAL [65,70]>)
+\end{lstlisting}
+
+To work comfortably with such sets of intervals, a separate
+aggregator class was defined that takes the list as an input
+for its constructor:
 
 \begin{lstlisting}
 * (defparameter *multi-interval*
-     (make-instance 'multi-interval :intervals
-                    (mapcar #'(lambda (start end)
-		                      (make-interval
-                                          'integer-interval
-                                          start end))
-                            '(5  50 70 65)
-                            '(13 60 90 70))))
+     (make-instance 'multi-interval :intervals *LIST-OF-INTERVALS*))
 \end{lstlisting}
 
 

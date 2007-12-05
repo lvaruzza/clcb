@@ -30,10 +30,9 @@
 (defsystem clcb
     :description "CLCB - Common Lisp stuff for computational biology."
     :long-description
-    "CLCB is a small project by Albert Krewinkel, mainly to teach
-himself some lisp and a better programming style (to the current
-day, his programming style is still pretty crappy). CLCB also
-offers some tools for computational biology."
+    "CLCB is a small project initiated by Albert Krewinkel, mostly to teach
+     himself some lisp. Over time, CLCB has turned into a tool with some
+     competitive edge for research in computational biology."
     :version "0.1"
     :author "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
     :maintainer "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
@@ -42,7 +41,8 @@ offers some tools for computational biology."
                  "cl-ppcre"
                  "split-sequence"
                  "moptilities"
-                 "alexandria")
+                 "alexandria"
+		 )
     :components
     ((:doc-file "README")
      (:static-file "LICENSE")

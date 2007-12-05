@@ -100,7 +100,8 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
  ((lower-bound :accessor lower-bound
                :initarg :lower-bound)
   (upper-bound :accessor upper-bound
-               :initarg :upper-bound)))
+               :initarg :upper-bound))
+  (:documentation "An interval of numbers"))
 
 (defclass integer-interval (number-interval)
   ((lower-bound :type integer)
@@ -113,7 +114,8 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
                                     (and (integerp element)
                                          (<= (lower-bound interval)
                                              element
-                                             (upper-bound interval)))))))
+                                             (upper-bound interval))))))
+  (:documentation "A number-interval of integers."))
 
 
 ;;; -------------------------------------
@@ -426,11 +428,11 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 
 (defparameter *interval2*
   (make-interval 'integer-interval 23 42))
-
-(defparameter *multi-interval*
-  (make-instance 'multi-interval :intervals
-                 (mapcar #'(lambda (start end) (make-interval
-                                                'integer-interval
-                                                start end))
-                         '(5  50 70 65)
-                         '(13 60 90 70))))
+ 
+;;; (defparameter *multi-interval*
+;;;   (make-instance 'multi-interval :intervals
+;;;                  (mapcar #'(lambda (start end) (make-interval
+;;;                                                 'integer-interval
+;;;                                                 start end))
+;;;                          '(5  50 70 65)
+;;;                          '(13 60 90 70))))

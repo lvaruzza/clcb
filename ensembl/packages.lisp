@@ -28,7 +28,8 @@
         #:iterate
         #:clcb
         #:clcb-utils
-        #:alexandria)
+        #:alexandria
+	)
   (:nicknames #:ensembl)
   (:shadowing-import-from #:clcb-utils #:make-interval)
   (:export #:fetch-by-stable-id

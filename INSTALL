@@ -1,0 +1,24 @@
+Installation of CLCB
+====================
+
+A Lisp interpreter is required, tested for compatibility was only
+sbcl. Under Debian Linux this is installed by calling
+
+   aptitude install sbcl cl-asdf cl-closer-mop cl-split-sequence \
+   			cl-ppcre cl-iterate
+
+For complete functionality, several additional packages 
+are required that are no yet availabie in Debian:
+
+alexandria : http://common-lisp.net/project/alexandria/
+moptilies : http://common-lisp.net/project/moptilities/
+
+To install the still missing packages, it is suggested to use
+the installer provided by asdf. That process is described at
+http://www.cliki.net/ASDF-Install. From the lisp shell execute
+
+ (require 'asdf)
+ (require 'asdf-install)
+ (asdf-install:install 'moptilities)
+ (asdf-install:install 'alexandria)
+
