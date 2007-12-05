@@ -22,3 +22,10 @@ http://www.cliki.net/ASDF-Install. From the lisp shell execute
  (asdf-install:install 'moptilities)
  (asdf-install:install 'alexandria)
 
+For the startup, some settings are likely to be beneficial to be made
+as an initalisation file. Such is constructed by the shell script
+'bin/userinit.sh'. When first started, that script's output should be
+pasted into the Lisp shell. At the time of writing, the shell, despite
+these settings, still is required to be started from the root directory
+of CLCB.
+
