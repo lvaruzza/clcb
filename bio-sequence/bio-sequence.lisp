@@ -41,9 +41,11 @@ of any type, but will normally be of type `string'.")
                 :initarg :description
                 :documentation "The descripitions of the object.")
    (seq-start :accessor seq-start
+              :accessor lower-bound
               :initarg :seq-start
               :initform 1)
    (seq-end :accessor seq-end
+            :accessor upper-bound
             :initarg :seq-end))
    (:documentation "A biological sequence is a polymeric macromolecule
 of nucelic acids (with a phorsphor-sugar backbone) or of amino acids
@@ -96,21 +98,29 @@ sequence tags (ESTs)."))
   ;; Copying all slot by themself is probably pretty stupid, but I
   ;; can't think of a better solution right now (Well, Gary King's MOP
   ;; based copy function would do => will implement)
-  (make-instance 'bio-sequence
+  (moptilities:copy-template seq)
+  #||(make-instance 'bio-sequence
                  :id (bio-sequence-id seq)
                  :name (bio-sequence-name seq)
                  :seq (bio-sequence-seq seq)
-                 :mol-weight (mol-weight seq)))
+                 :mol-weight (mol-weight seq))||#
+)
 
 (defmethod make-interval ((bio-seq bio-sequence) lower upper &rest args)
   (declare (ignore args))
   (let ((new-seq (moptilities:copy-template bio-seq)))
-    (setf (bio-sequence-seq new-seq) (subseq (bio-sequence-seq new-seq)
-                                             (1- lower)
-                                             upper)
-          (lower-bound new-seq) lower
+    (setf (lower-bound new-seq) lower
           (upper-bound new-seq) upper)
+    (when (not (null (bio-sequence-seq new-seq)))
+        (setf (bio-sequence-seq new-seq)
+              (subseq (bio-sequence-seq new-seq) (1- lower) upper)))
     new-seq))
+
+(defmethod make-interval ((class (eql (find-class 'nucleotide-sequence)))
+                          lower upper &rest args)
+  (make-instance class
+                 :seq-start lower
+                 :seq-end upper))
 
 
 (defmethod print-object ((seq bio-sequence) stream)
@@ -130,7 +140,7 @@ mechanism is required."
   (:method ((seq bio-sequence)) (length (bio-sequence-seq seq))))
 
 
-(defclass feature ()
+(defclass feature (integer-interval)
   ((feature-type :accessor feature-type
                  :initarg :feature-type))
   (:documentation "A property of interest that is referred to from a
