@@ -357,11 +357,18 @@ amino acids that should be added to the result."
                       (interval-intersection pf-coding-interval exon)))
             (collect exon)))))
 
-(defun main-supporting-exon (protein-feature)
+(defgeneric main-supporting-exon (protein-feature &optional exons)
+  (:documentation "Return the exon which contains the most sequence
+information for the protein feature."))
+
+(defmethod main-supporting-exon ((protein-feature protein-feature) &optional
+                                 (exons
+                                  (exons (transcript
+                                          (translation protein-feature)))))
   "The exon that holds most of the sequence coding for the protein-feature."
   (let ((pf-coding-interval (dna-sequence-interval protein-feature)))
     (iter
-      (for exon in (exons (transcript (translation protein-feature))))
+      (for exon in exons)
       (for overlap = (interval-intersection pf-coding-interval exon))
       (finding exon maximizing (interval-elements overlap)))))
 
