@@ -52,6 +52,9 @@
             (aref matches 0))))
 
 (defun fetch-by-stable-id (stable-id)
+  "Retrieves an a gene from EnsEMBL by its stable gene ID
+Example:
+(fetch-by-stable-id \"ENSG00000141510\")"
   (declare (type string stable-id))
   (fetch-by-stable-id-and-type stable-id (stable-id->ensembl-type stable-id)))
 
@@ -75,13 +78,18 @@
 ;;; Slot reader functions and methods
 ;;; ------------------------------------
 ;; Note: We don't support writer methods yet
-(defun ensembl-version (obj)
-  (slot-value (slot-value obj 'stable-id) 'version))
+(defun ensembl-version (ensembl-obj)
+  "Genes may vary in their sequence, e.g. because of differently identified exons or some resequencing. This function retrieves the version that is currently being assigned to the gene.
+Example:
+(ensembl-version (fetch-by-stable-id \"ENSG00000141510\"))
+  "
+  (slot-value (slot-value ensembl-obj 'stable-id) 'version))
 
 (defun ensembl-biotype (ensembl-obj)
   (slot-value ensembl-obj 'biotype))
 
 (defun ensembl-status (ensembl-obj)
+  "Genes differ in the degree of reliability one has in their existance. The most reliable genes are flagged as \"known\"."
   (slot-value ensembl-obj 'status))
 
 
@@ -163,6 +171,9 @@ this info is not available.")
 ;;; Bio Sequences
 ;;; -------------
 (defmethod seq-length ((ens-obj dna-sequence))
+  "The length of the sequence on the genome.
+Example:
+(seq-length (fetch-by-stable-id \"ENSG00000141510\")) "
   (with-slots ((seq-start seq-region-start)
                (seq-end   seq-region-end))
       ens-obj
@@ -211,9 +222,11 @@ region as predicted by TMHMM.")
     (transmembrane-protein-p (translation ts))))
 
 (defun codes-tm-protein (gene)
+  "True iff at least one transcript of that genes codes for a transmembrane protein."
   (some #'transmembrane-protein-p (slot-value gene 'transcript)))
 
 (defun codes-non-tm-protein (gene)
+  "True iff all transcripts of that gene are (presumed) soluble."
   (some (complement #'transmembrane-protein-p) (slot-value gene 'transcript)))
 
 
