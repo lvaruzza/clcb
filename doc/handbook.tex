@@ -121,10 +121,12 @@ startup and you should in the longer run move these lines there.
 \begin{lstlisting}
 (pushnew '<path/to/CLCB> asdf:*central-registry*)
 (pushnew '<path/to/CLCB/ensembl> asdf:*central-registry*)
-(asdf:oos 'asdf:load-op :clcb) or
+(asdf:oos 'asdf:load-op :clcb)
 (asdf:oos 'asdf:load-op :clcb-ensembl)
 (in-package :ensembl)
 \end{lstlisting}
+
+The clcb-utils library is loaded automatically since clcb-ensembl depends on it.
 
 \subsection{First hands on experience}
 

@@ -19,8 +19,8 @@ rootdir=`echo $rootdir|sed -e 's%/.$%%' -e 's%//%/%'`
 
 cat<<EOUSERINIT
 (pushnew "$rootdir" asdf:*central-registry*)
-(pushnew "$rootdir" asdf:*central-registry*)
-(asdf:oos 'asdf:load-op :clcb) or
+(pushnew "$rootdir/ensembl" asdf:*central-registry*)
+(asdf:oos 'asdf:load-op :clcb)
 (asdf:oos 'asdf:load-op :clcb-ensembl)
 (in-package :ensembl)
 EOUSERINIT
