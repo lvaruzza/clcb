@@ -26,10 +26,8 @@
 
 ;(connect '("ensembldb.ensembl.org" "homo_sapiens_core_47_36i" "anonymous" "")
 ;:database-type :mysql)
-(connect '("pc13.inb.uni-luebeck.de"
-           "homo_sapiens_core_47_36i"
-           "qtl" "")
-         :database-type :mysql)
+(apply #'connect (clcb-config::ensembl-connection-data))
+
 
 ;;; EnsEMBL superclass
 (def-view-class ensembl-object () ())

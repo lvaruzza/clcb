@@ -31,3 +31,13 @@
 (defvar *data-directory-pathname*
   (merge-pathnames (make-pathname :directory '(:relative "data"))
                    (asdf:component-pathname (asdf:find-system :clcb))))
+
+(defvar *ensembl-host*     "pc13.inb.uni-luebeck.de")
+(defvar *ensembl-database* "homo_sapiens_core_47_36i")
+(defvar *ensembl-user*     "qtl")
+(defvar *ensembl-password*   "")
+(defvar *ensembl-db-type*  :mysql)
+
+(defun ensembl-connection-data ()
+  `(,(list *ensembl-host* *ensembl-database* *ensembl-user* *ensembl-password*)
+    ,@(when *ensembl-db-type* (list :database-type *ensembl-db-type*))))
