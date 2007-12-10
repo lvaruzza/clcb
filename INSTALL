@@ -5,7 +5,7 @@ A Lisp interpreter is required, tested for compatibility was only
 sbcl. Under Debian Linux this is installed by calling
 
    aptitude install sbcl cl-asdf cl-closer-mop cl-split-sequence \
-   			cl-ppcre cl-iterate
+   			cl-ppcre cl-iterate cl-sql-mysql
 
 For complete functionality, several additional packages 
 are required that are no yet availabie in Debian:
@@ -20,7 +20,27 @@ http://www.cliki.net/ASDF-Install. From the lisp shell execute
  (require 'asdf)
  (require 'asdf-install)
  (asdf-install:install 'moptilities)
+
+here follow the instructions and once moptilities is installed,
+continue with
+
  (asdf-install:install 'alexandria)
+
+If you want to be on the safe side, then also install the gpg keys of
+these packages and consider for yourself if you trust them. The keys
+needed are
+
+   gpg  --recv-keys 0x9E2F734EF57A448E 0x886A220F86321D48
+
+If there is interest from your side to rebuild the documentation that
+is accompaning the source distribution of CLCB, then we suggest to also
+install the Debian package
+
+   aptitude install cl-lml2
+
+and back in sbcl:
+
+   (asdf-install:install 'tinaa)
 
 For the startup, some settings are likely to be beneficial to be made
 as an initalisation file. Such is constructed by the shell script
@@ -28,4 +48,13 @@ as an initalisation file. Such is constructed by the shell script
 pasted into the Lisp shell. At the time of writing, the shell, despite
 these settings, still is required to be started from the root directory
 of CLCB.
+
+For a start it helps to be located in the root directory of CLCB. From there,
+execute 
+
+	./bin/userinit.sh
+
+and paste the output to your sbcl shell. If we have not committed some non-sense
+the meantime then CLCB should compile smoothly.
+
 

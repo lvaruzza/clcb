@@ -451,14 +451,23 @@ The lines below show the representation of the exon class:
 A core principle of \CLCB is to retrieve data from Ensembl as easily as
 possible and then continue with the analysis with minimal and transparent
 access to the database. On major technical component to achieve such is
-by the introduction of intervals that represent subsequences.
+by the introduction of intervals to represent subsequences.
 
 \begin{figure}
 \begin{center}
 \input{intervalClassDiagram}
 \end{center}
-\caption{Class diagram of intervals in \CLCB}
+\caption{{\bf Class diagram of intervals in \CLCB.} }
+\label{fig:intervalClassDiagram}
 \end{figure}
+
+The notion of an interval is very intuitive both to users from a computational
+or a biological background. Figure \ref{fig:intervalClassDiagram} displays
+the relationships between these classes. As a start, we need only data intervals
+on natural numbers. Later, we will also have negative numbers, i.e., to explicitly
+include promotor regions. For the moment this is not implemented since in biology,
+it is common to omit position 0. The interval of $[ -1, -1 ]$ then includes two numbers,
+not three as the computationally primed user might expect.
 
 To access the classes and functions defined for the intervals, one needs to attach onselves to the clcb-utils package:
 
@@ -524,6 +533,11 @@ for its constructor:
 \begin{lstlisting}
 * (defparameter *multi-interval*
      (make-instance 'multi-interval :intervals *LIST-OF-INTERVALS*))
+*MULTI-INTERVAL*
+* *MULTI-INTERVAL*
+
+#<MULTI-INTERVAL (#<INTEGER-INTERVAL [5,13]> #<INTEGER-INTERVAL [50,60]> #<INTEGER-INTERVAL [65,90]>)>
+
 \end{lstlisting}
 
 
