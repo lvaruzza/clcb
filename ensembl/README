@@ -1,4 +1,3 @@
-I'm sorry, but there will be no serious documentation until the project
-is actually usable ;-) However, we have started commenting via the
-Lisp-intrinsic documentation slots which may find some use. Also, in
-../doc some rogue docs are evolving.
+All classes and methods in clcb-ensembl should have a documentation string
+and many also have explicit examples on their usage.
+In ../doc some rogue docs are evolving.

@@ -26,6 +26,25 @@
 
 (defparameter *coordinate-systems* (select 'coord-system :flatp t))
 
+(defparameter *tp53* nil)
+
+(defun sample_gene_tp53 () 
+  "The gene tp53 is retrieved from Ensembl and stored in the parameter *tp53*. If that parameter is already set, then it will be returned directly. The 'Tumour Protein 53' is one of the better-studied proteins and most biologists will immediately know its properties. This shall contribute to making the examples better understood.
+Example:
+* (SAMPLE_GENE_TP53)
+
+Gene TP53 successfully retrieved from Ensembl.
+#<GENE {10027FDC21}>
+* (SAMPLE_GENE_TP53)
+
+#<GENE {10027FDC21}>
+  "
+  (if *tp53* *tp53*
+     (progn (if (setf *tp53* (fetch-by-stable-id "ENSG00000141510"))
+		 (print "Gene TP53 successfully retrieved from Ensembl.")
+		 (print "Gene TP53 could not be retrieved."))
+	     *tp53*)))
+
 
 ;;; fetch objects from the MySQL database
 ;;; -------------------------------------
@@ -36,14 +55,24 @@
 
 (defgeneric fetch-by-name (name object-type)
   (:documentation "Get an EnsEMBL object of type `object-type' by its name.")
-
   (:method (name (object-type (eql 'coord-system)))
     (list name object-type)))
 
 (defun ensembl-type-char->type (char)
+  "Transforms single letters abbreviating the EnsEMBL types into their CLCB full representation as GENE, TRANSCRIPT, EXON or TRANSLATION.
+Example:
+* (ensembl-type-char->type #\p)
+
+TRANSLATION"
   (cdr (assoc char *char-class-alist* :test #'char-equal)))
 
 (defun stable-id->ensembl-type (string)
+  "Knows if a stable ID is a gene, transcript or peptide.
+Example:
+* (stable-id->ensembl-type \"ENSG00000141510\")
+
+GENE
+NIL"
   (declare (type string string))
   (multiple-value-bind (ign matches)
         (ppcre:scan-to-strings "ENS([A-Z])*([TGEP])[0-9]+" string)
@@ -54,14 +83,18 @@
 (defun fetch-by-stable-id (stable-id)
   "Retrieves an a gene from EnsEMBL by its stable gene ID
 Example:
-(fetch-by-stable-id \"ENSG00000141510\")"
+* (defparameter *tp53* (fetch-by-stable-id \"ENSG00000141510\"))
+
+*TP53*
+* *TP53*
+
+#<GENE {10027FDC21}>"
   (declare (type string stable-id))
   (fetch-by-stable-id-and-type stable-id (stable-id->ensembl-type stable-id)))
 
 
 (defgeneric fetch-by-seq-region-name (sr-name type)
   (:documentation "Fetch by the name of the seq region (e.g. 'X').")
-
   (:method (sr-name type)
     (select type :where
             (sql-and (sql-= (sql-slot-value 'seq-region 'name)
@@ -81,20 +114,32 @@ Example:
 (defun ensembl-version (ensembl-obj)
   "Genes may vary in their sequence, e.g. because of differently identified exons or some resequencing. This function retrieves the version that is currently being assigned to the gene.
 Example:
-(ensembl-version (fetch-by-stable-id \"ENSG00000141510\"))
-  "
+(ensembl-version (sample_gene_tp53))
+
+4"
   (slot-value (slot-value ensembl-obj 'stable-id) 'version))
 
 (defun ensembl-biotype (ensembl-obj)
+  "Type of sequence. It may be protein-coding, microRNA or something else.
+* (ensembl-biotype (sample_gene_tp53))
+
+\"protein_coding\""
   (slot-value ensembl-obj 'biotype))
 
 (defun ensembl-status (ensembl-obj)
-  "Genes differ in the degree of reliability one has in their existance. The most reliable genes are flagged as \"known\"."
+  "Genes differ in the degree of reliability one has in their existance. The most reliable genes are flagged as \"known\".
+* (ensembl-status (sample_gene_tp53))
+
+\"KNOWN\" "
   (slot-value ensembl-obj 'status))
 
 
 (defgeneric stable-id (ensembl-obj)
-  (:documentation "Get the EnsEMBL stable id of an object."))
+  (:documentation "Get the EnsEMBL stable id of an object.
+Example:
+* (stable-id (sample_gene_tp53))
+
+\"ENSG00000141510\" "))
 
 (defmethod stable-id (ensembl-obj)
   (slot-value (slot-value ensembl-obj 'stable-id)
@@ -103,7 +148,11 @@ Example:
 
 (defgeneric strand (bio-sequence)
   (:documentation "Returns +1 or -1 for the plus or minus strand of
-bio-sequence, respectively.")
+bio-sequence, respectively.
+Example:
+* (strand (sample_gene_tp53))
+
+-1")
   (:method (ensembl-obj) (slot-value ensembl-obj 'seq-region-strand)))
 
 
@@ -116,7 +165,12 @@ or nil if there is no such transcript.")
 
 (defgeneric transcripts (ens-obj)
   (:documentation "Return a list of all transcripts corresponding to
-the object, or nil if no such transcript exists.")
+the object, or nil if no such transcript exists.
+Example:
+* (transcripts (sample_gene_tp53))
+
+(#<TRANSCRIPT {100293BCE1}> #<TRANSCRIPT {100293CF61}>
+  #<TRANSCRIPT {100293E1E1}>)")
   (:method ((gene gene)) (slot-value gene 'transcript))
   (:method ((exon exon))
     (mapcar #'(lambda (exon-transcript)
@@ -126,8 +180,10 @@ the object, or nil if no such transcript exists.")
 
 (defgeneric exons (ens-obj)
   (:documentation "Return a list of all exons within the object, or
-nil if there are no exons.")
-
+nil if there are no exons.
+Example:
+Untested: (exons (car (transcripts (sample_gene_tp53))))
+")
   (:method ((transcript transcript))
     (mapcar #'(lambda (et) (car (slot-value et 'exon)))
             (slot-value transcript 'exon-transcript)))
@@ -139,12 +195,14 @@ nil if there are no exons.")
   (:documentation "Return the gene corresponding to the object, or nil
 if there is no such gene.")
   (:method (obj) (declare (ignore obj)) nil)
+  (:method ((gene gene)) gene)
   (:method ((trans transcript)) (slot-value trans 'gene))
   (:method ((exon exon)) (gene (transcript exon))))
 
 (defgeneric translation (seq-obj)
-  (:documentation "Translation for this object.")
+  (:documentation "Translation for an object that is either a transcript sequence or a protein sequence itself already (or a fragment of it, which would be referred to as a protein-feature).")
   (:method ((trans transcript)) (slot-value trans 'translation))
+  (:method ((pep translation)) pep)
   (:method ((pf protein-feature)) (slot-value pf 'translation)))
 
 (defgeneric chromosome (ensembl-object)
