@@ -61,15 +61,22 @@ accessible as instances of this class."))
 
 
 (defun read-amino-acids (aa-table-file)
-  ;; FIXME: Missig documentation.
-  "Albert. "
+  "CLCB comes with a text file that describes the most essential properties of amino acids. You may have your own. This function creates instances for the amino acids stored in that file."
   (with-open-file (in aa-table-file)
     (read-objects-from-table in 'amino-acid)))
 
 (defparameter *amino-acids*
   (read-amino-acids
    (make-pathname :name "amino-acids" :type "txt"
-                  :defaults *data-directory-pathname*)))
+                  :defaults *data-directory-pathname*))
+  "A global parameter with information about all naturally occurring amino acids.
+
+Example:
+
+* (car *amino-acids*)
+
+#<AMINO-ACID Ala>
+")
 
 (defparameter *1-letter-aa-hash* 
   (let ((1-letter-hash (make-hash-table)))
@@ -80,7 +87,18 @@ accessible as instances of this class."))
             aa)))
   "The objects that are representing amino acids are stored in a hash
 from which they can be retrieved on demand, i.e, when reading and
-interpreting a sequence string.")
+interpreting a sequence string.
+
+Example:
+
+* *1-letter-aa-hash*
+
+#<HASH-TABLE :TEST EQL :COUNT 44 {1002AA0811}>
+
+* (gethash #\a *1-letter-aa-hash*)
+
+#<AMINO-ACID Ala>
+T")
 
 (defparameter *3-letter-aa-hash*
   (let ((3-letter-hash (make-hash-table :test #'equal)))
@@ -92,7 +110,11 @@ give your the object for Alanine. This function is used less
 frequently in everyday's practice, but, once one is working with
 artificial amino acids or those modifications performed by enzymes as
 post-translational modifications, to have more than the 26 letters of
-the alphabet becomes handy.")
+the alphabet becomes handy.
+
+*3-letter-aa-hash*
+
+#<HASH-TABLE :TEST EQUAL :COUNT 22 {1002FF6F81}> ")
 
 ;;;; -------------------------------------------------------------------------
 ;;;; Amino Acids Methods
@@ -125,7 +147,14 @@ the alphabet becomes handy.")
 
 (defgeneric get-amino-acid (identifier)
   (:documentation
-   "Get an amino acid object corresponding to the given identifier.")
+   "Get an amino acid object corresponding to the given identifier.
+
+Example:
+
+* (get-amino-acid \"ala\")
+
+#<AMINO-ACID Ala>
+T")
 
   (:method ((char character)) (gethash char *1-letter-aa-hash*))
 
