@@ -232,7 +232,12 @@ nucleotide sequence which codes for the corresponding amino acids.
 
 (defgeneric nt-coords->aa-coords (coord)
   (:documentation "Convert from coordinates in nucleotides to
-                   coordinates in amino acids."))
+                   coordinates in amino acids.
+Example:
+
+* (mapcar #'nt-coords->aa-coords (list 1 2 3 4 5 6 7 8 9))
+
+(1 1 1 2 2 2 3 3 3)"))
 
 (defmethod nt-coords->aa-coords ((coord integer))
   (multiple-value-bind (aa-1 rest) (truncate (1- coord) 3)
@@ -274,7 +279,8 @@ the exons within the transcript."))
                :initarg transcript
                :documentation "The transcript corresponding to this exon.")
    (circular :allocation :class
-             :initform nil)))
+             :initform nil))
+  (:documentation "Exons are those regions of the transcript of the genomic DNA that leave the nucleus and are read out to form the amino acid sequence. A single gene is very likely to have multiple variants that are assembled from different exons. The exonic regions from different transcript may overlap when mapped back onto the genome."))
 
 (defclass protein (amino-acid-sequence)
   ((transcript :initarg :transcript
@@ -282,20 +288,24 @@ the exons within the transcript."))
                :documentation "The transcript which codes for this protein.")
    (features :initarg :features
              :accessor protein-features
-             :documentation "Protein features")))
+             :documentation "Slot harboring the features of that protein sequence. This may be post-translational modifications or links to protein domain databases that are manifested by a respective sequence similarity at that particular region."))
+  (:documentation "Proteins are the class of molecules that most biochemical functions are attributed to."))
 
 (defclass protein-feature (feature)
   ((protein :initarg protein
             :accessor protein
             :accessor translation
-            :documentation "the protein to which this feature belongs.")
+            :documentation "The link back to the protein to which this feature belongs.")
    (feat-start :initarg :start
                :accessor feat-start
                :accessor lower-bound)
    (feat-end :initarg :end
              :accessor feat-end
-             :accessor upper-bound)))
+             :accessor upper-bound))
+  (:documentation "Whenever a fragment of a protein sequence is known to be special, then this class, the protein feature, is how this knowledge should be expressed formally. The name 'feature' is derived from the term 'feature-table' as it is used in the EMBL-formatted sequence databases like 'uniprot'. EnsEMBL and UniProt collaborate on protein annotation."))
 
 (defclass transmembrane-helix (protein-feature)
-  ())
+  ((sidedness :initarg nil
+	      :documentation "With N-terminus inside and C-terminus outside, a membrane-spanning helix has an in-out topology. The alternative is an out-in topology. The default is nil. The sidedness is most difficult to predict."))
+  (:documentation "Membrane proteins are essential to understand for the pharmaceutical industry and they are fascinating in their own right. There are many things that one wants to know about membrane-spanning regions in proteins. Their sidedness is of concern, but also information about their aromatic ring or the distribution of stop-signals around them."))
 
