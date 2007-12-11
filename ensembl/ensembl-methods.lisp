@@ -26,24 +26,6 @@
 
 (defparameter *coordinate-systems* (select 'coord-system :flatp t))
 
-(defparameter *tp53* nil)
-
-(defun sample_gene_tp53 () 
-  "The gene tp53 is retrieved from Ensembl and stored in the parameter *tp53*. If that parameter is already set, then it will be returned directly. The 'Tumour Protein 53' is one of the better-studied proteins and most biologists will immediately know its properties. This shall contribute to making the examples better understood.
-Example:
-* (SAMPLE_GENE_TP53)
-
-Gene TP53 successfully retrieved from Ensembl.
-#<GENE {10027FDC21}>
-* (SAMPLE_GENE_TP53)
-
-#<GENE {10027FDC21}>
-  "
-  (if *tp53* *tp53*
-     (progn (if (setf *tp53* (fetch-by-stable-id "ENSG00000141510"))
-		 (print "Gene TP53 successfully retrieved from Ensembl.")
-		 (print "Gene TP53 could not be retrieved."))
-	     *tp53*)))
 
 
 ;;; fetch objects from the MySQL database
@@ -59,18 +41,20 @@ Gene TP53 successfully retrieved from Ensembl.
     (list name object-type)))
 
 (defun ensembl-type-char->type (char)
-  "Transforms single letters abbreviating the EnsEMBL types into their CLCB full representation as GENE, TRANSCRIPT, EXON or TRANSLATION.
-Example:
-* (ensembl-type-char->type #\p)
+  "Transforms single letters abbreviating the EnsEMBL types into their
+CLCB full representation as GENE, TRANSCRIPT, EXON or TRANSLATION.
 
-TRANSLATION"
+###Example:
+* (ensembl-type-char->type #\p)
+=> TRANSLATION"
   (cdr (assoc char *char-class-alist* :test #'char-equal)))
 
 (defun stable-id->ensembl-type (string)
   "Knows if a stable ID is a gene, transcript or peptide.
-Example:
-* (stable-id->ensembl-type \"ENSG00000141510\")
 
+###Example:
+* (stable-id->ensembl-type \"ENSG00000141510\")
+=>
 GENE
 NIL"
   (declare (type string string))
@@ -112,8 +96,11 @@ Example:
 ;;; ------------------------------------
 ;; Note: We don't support writer methods yet
 (defun ensembl-version (ensembl-obj)
-  "Genes may vary in their sequence, e.g. because of differently identified exons or some resequencing. This function retrieves the version that is currently being assigned to the gene.
-Example:
+  "Genes may vary in their sequence, e.g. because of differently
+identified exons or some resequencing. This function retrieves the
+version that is currently being assigned to the gene.
+
+###Example:
 (ensembl-version (sample_gene_tp53))
 
 4"
@@ -127,7 +114,10 @@ Example:
   (slot-value ensembl-obj 'biotype))
 
 (defun ensembl-status (ensembl-obj)
-  "Genes differ in the degree of reliability one has in their existance. The most reliable genes are flagged as \"known\".
+  "Genes differ in the degree of reliability one has in their
+existance. The most reliable genes are flagged as \"known\".
+
+###Example
 * (ensembl-status (sample_gene_tp53))
 
 \"KNOWN\" "
@@ -136,7 +126,8 @@ Example:
 
 (defgeneric stable-id (ensembl-obj)
   (:documentation "Get the EnsEMBL stable id of an object.
-Example:
+
+###Example:
 * (stable-id (sample_gene_tp53))
 
 \"ENSG00000141510\" "))
@@ -149,7 +140,8 @@ Example:
 (defgeneric strand (bio-sequence)
   (:documentation "Returns +1 or -1 for the plus or minus strand of
 bio-sequence, respectively.
-Example:
+
+###Example:
 * (strand (sample_gene_tp53))
 
 -1")
@@ -166,7 +158,8 @@ or nil if there is no such transcript.")
 (defgeneric transcripts (ens-obj)
   (:documentation "Return a list of all transcripts corresponding to
 the object, or nil if no such transcript exists.
-Example:
+
+###Example:
 * (transcripts (sample_gene_tp53))
 
 (#<TRANSCRIPT {100293BCE1}> #<TRANSCRIPT {100293CF61}>
@@ -200,7 +193,9 @@ if there is no such gene.")
   (:method ((exon exon)) (gene (transcript exon))))
 
 (defgeneric translation (seq-obj)
-  (:documentation "Translation for an object that is either a transcript sequence or a protein sequence itself already (or a fragment of it, which would be referred to as a protein-feature).")
+  (:documentation "Translation for an object that is either a
+transcript sequence or a protein sequence itself already (or a
+fragment of it, which would be referred to as a protein-feature).")
   (:method ((trans transcript)) (slot-value trans 'translation))
   (:method ((pep translation)) pep)
   (:method ((pf protein-feature)) (slot-value pf 'translation)))
@@ -230,7 +225,8 @@ this info is not available.")
 ;;; -------------
 (defmethod seq-length ((ens-obj dna-sequence))
   "The length of the sequence on the genome.
-Example:
+
+###Example:
 (seq-length (fetch-by-stable-id \"ENSG00000141510\")) "
   (with-slots ((seq-start seq-region-start)
                (seq-end   seq-region-end))
@@ -280,7 +276,8 @@ region as predicted by TMHMM.")
     (transmembrane-protein-p (translation ts))))
 
 (defun codes-tm-protein (gene)
-  "True iff at least one transcript of that genes codes for a transmembrane protein."
+  "True iff at least one transcript of that genes codes for a
+transmembrane protein."
   (some #'transmembrane-protein-p (slot-value gene 'transcript)))
 
 (defun codes-non-tm-protein (gene)
@@ -295,20 +292,70 @@ does not affect the corresponding transcripts reading frame."))
   (zerop (mod (seq-length exon) 3)))
 
 
+
 ;;; Sequence mapping
 ;;; ----------------
+
+;;; FIXME: Instead of a function taking simple integers, this should
+;;; be a method that can handle different kinds of object.  It should
+;;; be able to handle dna-sequence-intervals, nucleotide-intervals and
+;;; amino-acid-intervals
+
+
+
+(defgeneric aa-coords->nt-coords (coord)
+  (:documentation "Convert coordinates from amino acids to
+nucleotides.  This works for simple integers as well as for intervals.
+Note that the first monomere has the index 1 in eather coordinate
+system, nucleotide as well as amino acid.  If the coordinate is a
+single number, it is mapped to the _first_ nucleotide which codes for
+the corresponding amino acid. If the argument is an interval on an
+amino acid sequence, the result is an interval that spans the whole
+nucleotide sequence which codes for the corresponding amino acids.
+
+### Examples
+(aa->nt 1)
+=> 1
+(aa->nt 3)
+=> 7 "))
+
+(defmethod aa-coords->nt-coords ((coord integer))
+  (1+ (* 3 (1- coord))))
+
+(defmethod aa-coords->nt-coords ((interval integer-interval))
+  (make-interval interval
+                 (aa-coords->nt-coords (lower-bound interval))
+                 (+ 2 (aa-coords->nt-coords (upper-bound interval)))))
+
+
+(defgeneric nt-coords->aa-coords (coord)
+  (:documentation "Convert from coordinates in nucleotides to
+coordinates in amino acids."))
+
+(defmethod nt-coords->aa-coords ((coord integer))
+  (multiple-value-bind (aa-1 rest) (truncate (1- coord) 3)
+    (values (1+ aa-1) rest)))
+
+(defmethod nt-coords->aa-coords ((interval integer-interval))
+  (bind:bind (((values start start-off)
+               (nt-coords->aa-coords (lower-bound interval)))
+              ((values end end-off)
+               (nt-coords->aa-coords (upper-bound interval))))
+    (values (make-interval interval  start end) start-off end-off)))
+
 (defun aa->nt (aa-pos &optional (offset 0))
   "Convert an position given in amino acids to a position in
 nucleotides. If `offset' is given, it's interpreted as the number of
 nucleotides that should be added to the result."
-  (+ (* 3 aa-pos) offset))
+  (+ (1+ (* 3 (1- aa-pos)))
+     offset))
 
 (defun nt->aa (nt-pos &optional (offset 0))
   "Convert an position given in nuleotides to a position in amino
 acids. If `offset' is given, it's interpreted as the number of
 amino acids that should be added to the result."
-  (multiple-value-bind (aa rest) (truncate nt-pos 3)
-      (values (+ offset aa) rest)))
+  (multiple-value-bind (aa-1 rest) (truncate (1- nt-pos) 3)
+    (values (+ offset (1+ aa-1)) rest)))
 
 
 
@@ -406,6 +453,7 @@ amino acids that should be added to the result."
              (coding-region (dna-sequence-interval translation))
              (protein-length-nt (interval-elements coding-region)))
         ;; start and stop positions on the coding region
+        ;; FIXME: use aa-coords->nt-coords instead of aa->nt
         (destructuring-bind (start . end)
             (if (plusp (strand transcript))
                 (cons (aa->nt seq-start) (aa->nt seq-end))
@@ -488,6 +536,33 @@ information for the protein feature."))
   (select 'gene :limit 20 :flatp t))
 
 (defparameter *gene* (fetch-by-stable-id "ENSG00000079134"))
+
+(defparameter *tp53* nil)
+
+(defun sample-gene-tp53 () 
+  "The gene tp53 is retrieved from Ensembl and stored in the parameter
+*tp53*. If that parameter is already set, then it will be returned
+directly. The 'Tumour Protein 53' is one of the better-studied
+proteins and most biologists will immediately know its
+properties. This shall contribute to making the examples better
+understood.  Example: * (SAMPLE_GENE_TP53)
+
+Gene TP53 successfully retrieved from Ensembl.
+#<GENE {10027FDC21}>
+* (SAMPLE_GENE_TP53)
+
+#<GENE {10027FDC21}>
+  "
+   (if *tp53*
+       *tp53*
+       (progn
+         (if (setf *tp53* (fetch-by-stable-id "ENSG00000141510"))
+             (print "Gene TP53 successfully retrieved from Ensembl.")
+             (print "Gene TP53 could not be retrieved."))
+         *tp53*)))
+
+(setf *tp53* (sample-gene-tp53))
+
 
 (defparameter *transcript* (car (transcripts *gene*)))
 
