@@ -194,15 +194,28 @@ if there is no such gene.")
 
 (defgeneric translation (seq-obj)
   (:documentation "Translation for an object that is either a
-transcript sequence or a protein sequence itself already (or a
-fragment of it, which would be referred to as a protein-feature).")
+transcript sequence or already a protein sequence itself. Also the
+sequence object may be a mere fragment of a real protein. In that latter
+case, CBCL refers to it as a protein-feature.
+
+Example:
+* (translation  (car (transcripts (sample-gene-rhodopsin))))
+
+#<TRANSLATION {BA81B61}>")
   (:method ((trans transcript)) (slot-value trans 'translation))
   (:method ((pep translation)) pep)
   (:method ((pf protein-feature)) (slot-value pf 'translation)))
 
 (defgeneric chromosome (ensembl-object)
   (:documentation "Return the chromosome this object is on, or nil if
-this info is not available.")
+this info is not available. The function returns a string, not a number,
+because of the genosomes X and Y.
+
+Example
+
+* (chromosome (sample-gene-rhodopsin))
+
+\"3\"")
   (:method ((seq dna-sequence)) (slot-value (seq-region seq) 'name)))
 
 
@@ -214,6 +227,7 @@ this info is not available.")
       ;; FIXME:check if we have the name of the chromosome or
       ;; something else.
     chr-name))
+
 (defgeneric coordinate-system (ens-obj)
   (:documentation "Return the coordinate system of the object."))
 (defmethod coordinate-system ((ens-obj dna-sequence))
@@ -227,7 +241,12 @@ this info is not available.")
   "The length of the sequence on the genome.
 
 ###Example:
-(seq-length (fetch-by-stable-id \"ENSG00000141510\")) "
+* (seq-length (sample-gene-rhodopsin))
+
+6695
+* (seq-length (sample-gene-tp53))
+
+19197"
   (with-slots ((seq-start seq-region-start)
                (seq-end   seq-region-end))
       ens-obj
@@ -239,7 +258,20 @@ this info is not available.")
 ;;; ----------------
 (defgeneric protein-features-of-type (protein feat-type)
   (:documentation "Get all protein-features of a certain type for the
-given protein. If type is nil, all features of the protein are returned")
+given protein. If type is nil, all features of the protein are returned
+
+Example:
+
+* (defparameter *ts* (car (transcripts (sample-gene-rhodopsin))))
+* (defparameter *tl* (translation *ts*))
+* (protein-features-of-type *tl* \"transmembrane\")
+
+(#<PROTEIN-FEATURE {BA8E7E9}> #<PROTEIN-FEATURE {BA8F051}>
+  #<PROTEIN-FEATURE {BA8F8B9}> #<PROTEIN-FEATURE {BA90129}>
+   #<PROTEIN-FEATURE {BA90991}> #<PROTEIN-FEATURE {BA911F9}>
+    #<PROTEIN-FEATURE {BA91A61}>)
+
+")
 
   (:method ((transl translation) (type (eql nil)))
     (declare (ignore type))
@@ -254,10 +286,41 @@ given protein. If type is nil, all features of the protein are returned")
     (protein-features transl (symbol-name feat-type))))
 
 (defun protein-features (protein &optional feat-type)
+  "Returns all sequence properties of a protein.
+
+Example:
+
+* (defparameter *ts* (car (transcripts (sample-gene-rhodopsin))))
+* (defparameter *tl* (translation *ts*))
+* (protein-features *tl*)
+(#<PROTEIN-FEATURE {BA8CEB1}> #<PROTEIN-FEATURE {BA8D719}>
+        ...
+		 #<PROTEIN-FEATURE {BA9DC01}> #<PROTEIN-FEATURE {BA9E481}>)
+"
   (protein-features-of-type protein feat-type))
 
 
 (defun protein-feature-type (pf)
+  "Returns the type of a particular feature. This information can be used to filter the retrieval of features, e.g., with the protein-features-of-type method.
+
+Example: 
+
+* (defparameter *ts* (car (transcripts (sample-gene-rhodopsin))))
+* (defparameter *tl* (translation *ts*))
+* (protein-features *tl*)
+* (defparameter *ts* (car (transcripts (sample-gene-rhodopsin))))
+* (defparameter *tl* (translation *ts*))
+* (mapcar #'protein-feature-type (protein-features *tl*))
+
+* (mapcar #'protein-feature-type (protein-features *tl*))
+
+(\"Pfam\" \"Pfam\" \"Superfamily\" \"transmembrane\" \"transmembrane\"
+ \"transmembrane\" \"transmembrane\" \"transmembrane\" \"transmembrane\"
+ \"transmembrane\" \"low_complexity" "Prosite_patterns" "Prosite_patterns\"
+ \"Prosite_profiles\" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
+ \"Prints\" \"Prints" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
+ \"Prints\" \"Prints\" \"Prints" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
+ \"Prints\")"
   (slot-value (analysis pf)
               'db))
 
@@ -268,7 +331,13 @@ given protein. If type is nil, all features of the protein are returned")
 (defgeneric transmembrane-protein-p (transcript-or-protein)
   (:documentation "Returns T iff the given protein (or the protein
 resulting from translating the transcript) contains a transmembrane
-region as predicted by TMHMM.")
+region as stored in Ensembl and predicted by TMHMM.
+
+Example:
+
+* (transmembrane-protein-p (car (transcripts (sample-gene-rhodopsin))))
+
+T")
   (:method ((trans (eql nil))) nil)
   (:method ((tl translation)) 
     (not (null (protein-features tl "transmembrane"))))
@@ -277,11 +346,29 @@ region as predicted by TMHMM.")
 
 (defun codes-tm-protein (gene)
   "True iff at least one transcript of that genes codes for a
-transmembrane protein."
+transmembrane protein.
+
+Example:
+
+* (codes-tm-protein (sample-gene-tp53))
+
+NIL
+* (codes-tm-protein (sample-gene-rhodopsin))
+
+T "
   (some #'transmembrane-protein-p (slot-value gene 'transcript)))
 
 (defun codes-non-tm-protein (gene)
-  "True iff all transcripts of that gene are (presumed) soluble."
+  "True iff all transcripts of that gene are (presumed) soluble. Please be aware that this is not the mere complement of the function #'codes-tm-protein since some genes have both transmembrane and soluble isoforms.
+
+Example:
+
+* (codes-non-tm-protein (sample-gene-tp53))
+
+T
+* (codes-non-tm-protein (sample-gene-rhodopsin))
+
+NIL"
   (some (complement #'transmembrane-protein-p) (slot-value gene 'transcript)))
 
 
@@ -301,8 +388,48 @@ does not affect the corresponding transcripts reading frame."))
 ;;; be able to handle dna-sequence-intervals, nucleotide-intervals and
 ;;; amino-acid-intervals
 
-;;; There are better methods in clcb. Remove if you're shure that it
-;;; won't break stuff.
+
+
+(defgeneric aa-coords->nt-coords (coord)
+  (:documentation "Convert coordinates from amino acids to
+nucleotides.  This works for simple integers as well as for intervals.
+Note that the first monomere has the index 1 in eather coordinate
+system, nucleotide as well as amino acid.  If the coordinate is a
+single number, it is mapped to the _first_ nucleotide which codes for
+the corresponding amino acid. If the argument is an interval on an
+amino acid sequence, the result is an interval that spans the whole
+nucleotide sequence which codes for the corresponding amino acids.
+
+### Examples
+(aa->nt 1)
+=> 1
+(aa->nt 3)
+=> 7 "))
+
+(defmethod aa-coords->nt-coords ((coord integer))
+  (1+ (* 3 (1- coord))))
+
+(defmethod aa-coords->nt-coords ((interval integer-interval))
+  (make-interval interval
+                 (aa-coords->nt-coords (lower-bound interval))
+                 (+ 2 (aa-coords->nt-coords (upper-bound interval)))))
+
+
+(defgeneric nt-coords->aa-coords (coord)
+  (:documentation "Convert from coordinates in nucleotides to
+coordinates in amino acids."))
+
+(defmethod nt-coords->aa-coords ((coord integer))
+  (multiple-value-bind (aa-1 rest) (truncate (1- coord) 3)
+    (values (1+ aa-1) rest)))
+
+(defmethod nt-coords->aa-coords ((interval integer-interval))
+  (bind:bind (((values start start-off)
+               (nt-coords->aa-coords (lower-bound interval)))
+              ((values end end-off)
+               (nt-coords->aa-coords (upper-bound interval))))
+    (values (make-interval interval  start end) start-off end-off)))
+
 (defun aa->nt (aa-pos &optional (offset 0))
   "Convert an position given in amino acids to a position in
 nucleotides. If `offset' is given, it's interpreted as the number of
@@ -429,7 +556,21 @@ amino acids that should be added to the result."
 ;;; Protein Features
 ;;;-----------------
 (defun supporting-exons (protein-feature)
-  "All exons that code for the given protein-feature."
+  "All exons that code for the given protein-feature.
+
+Example:
+
+* (defparameter *ts* (car (transcripts (sample-gene-rhodopsin))))
+* (defparameter *tl* (translation *ts*))
+* (protein-features *tl*)
+* (defparameter *ts* (car (transcripts (sample-gene-rhodopsin))))
+* (defparameter *tl* (translation *ts*))
+* (defparameter *pf* (protein-features-of-type *tl* \"transmembrane\"))
+* (supporting-exons (car *pf*))
+
+(#<EXON {BAFA8B1}>)
+
+"
   (let ((pf-coding-interval (dna-sequence-interval protein-feature)))
     (iter (for exon in  (exons (transcript (translation protein-feature))))
           (when (not (interval-empty-p
@@ -459,10 +600,25 @@ information for the protein feature."))
 ;;; ensembl objects to fire up a browser and view an url for this
 ;;; object.
 (defgeneric ensembl-object->url (ensembl-obj)
-  (:documentation "Get the Ensembl genome browser URL for this object.")
+  (:documentation "Get the Ensembl genome browser URL for this object.
+Example:
+
+* (ensembl-object->url (sample-gene-tp53))
+
+\"http://www.ensembl.org/Homo_sapiens/geneview?db=core;gene=ENSG00000141510\"")
+  (:method ((gene gene))
+    (format nil "http://www.ensembl.org/Homo_sapiens/geneview?db=core;gene=~A"
+            (stable-id gene)))
+  (:method ((transcript transcript))
+    (format nil "http://www.ensembl.org/Homo_sapiens/transview?db=core;transcript=~A"
+            (stable-id transcript)))
+  (:method ((translation translation))
+    (format nil "http://www.ensembl.org/Homo_sapiens/protview?db=core;peptide~A"
+            (stable-id translation)))
   (:method ((exon exon))
     (format nil "http://www.ensembl.org/Homo_sapiens/exonview?exon=~A"
-            (stable-id exon))))
+            (stable-id exon)))
+  )
 
 
 
@@ -505,11 +661,15 @@ information for the protein feature."))
 directly. The 'Tumour Protein 53' is one of the better-studied
 proteins and most biologists will immediately know its
 properties. This shall contribute to making the examples better
-understood.  Example: * (SAMPLE_GENE_TP53)
+understood.
+
+Example:
+
+* (SAMPLE-GENE-TP53)
 
 Gene TP53 successfully retrieved from Ensembl.
 #<GENE {10027FDC21}>
-* (SAMPLE_GENE_TP53)
+* (SAMPLE-GENE-TP53)
 
 #<GENE {10027FDC21}>
   "
@@ -522,6 +682,30 @@ Gene TP53 successfully retrieved from Ensembl.
          *tp53*)))
 
 (setf *tp53* (sample-gene-tp53))
+
+(defparameter *rhodopsin* nil)
+
+(defun sample-gene-rhodopsin () 
+  "The gene rhodopsin is retrieved from Ensembl and stored in the parameter *rhodopsin*. If that parameter is already set, then it will be returned directly. The gene is a prominant representant of the GPCR protein family. This shall contribute to making the examples better understood.
+
+Example:
+
+* (sample-gene-rhodopsin)
+
+Gene TP53 successfully retrieved from Ensembl.
+#<GENE {10027FDC21}>
+* (sample-gene-rhodopsin)
+
+#<GENE {10027FDC21}>
+  "
+  (if *rhodopsin* *rhodopsin*
+     (progn (if (setf *rhodopsin* (fetch-by-stable-id "ENSG00000163914"))
+		 (print "Gene RHO successfully retrieved from Ensembl.")
+		 (print "Gene RHO could not be retrieved."))
+	     *rhodopsin*)))
+
+(setf *rhodopsin* (sample-gene-rhodopsin))
+
 
 
 (defparameter *transcript* (car (transcripts *gene*)))
