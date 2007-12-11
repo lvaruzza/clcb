@@ -17,14 +17,7 @@ fi
 
 rootdir=`echo $rootdir|sed -e 's%/.$%%' -e 's%//%/%'`
 
-if find /home/moeller/.sbcl > /dev/null; then
-	# Albert, wirf mal 'nen Blick hierauf, bitte,
-	# hiernach funktionierte (in-package :tinaa)
-	# zwar, aber das liegt doch an etwas anderem, oder?
-	#echo "(pushnew "$rootdir" :tinaa)"
-	#echo "(asdf:oos 'asdf:load-op :tinaa)"
-	echo "(in-package :tinaa)"
-else
+if ! find /home/moeller/.sbcl > /dev/null; then
 	echo ";;; Could not find tinaa on your system"
 	echo
 fi

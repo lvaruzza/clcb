@@ -312,14 +312,12 @@ Example:
 * (defparameter *tl* (translation *ts*))
 * (mapcar #'protein-feature-type (protein-features *tl*))
 
-* (mapcar #'protein-feature-type (protein-features *tl*))
-
 (\"Pfam\" \"Pfam\" \"Superfamily\" \"transmembrane\" \"transmembrane\"
  \"transmembrane\" \"transmembrane\" \"transmembrane\" \"transmembrane\"
- \"transmembrane\" \"low_complexity" "Prosite_patterns" "Prosite_patterns\"
+ \"transmembrane\" \"low_complexity\" \"Prosite_patterns\" \"Prosite_patterns\"
  \"Prosite_profiles\" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
- \"Prints\" \"Prints" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
- \"Prints\" \"Prints\" \"Prints" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
+ \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
+ \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\" \"Prints\"
  \"Prints\")"
   (slot-value (analysis pf)
               'db))

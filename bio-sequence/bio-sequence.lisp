@@ -43,7 +43,9 @@ of any type, but will normally be of type `string'.")
    (seq-start :accessor seq-start
               :accessor lower-bound
               :initarg :seq-start
-              :initform 1)
+              :initform 1
+	      :documentation "Particularly those sequences that are part of another sequence may be preferably start their numbering with the parental position."
+	      )
    (seq-end :accessor seq-end
             :accessor upper-bound
             :initarg :seq-end))
