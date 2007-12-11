@@ -26,6 +26,10 @@ continue with
 
  (asdf-install:install 'alexandria)
 
+and
+
+ (asdf-install:install 'bind)
+
 If you want to be on the safe side, then also install the gpg keys of
 these packages and consider for yourself if you trust them. The keys
 needed are
