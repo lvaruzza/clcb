@@ -200,6 +200,48 @@ orthogonal coded means and when it is used."))
   (reduce #'+ (map 'vector #'* word scoring-word)))
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Coordinates on bio-sequences
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defgeneric aa-coords->nt-coords (coord)
+  (:documentation "Convert coordinates from amino acids to
+nucleotides.  This works for simple integers as well as for intervals.
+Note that the first monomere has the index 1 in eather coordinate
+system, nucleotide as well as amino acid.  If the coordinate is a
+single number, it is mapped to the _first_ nucleotide which codes for
+the corresponding amino acid. If the argument is an interval on an
+amino acid sequence, the result is an interval that spans the whole
+nucleotide sequence which codes for the corresponding amino acids.
+
+### Examples
+(aa->nt 1)
+=> 1
+(aa->nt 3)
+=> 7 "))
+
+(defmethod aa-coords->nt-coords ((coord integer))
+  (1+ (* 3 (1- coord))))
+
+(defmethod aa-coords->nt-coords ((interval integer-interval))
+  (make-interval interval
+                 (aa-coords->nt-coords (lower-bound interval))
+                 (+ 2 (aa-coords->nt-coords (upper-bound interval)))))
+
+(defgeneric nt-coords->aa-coords (coord)
+  (:documentation "Convert from coordinates in nucleotides to
+                   coordinates in amino acids."))
+
+(defmethod nt-coords->aa-coords ((coord integer))
+  (multiple-value-bind (aa-1 rest) (truncate (1- coord) 3)
+    (values (1+ aa-1) rest)))
+
+(defmethod nt-coords->aa-coords ((interval integer-interval))
+  (bind:bind (((values start start-off)
+               (nt-coords->aa-coords (lower-bound interval)))
+              ((values end end-off)
+               (nt-coords->aa-coords (upper-bound interval))))
+    (values (make-interval interval  start end) start-off end-off)))
 
 
 
@@ -207,8 +249,8 @@ orthogonal coded means and when it is used."))
 ;;;; Sequence objects to closely model real world molecules.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; For now those are very similar to ensembl objects. maybe I will
-;; change that later.
+;; For now those are very similar to ensembl objects.  I might change
+;; that later.
 (defclass transcript (nucleotide-sequence)
   ((exons :accessor exons
           :initarg :exons

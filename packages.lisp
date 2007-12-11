@@ -126,6 +126,8 @@
            #:bio-sequence-description
            #:bio-sequence-seq
            #:bio-sequence-length
+           #:nt-coords->aa-coords
+           #:aa-coords->nt-coords
 
            ;; nucleotide-sequence
            #:circular

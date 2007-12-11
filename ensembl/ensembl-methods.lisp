@@ -301,48 +301,8 @@ does not affect the corresponding transcripts reading frame."))
 ;;; be able to handle dna-sequence-intervals, nucleotide-intervals and
 ;;; amino-acid-intervals
 
-
-
-(defgeneric aa-coords->nt-coords (coord)
-  (:documentation "Convert coordinates from amino acids to
-nucleotides.  This works for simple integers as well as for intervals.
-Note that the first monomere has the index 1 in eather coordinate
-system, nucleotide as well as amino acid.  If the coordinate is a
-single number, it is mapped to the _first_ nucleotide which codes for
-the corresponding amino acid. If the argument is an interval on an
-amino acid sequence, the result is an interval that spans the whole
-nucleotide sequence which codes for the corresponding amino acids.
-
-### Examples
-(aa->nt 1)
-=> 1
-(aa->nt 3)
-=> 7 "))
-
-(defmethod aa-coords->nt-coords ((coord integer))
-  (1+ (* 3 (1- coord))))
-
-(defmethod aa-coords->nt-coords ((interval integer-interval))
-  (make-interval interval
-                 (aa-coords->nt-coords (lower-bound interval))
-                 (+ 2 (aa-coords->nt-coords (upper-bound interval)))))
-
-
-(defgeneric nt-coords->aa-coords (coord)
-  (:documentation "Convert from coordinates in nucleotides to
-coordinates in amino acids."))
-
-(defmethod nt-coords->aa-coords ((coord integer))
-  (multiple-value-bind (aa-1 rest) (truncate (1- coord) 3)
-    (values (1+ aa-1) rest)))
-
-(defmethod nt-coords->aa-coords ((interval integer-interval))
-  (bind:bind (((values start start-off)
-               (nt-coords->aa-coords (lower-bound interval)))
-              ((values end end-off)
-               (nt-coords->aa-coords (upper-bound interval))))
-    (values (make-interval interval  start end) start-off end-off)))
-
+;;; There are better methods in clcb. Remove if you're shure that it
+;;; won't break stuff.
 (defun aa->nt (aa-pos &optional (offset 0))
   "Convert an position given in amino acids to a position in
 nucleotides. If `offset' is given, it's interpreted as the number of
