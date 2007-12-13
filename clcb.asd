@@ -42,6 +42,7 @@
                  "split-sequence"
                  "moptilities"
                  "alexandria"
+		 "bind"
 		 )
     :components
     ((:doc-file "README")

@@ -50,6 +50,10 @@
            #:exon-phase
            #:strand
 
+	   ;; data for sample code troughout CLCB
+           #:sample-gene-tp53
+	   #:sample-gene-rhodopsin
+
            ;; Stuff that will go into bio-sequence eventually
            #:dna-sequence-interval
            #:aa->nt

@@ -25,46 +25,90 @@
 
 ;;;; -------------------------------------------------------------------------
 ;;;; Some New Types 
-(defun float-or-nil-p (x) (or (null x) (floatp x)))
+(defun float-or-nil-p (x) 
+  "Indicates of the argument is a floating point number or nil. Admittedly, this is somewhat counterintuitive here.
+
+Example:
+* (FLOAT-OR-NIL-P 0)
+
+NIL
+* (FLOAT-OR-NIL-P 0.0)
+
+T
+* (FLOAT-OR-NIL-P 1)
+
+NIL
+* (FLOAT-OR-NIL-P 1.0)
+
+T
+* (null 0)
+
+NIL
+* (null nil)
+
+T"
+  (or (null x) (floatp x)))
 (deftype float-or-nil () `(satisfies float-or-nil-p))
 
-(defun number-or-nil-p (x) (typep x '(or null number)))
+(defun number-or-nil-p (x) 
+  "True if the argumet is numeric.
+
+Examples:
+* (number-or-nil-p 0)
+
+T
+* (number-or-nil-p 0.0)
+
+T
+* (number-or-nil-p "0")
+
+NIL"
+  (typep x '(or null number)))
 (deftype number-or-nil () `(satisfies number-or-nil-p))
 
 
 
 ;;;; -------------------------------------------------------------------------
 ;;;; Tables and Columns
-(defparameter *separator* (list #\tab))
+(defparameter *separator* (list #\tab)
+  "The default column separator in tables.")
 
 (defparameter *default-table-size* 50
   "Specifies the default size of the adjustable array underlying a
   table.")
 
 (defun make-table-rows (&optional (size *default-table-size*))
+  "A new column is prepared as an array of the length as specified in the first argument. If that is omitted, the *default-table-size* is chosen."
   (make-array size :adjustable t :fill-pointer 0))
 
 (defclass table ()
   ((rows :accessor table-rows :initarg :rows :initform (make-table-rows))
-   (schema :accessor table-schema :initarg :schema)))
+   (schema :accessor table-schema :initarg :schema))
+  (:documentation "This class presents a two-dimensional array that is interpreted as a table or spreadsheet. This implementation is comparable with the dump of a relational database in which a particular column is of an invariant type. Rows represent observations/individuals."))
 
 (defclass column ()
   ((name :reader column-name
-         :initarg :name)
+         :initarg :name
+	 :documentation "The name of a column as it would be presented in a header line when printed.")
    (equality-predicate :reader column-equality-predicate
-                       :initarg :equality-predicate)
+                       :initarg :equality-predicate
+		       :documentation "A function indicating of two entries in a column are equal or not.")
    (comparator :reader column-comparator
-               :initarg :comparator)
+               :initarg :comparator
+	       :documentation "A function(a,b) indicating if a<b -> -1, a>b -> 1 or a==b -> 0.")
    (default-value :reader column-default-value
                   :initarg :default-value
-                  :initform nil)
+                  :initform nil
+		  :documentation "The default is to insert NIL when no other value is specified. This can be adapted columnwise with this attribute.")
    (value-normalizer :reader column-value-normalizer
                      :initarg :value-normalizer
                      :initform #'(lambda (v column)
                                     (declare (ignore column))
                                     v))
    (parse-function :reader column-parse-function
-                   :initarg :parse-function)))
+                   :initarg :parse-function
+		   :documentation "A function to read a column from a string."))
+  (:documentation "A column is a vertical slot in a table."))
 
 (defun not-nullable (value column)
   (or value (error "Column ~A can't be null." (column-name column))))
@@ -153,21 +197,25 @@ class."
   (vector-push-extend line table-data))
 
 (defun read-table-line (stream separator)
+  "A row is read from a stream and an array of attributes returned as splitted according to the specified separator."
   (split-sequence separator (read-line stream nil nil)))
 
 (defun ordered-columns (columns col-order)
+  "Retrieves columns in a particular order."
   (mapcar #'(lambda (x)
               (find x columns :key #'column-name
                     :test #'string-equal))
           col-order))
 
 (defun text-line->table-row (line column-order)
+  "A text string is converted into a table row. The second argument allows to specify an assignment from the attributes read to the column in which they should be stored."
   (map 'vector #'funcall
        (mapcar #'column-parse-function column-order)
        line))
 
 
 (defun add-table-line (line table)
+  "A row is added to the table."
   (vector-push-extend line (table-rows table)))
 
 (defun class->table (class)
@@ -192,7 +240,7 @@ class."
        do (add-table-line row table)
        finally (return table))))
 
-;; FIXME: This relies on the fakt, that the initargs have the same
+;; FIXME: This relies on the fact, that the initargs have the same
 ;; name as the columns. Use MOP instead.
 (defun table->objects (table class)
   (let ((col-names (mapcar #'column-name (table-schema table))))
@@ -207,6 +255,7 @@ class."
 (defun read-objects-from-table (stream class &key
                                 (separator #\tab) (header nil)
                                 (comment-char #\#))
+  "Creates objects from a table, one object per line."
   (table->objects
    (read-table-from-class stream class
                           :separator separator
@@ -218,10 +267,10 @@ class."
 ;;; ----------------------------------------------
 ;;; Table methods
 (defgeneric table-row (table row-id)
-  (:documentation "Get row from table."))
+  (:documentation "Get row from table, i.e, table[row-id,] in R syntax."))
 
 (defgeneric table-column (table col-id)
-  (:documentation "Get column from table."))
+  (:documentation "Get column from table, i.e., table[,col-id] in R syntax."))
 
 (defmethod table-row ((table table) row)
   (aref (table-rows table) row))
@@ -245,4 +294,9 @@ class."
                 column))
 
 (defun table-num-rows (table)
+  "Number of rows in a table, equivalent to nrow(table) in R."
   (length (table-rows table)))
+
+(defun table-num-cols (table)
+  "Number of columns in a table, equivalent to ncol(table) in R. The value is undefined if no row has yet been inserted."
+  (length (car (table-rows table))))

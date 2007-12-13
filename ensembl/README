@@ -1,3 +1,14 @@
-All classes and methods in clcb-ensembl should have a documentation string
-and many also have explicit examples on their usage.
-In ../doc some rogue docs are evolving.
+============
+clcb-ensembl
+============
+
+That class provides read access to essential tables in the Ensembl
+core matrices. The objects nicely capsule the relational tables of the
+MySQL database. All iterators and set operations are provided by Lisp,
+sequence intervals that represent protein features are contributed to
+the language by CLCB.
+
+All classes and methods in clcb-ensembl should already have a
+documentation string. Many also give explicit examples on their usage.
+In ../doc some rogue documentation is evolving that presents
+the functionality of CLCB in a larger context.
