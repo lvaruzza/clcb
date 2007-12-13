@@ -1,23 +1,25 @@
-The Common Lisp Computational Biology (CLCB) package is intended
-to be a comprehensive, flexible and easy to use library for
-bioinformatics and computational biology.  It aims at competing with
-Bio{Perl,Java,Python,Ruby} in terms of modularity and scope. The
-intertwined handling of data and control structures in lisp shall
-render this packages as an ideal source for active research in
-biological sequence analysis, combining the commodity of readily
-available functionality with the lisp-intrinsic dynamics to work with
-new structures.
-
 =================================
 Common Lisp Computational Biology
 =================================
+
+The Common Lisp Computational Biology (CLCB) package aims
+to be a comprehensive, flexible and easy to use library for
+bioinformatics and computational biology.  It competes with
+Bio{Perl,Java,Python,Ruby} in terms of modularity and scope. The
+intertwined handling of data and control structures in Lisp shall
+render this packages as an ideal source for active research in
+biological sequence analysis, combining the commodity of readily
+available functionality with the Lisp-intrinsic dynamics to work with
+new structures.
 
 Scope and Motivation
 ====================
 
 Common Lisp has the outstanding feature to intertwine control structures
 and data.  This appeals particularly to Bioinformatics which is data
-driven and deals with structures of enormous complexity. The here
+driven and deals with structures of enormous complexity. The success
+that the statistics suite R has in our field, which has its roots in
+Lisp, may be close to a proof of that statement. The here
 presented ground work provides a coherent access to
 
  * objects representing biological sequences
@@ -26,13 +28,12 @@ presented ground work provides a coherent access to
 The Common Lisp Computational Biology package is intended to be a
 comprehensive, flexible and easy to use library for bioinformatics and
 computational biology.  It (hopefully) will be comparable to
-Bio{Perl,Java,Python,Ruby} in terms of modularity and scope.  It is
-not a competitor to BioLisp/BioBike, since this effort aims at
-providing complete working environments. CLCB instead addresses rather
-low-level tools, but in a modular fashion.  In fact, we'd like to make
-it comperatible with BioBike in a later stage of the project.  Also,
-CLCB will be independent of the Common Lisp implementation used.
+Bio{Perl,Java,Python,Ruby} in terms of modularity and scope.
 
+There are several other biologically inspired initiatives working with
+Lisp. Their functionality does not directly overlap with what is
+provided by CLCB. Consequencly, CLCB is more of an addition than a
+competitor to BioLisp/BioBike or to ... ?
 
 
 Modularity

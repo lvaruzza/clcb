@@ -58,7 +58,5 @@ execute
 
 	./bin/userinit.sh
 
-and paste the output to your sbcl shell. If we have not committed some non-sense
-the meantime then CLCB should compile smoothly.
-
-
+and paste the output to your sbcl shell. If we have not committed some
+non-sense the meantime then CLCB should compile smoothly.
