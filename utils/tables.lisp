@@ -84,7 +84,10 @@ NIL"
 (defclass table ()
   ((rows :accessor table-rows :initarg :rows :initform (make-table-rows))
    (schema :accessor table-schema :initarg :schema))
-  (:documentation "This class presents a two-dimensional array that is interpreted as a table or spreadsheet. This implementation is comparable with the dump of a relational database in which a particular column is of an invariant type. Rows represent observations/individuals."))
+  (:documentation "This class presents a two-dimensional array that is interpreted as a table or spreadsheet. This implementation is comparable with the dump of a relational database in which a particular column is of an invariant type. Rows represent observations/individuals.
+
+  
+Example: See the file molecule/amino-acids.lisp of the CLCB sources for an employment of this class."))
 
 (defclass column ()
   ((name :reader column-name

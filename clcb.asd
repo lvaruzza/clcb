@@ -42,7 +42,7 @@
                  "split-sequence"
                  "moptilities"
                  "alexandria"
-		 "bind"
+		 "metabang-bind"
 		 )
     :components
     ((:doc-file "README")

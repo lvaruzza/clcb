@@ -22,6 +22,7 @@
 \begin{document}
 
 \titlepage
+\tableofcontents
 
 \chapter{Introduction}
 
@@ -299,7 +300,7 @@ Conceptionally, the bio-sequence class is the link between the abstract mathemat
 
 The package describes several routines for the input and output of sequences to streams.
 
-\section{\ensembl}
+\section{ensembl}
 
 The \ensembl database provides insights into 
 \begin{itemize}
@@ -446,7 +447,8 @@ The lines below show the representation of the exon class:
   :dna-sequence t)
 \end{lstlisting}
 
-\section{Intervals}
+\section{utils}
+\subsection{intervals}
 
 A core principle of \CLCB is to retrieve data from Ensembl as easily as
 possible and then continue with the analysis with minimal and transparent
@@ -540,6 +542,12 @@ for its constructor:
 
 \end{lstlisting}
 
+An application of intervals is on genomic sequences. 
+
+\begin{lstlisting}
+dna-sequence-interval
+\end{lstlisting}
+
 
 
 \chapter{Use Cases}
@@ -561,6 +569,10 @@ remain open between these queries.
 
 \subsection{Link between genomic and protein features}
 
+\subsection{Selection of alternatively spliced protein features}
+
+\subsection{Tabular representation of findings}
+
 \section{Intergenomics}
 
 \subsection{\ensembl Mart}
@@ -571,7 +583,13 @@ remain open between these queries.
 
 Not implemented yet.
 
-\section{Communication with other Bioinformatics Suites}
+\section{Communication}
+
+\subsection{Retrieval of database cross references}
+
+implementiert Steffen mal
+
+\subsection{...with other Bioinformatics Suites}
 
 The orchestration of software programs to work towards the scientific
 or very pragmatic aims is an art per se. Tools like Taverna have become
