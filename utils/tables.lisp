@@ -60,7 +60,7 @@ T
 * (number-or-nil-p 0.0)
 
 T
-* (number-or-nil-p "0")
+* (number-or-nil-p \"0\")
 
 NIL"
   (typep x '(or null number)))
@@ -231,18 +231,17 @@ class."
                    (separator #\tab) (header nil) (comment-char #\#))
   "Read in a table from a text file. This function should behave
    similar to the read.table function in R."
-  (declare (ignore header comment-char))
+  (declare (ignore header))
   (let* ((header (read-table-line stream separator))
          (file-col-order (ordered-columns (class->columns class)
                                           header))
          (table (make-instance 'table :schema file-col-order)))
-    (loop
-       for line = (read-table-line stream separator)
-       while (not (null (car line)))
-       unless (char= (char line 0) comment-char)
-       for row = (text-line->table-row line file-col-order)
-       do (add-table-line row table)
-       finally (return table))))
+    (iter (for splitted-line = (read-table-line stream separator))
+          (while (not (null (car splitted-line))))
+          (unless (char= (char (car splitted-line) 0) comment-char)
+            (let ((row (text-line->table-row splitted-line file-col-order)))
+              (add-table-line row table)))
+          (finally (return table)))))
 
 ;; FIXME: This relies on the fact, that the initargs have the same
 ;; name as the columns. Use MOP instead.

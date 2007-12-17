@@ -25,15 +25,23 @@
 
 (defclass codon ()
   ((triplet :initarg :triplet
-	    :documentation "describes three nucleotides that need to be matched on the mRNA"
-            :accessor codon-triplet)
+            :accessor codon-triplet
+	    :documentation "describes three nucleotides that need to
+                            be matched on the mRNA" )
    (start-aa :initarg :start-aa
              :documentation "set if the codon may initiate a translation."
              :accessor codon-start-aa)
    (aa :initarg :aa
        :documentation "the amino acid that is transferred"
        :accessor codon-aa))
-   (:documentation "Codons can be though of units of translation from RNA to protein. Every codon is assigned to a particular tRNA, which may recognise multiple codons. There are two types of special codons, one that may initiate the translation process (see slot start-aa), the other that certainly stops it. In some organism under some special conditions such stop codons may also code for the 21st amino acid, seleno-cystein, but this is not modelled here."))
+   (:documentation "Codons can be though of units of translation from
+   RNA to protein. Every codon is assigned to a particular tRNA, which
+   may recognise multiple codons. There are two types of special
+   codons, one that may initiate the translation process (see slot
+   start-aa), the other that certainly stops it. In some organism
+   under some special conditions such stop codons may also code for
+   the 21st amino acid, seleno-cystein, but this is not modelled
+   here."))
 
 (defmethod print-object ((codon codon) (s stream))
   (with-accessors ((aa codon-aa) (saa codon-start-aa)) codon
@@ -45,15 +53,22 @@
 
 (defclass genetic-code-table ()
   ((id :accessor genetic-code-id
-       :documentation "A number to which is commonly referred when addressing a particular coding table."
+       :documentation "A number to which is commonly referred when
+       addressing a particular coding table."
        :initarg :id)
    (name :accessor genetic-code-name
-	 :documentation "The human-understandable description of the range of species that features this translation"
+	 :documentation "The human-understandable description of the
+	 range of species that features this translation"
          :initarg :name)
    (codons :initarg :codons
-	   :documentation "List of objects of the codon class that assign nucleotides to amino acids."
+	   :documentation "List of objects of the codon class that
+	   assign nucleotides to amino acids."
            :accessor genetic-code-codons))
-   (:documentation "Species possibly differ in their assignments of nucleotides to amino acids. Actually, our mitochondria have a different (bacterial) coding from our nucleus. The assignment is referred to as the genetic code and this class knows about multiple such codes that it represents in a table."))
+   (:documentation "Species possibly differ in their assignments of
+   nucleotides to amino acids. Actually, our mitochondria have a
+   different (bacterial) coding from our nucleus. The assignment is
+   referred to as the genetic code and this class knows about multiple
+   such codes that it represents in a table."))
 
 (defmethod print-object ((gct genetic-code-table) (s stream))
   (print-unreadable-object (gct s :type t)
@@ -176,9 +191,11 @@
 (defmethod get-amino-acid ((cod codon))
   (codon-aa cod))
 
+#||
 (defun string->amino-acids (string)
   "Create a vector of amino acids by interpreting the string as a
 sequence of 1-letter-codes."
   (declare (optimize (speed 3) (safety 1))
            (type simple-string string))
-  (map '(simple-array amino-acid (*)) #'get-amino-acid string))
+  ;; Huh?
+  (map '(simple-array amino-acid (*)) #'get-amino-acid string))||#

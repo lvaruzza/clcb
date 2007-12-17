@@ -43,12 +43,14 @@
    (ensembl-gene
      :accessor short-name
      :initform nil :type string
-     :documentation "abbreviation found in gene-, transcript- or protein-identifiers")
+     :documentation "abbreviation found in gene-, transcript- or
+     protein-identifiers")
    (ncbi-id
      :accessor ncbi
-     :initform nil :type utils::number-or-nil
+     :initform nil :type clcb-utils::number-or-nil
      :documentation "ID in NCBI taxonomy database"))
-  (:documentation "Utility class to prepare for comparisons of sequences between organisms."))
+  (:documentation "Utility class to prepare for comparisons of
+  sequences between organisms."))
 
 
 
@@ -58,15 +60,17 @@
 
 
 (defun read-species (species-table-file)
-  "CLCB comes with a text file that describes the species and their appearance in EnsEMBL."
+  "CLCB comes with a text file that describes the species and their
+appearance in EnsEMBL."
   (with-open-file (in species-table-file)
     (read-objects-from-table in 'species)))
 
+#||
 (defparameter *species*
   (read-species
    (make-pathname :name "species" :type "txt"
                   :defaults *data-directory-pathname*))
-  "A global parameter with information about species in EnsEMBL. This file is manually created and may need an update when dealing with a newly sequenced organism that we were not yet aware of.
+  "A global parameter with information about species in EnsEMBL.  This file is manually created and may need an update when dealing with a newly sequenced organism that we were not yet aware of.
 
 Example:
 
@@ -79,4 +83,4 @@ Example:
     (dolist (aa *species* species-latin-hash)
       (setf (gethash (latin aa) species-latin-hash) aa)
       (setf (gethash (char-downcase (latin aa)) species-latin-hash) aa)))
-  "The objects representing species are retrievable only by their latin name.")
+  "The objects representing species are retrievable only by their latin name.")||#

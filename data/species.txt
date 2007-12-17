@@ -1,4 +1,4 @@
-latin	trivial	ensembl_core	ensembl_mart	ensembl_gene	ncbi
+latin	trivial	ensembl-core	ensembl-mart	ensembl-gene	ncbi
 homo sapiens	human	homo_sapiens	hsapiens		9606
 mus musculus	mouse	mus_musculus	mmusculus	MUS	10090
 rattus norvegicus	rat	rattus_norvegivus	rnorvegicus	RNO	10116
@@ -7,26 +7,26 @@ danio rerio	zebrafish	danio_rerio	drerio	DAR	7955
 bos taurus	cow	bos_taurus	btaurus	BTA	9913
 felis catus	cat	felis_catus	fcatus	FCA	9685
 pan troglodytes	chimp	pan_troglodytes ptroglodytes	PTR	9598
-gasterosteus aculeatus	three spined stickleback			GAC	69293
-xenopus tropicalis
-tupaia belangeri 
-takifugu rubripes
-spermophilus tridecemlineatus
-sorex araneus
-otolemur garnettii
-oryzias latipes
-oryctolagus cuniculus
-ornithorhynchus anatinus
-ochotona princeps
-myotis lucifugus
-monodelphis domestica
-microcebus murinus
-macaca mulatta 
-loxodonta africana
-gallus gallus	chicken	gallus_gallus	ggallus	GAL	9031
-erinaceus europaeus
-echinops telfairi 
-dasypus novemcinctus 
-cavia porcellus
-caenorhabditis elegans
-anopheles gambiae	moskito			ANG	7165
+#gasterosteus aculeatus	three spined stickleback			GAC	69293
+#xenopus tropicalis
+#tupaia belangeri 
+#takifugu rubripes
+#spermophilus tridecemlineatus
+#sorex araneus
+#otolemur garnettii
+#oryzias latipes
+#oryctolagus cuniculus
+#ornithorhynchus anatinus
+#ochotona princeps
+#myotis lucifugus
+#monodelphis domestica
+#microcebus murinus
+#macaca mulatta 
+#loxodonta africana
+#gallus gallus	chicken	gallus_gallus	ggallus	GAL	9031
+#erinaceus europaeus
+#echinops telfairi 
+#dasypus novemcinctus 
+#cavia porcellus
+#caenorhabditis elegans
+#anopheles gambiae	moskito			ANG	7165

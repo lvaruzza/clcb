@@ -429,10 +429,10 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 (defparameter *interval2*
   (make-interval 'integer-interval 23 42))
  
-;;; (defparameter *multi-interval*
-;;;   (make-instance 'multi-interval :intervals
-;;;                  (mapcar #'(lambda (start end) (make-interval
-;;;                                                 'integer-interval
-;;;                                                 start end))
-;;;                          '(5  50 70 65)
-;;;                          '(13 60 90 70))))
+(defparameter *multi-interval*
+  (make-instance 'multi-interval :intervals
+                 (mapcar #'(lambda (start end) (make-interval
+                                                'integer-interval
+                                                start end))
+                         '(5  50 70 65)
+                         '(13 60 90 70))))
