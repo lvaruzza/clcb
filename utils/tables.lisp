@@ -226,7 +226,7 @@ class."
   (make-instance 'table
                  :schema (class->columns class)))
 
-;; FIXME: Honor comment-char and header arguments
+;; FIXME: Honor header arguments
 (defun read-table-from-class (stream class &key
                    (separator #\tab) (header nil) (comment-char #\#))
   "Read in a table from a text file. This function should behave
@@ -239,6 +239,7 @@ class."
     (loop
        for line = (read-table-line stream separator)
        while (not (null (car line)))
+       unless (char= (char line 0) comment-char)
        for row = (text-line->table-row line file-col-order)
        do (add-table-line row table)
        finally (return table))))

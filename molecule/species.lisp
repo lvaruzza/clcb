@@ -25,30 +25,30 @@
 
 (defclass species () 
   ((latin
-     :accessor latin
+     :accessor species-latin-name
      :type string
      :documentation "scientific name of species")
    (trivial
-     :accessor trivial
+     :accessor species-trivial-name
      :initform nil :type string
      :documentation "common name of species")
-   (ensembl_core
+   (ensembl-core
      :accessor core-db-name
      :initform nil :type string
      :documentation "name of core of SQL database")
-   (ensembl_mart
+   (ensembl-mart
      :accessor mart-db-name
      :initform nil :type string
      :documentation "name in EnsEMBL mart databases")
-   (ensembl_gene
+   (ensembl-gene
      :accessor short-name
      :initform nil :type string
      :documentation "abbreviation found in gene-, transcript- or protein-identifiers")
-   (ncbi_id
+   (ncbi-id
      :accessor ncbi
      :initform nil :type utils::number-or-nil
      :documentation "ID in NCBI taxonomy database"))
-  (:documentation "Utility class to prepare for comparisons of sequences between organisms.")
+  (:documentation "Utility class to prepare for comparisons of sequences between organisms."))
 
 
 
@@ -59,7 +59,7 @@
 
 (defun read-species (species-table-file)
   "CLCB comes with a text file that describes the species and their appearance in EnsEMBL."
-  (with-open-file (in aa-table-file)
+  (with-open-file (in species-table-file)
     (read-objects-from-table in 'species)))
 
 (defparameter *species*
@@ -74,11 +74,9 @@ Example:
 
 ")
 
-(defparameter *latin-species-hash* 
-  (let ((latin-species-hash (make-hash-table)))
-    (dolist (aa *species* latin-species-hash)
-      (setf (gethash (latin aa) latin-species-hash)
-            aa)
-      (setf (gethash (char-downcase (latin aa)) latin-species-hash)
-            aa)))
+(defparameter *species-latin-hash* 
+  (let ((species-latin-hash (make-hash-table)))
+    (dolist (aa *species* species-latin-hash)
+      (setf (gethash (latin aa) species-latin-hash) aa)
+      (setf (gethash (char-downcase (latin aa)) species-latin-hash) aa)))
   "The objects representing species are retrievable only by their latin name.")
