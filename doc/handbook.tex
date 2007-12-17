@@ -585,11 +585,53 @@ Not implemented yet.
 
 \section{Communication}
 
+The information that was gathered with \CLCB most
+likely needs to be processed further. This may
+be for publication or to add more biological data
+that was not directly accessible from \CLCB. Also,
+some external parties may have already prepared 
+an analysis platform that should be sent the data to.
+
+\subsection{Data import}
+
+Any data can be read with Lisp. The clcb-utils:table
+class is of considerable benefit to add data for analyses.
+The files amino-acids.\{txt,lisp\} and species.\{txt,lisp\}
+give examples for the preparation of a hash table
+that finds rows in tables by some attribute of theirs.
+
+To prepare the input, a new class that is representing the rows must
+be prepared. In a initial version, it may be the names of the columns
+that directly determine the names of the slots. At a later stage on may
+decide that some column are not of interest or that additional slots
+are required.
+
+The genetic code representation represents a custom format.  If the data
+imported is likely to be of interest for a larger audience then please
+consider to submit your work to the \CLCB or make it publicly available
+through other means.
+
+\subsubsection{Output text files and tables}
+
+The output of tables to prepare a text-based communication with another tool can work in complete analogy to the input. One defines a table and just by printing it to a file this will be directly readable by, say, R, Gnumeric or some other spreadsheet.
+
+If the output format is not tab-delimited or in any way repetitive, e.g., a dendrogram, then core Lisp may be the perfect handler of that format, but not the routines that are currently provided by \CLCB.
+
+\subsubsection{Relational databases}
+
+
+
 \subsection{Retrieval of database cross references}
 
 implementiert Steffen mal
 
 \subsection{...with other Bioinformatics Suites}
+
+At this developmental stage, \CLCB has not yet developed any particular
+interface to other bioinformatics libraries or statistics suites. To
+tap into all the resources made available to R (www.r-project.org) seem
+a worthwhile target. To achieve such, the data needs to be exchanged
+between Lisp and R as text files.
 
 The orchestration of software programs to work towards the scientific
 or very pragmatic aims is an art per se. Tools like Taverna have become
@@ -603,13 +645,14 @@ then CBCL should already allow to store the data in a format that is
 suitable as input for later tools since the most common file formats
 are already implemented.
 
-The tool that is most commonly used to perform the orchestration is 
-the program {\em make}. The data files that every step of the analysis needs
-are communication and synchronisation points. Only after the process producing one
-data file has been completed, the downstream analyis programs are initiated.
-Also nice: Makefiles can implement a parallel execution of the analysis and 
-even some queuing systems are compatible with Makefiles to allow using a complete
-compute farm or a computational grid for the analysis.
+The tool that is most commonly used to perform the orchestration is the
+program {\em make}. The data files that every step of the analysis needs
+are communication and synchronisation points. Only after the process
+producing one data file has been completed, the downstream analyis
+programs are initiated.  Also nice: Makefiles can implement a parallel
+execution of the analysis and even some queuing systems are compatible
+with Makefiles to allow using a complete compute farm or a computational
+grid for the analysis.
 
 There is some ever-going work on applying agent technologies for
 Bioinformatics \cite{agents:2007}. Well, today this is mostly written

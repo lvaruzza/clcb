@@ -23,7 +23,6 @@
 
 (in-package #:clcb)
 
-
 (defclass amino-acid (molecule)
   ((1-letter-code
     :accessor 1-letter-code     :initarg :1-letter-code 
