@@ -1,0 +1,66 @@
+\documentclass{article}
+\author{Albert Krewinkel$^*$ \and Steffen M{\"{o}}ller}
+\title{Coherent Lisp access to resources in Computational Biology}
+\date{\today}
+\begin{document}
+\maketitle
+{\small University of L{\"{u}}beck, Institute for Neuro- and Bioinformatics, D-23538 L\"ubeck\\
+
+$^*$to whom correspondence should be addressed: krewink@inb.uni-luebeck.de
+}
+\begin{abstract}
+This work introduces a Lisp package for accessing information in the
+genome database EnsEMBL and thereby integrating data of SNPs, genes,
+transcripts and proteins.
+
+{\bf Availability:} http://clcb.sf.net
+\end{abstract}
+
+\section{Introduction}
+
+Computational biology experiences a steady gain not only in the sheer
+volume of data that needs to be processed. The data that is stored becomes
+more and more interconnected as well. There is an interplay of sequence
+similarity and intergenomics, of sequence variation and expression data
+or protein features.
+
+The volume of data is coped with the old technology of relational
+databases and since the IT develops faster than that data rate, this
+is save. The models for interactions of the data, however, need to be
+transferred between the human and the machine. The community approaches
+behind BioJava, BioPerl or BioRuby have provided an enormous wealth of
+tricks for dealing with data in computational biology, but the interaction
+with those data is not addressed.
+
+The motivation behind the here presented work lies in the hunch that
+by strengthening the functional aspects of programming languages, this
+situation can be helped.  A technology older than relational databases,
+the programming language Lisp, was employed to model interactions
+between biological entities in the EnsEMBL core and SNP databases. To
+the end use this functions much like prepared tables of BioMart but
+without constraints on the semantic links of the data and, admittedly,
+more interactions with the database.
+
+\section{Results}
+
+\section{Discussion}
+
+The common myths about Lisp have all long been debunked. Lisp integrates
+principles from functional, iterative and object-oriented programming and
+its macro system provides it with an unparalleled flexibility. The
+functional programming brings computational biology has advantages. The
+programmer follows the data through the code and operations may be passed 
+as entities between functions. This allows to think about the function of,
+e.g. a nuclease, in complete analogy to the enzyme on a molecular level:
+both can be added to a set of target sequences.
+
+The CLCB library is moderately complete for its application on the EnsEMBL
+database. The success that the statistics envirionment R \cite{Rbioinformatics}
+has in the field of bioinformatics, which shared many concepts of a
+functional language, is indicative of the potential that Lisp has for
+computational biology.
+
+\bibliographystyle{plain}
+\bibliography{clcb}
+
+\end{document}
