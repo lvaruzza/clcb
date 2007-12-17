@@ -112,7 +112,17 @@
            #:*3-letter-aa-hash*
            #:get-amino-acid
 
-
+	   ;; species
+	   #:species
+	   #:latin
+	   #:trivial
+	   #:ncbi
+	   #:core-db-name
+	   #:mart-db-name
+	   #:short-name
+	   #:*species*
+	   #:*latin-species-hash*
+	   
            ;;; BIO-SEQUENCES
            #:nucleotide-sequence
            #:amino-acid-sequence

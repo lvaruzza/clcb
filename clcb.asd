@@ -68,6 +68,7 @@
      (:module "molecule"
               :components ((:file "molecule")
                            (:file "amino-acids")
+                           (:file "species")
                            (:file "nucleotide"))
               :depends-on ("utils" "config")
               :serial t)

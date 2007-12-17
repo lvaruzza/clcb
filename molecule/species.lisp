@@ -33,15 +33,15 @@
      :initform nil :type string
      :documentation "common name of species")
    (ensembl_core
-     :accessor core
+     :accessor core-db-name
      :initform nil :type string
      :documentation "name of core of SQL database")
    (ensembl_mart
-     :accessor mart
+     :accessor mart-db-name
      :initform nil :type string
      :documentation "name in EnsEMBL mart databases")
    (ensembl_gene
-     :accessor gene
+     :accessor short-name
      :initform nil :type string
      :documentation "abbreviation found in gene-, transcript- or protein-identifiers")
    (ncbi_id
