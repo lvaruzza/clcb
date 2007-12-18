@@ -1,7 +1,10 @@
 
 all: paper.pdf
 
-paper.bbl: $(wildcard *.bib)
+paper.aux: paper.tex
+	pdflatex $<
+
+paper.bbl: $(wildcard *.bib) paper.aux
 	bibtex paper 
 
 paper.pdf: paper.tex paper.bbl
