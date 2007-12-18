@@ -78,31 +78,42 @@ NIL"
   table.")
 
 (defun make-table-rows (&optional (size *default-table-size*))
-  "A new column is prepared as an array of the length as specified in the first argument. If that is omitted, the *default-table-size* is chosen."
+  "A new column is prepared as an array of the length as specified in
+the first argument. If that is omitted, the *default-table-size* is
+chosen."
   (make-array size :adjustable t :fill-pointer 0))
 
 (defclass table ()
   ((rows :accessor table-rows :initarg :rows :initform (make-table-rows))
    (schema :accessor table-schema :initarg :schema))
-  (:documentation "This class presents a two-dimensional array that is interpreted as a table or spreadsheet. This implementation is comparable with the dump of a relational database in which a particular column is of an invariant type. Rows represent observations/individuals.
-
+  (:documentation "This class presents a two-dimensional array that is
+  interpreted as a table or spreadsheet. This implementation is
+  comparable with the dump of a relational database in which a
+  particular column is of an invariant type. Rows represent
+  observations/individuals.
   
-Example: See the file molecule/amino-acids.lisp of the CLCB sources for an employment of this class."))
+  Example: See the file molecule/amino-acids.lisp of the CLCB sources
+  for an employment of this class."))
 
 (defclass column ()
   ((name :reader column-name
          :initarg :name
-	 :documentation "The name of a column as it would be presented in a header line when printed.")
+	 :documentation "The name of a column as it would be presented
+	 in a header line when printed.")
    (equality-predicate :reader column-equality-predicate
                        :initarg :equality-predicate
-		       :documentation "A function indicating of two entries in a column are equal or not.")
+		       :documentation "A function indicating of two
+		       entries in a column are equal or not.")
    (comparator :reader column-comparator
                :initarg :comparator
-	       :documentation "A function(a,b) indicating if a<b -> -1, a>b -> 1 or a==b -> 0.")
+	       :documentation "A function(a,b) indicating if a<b ->
+	       -1, a>b -> 1 or a==b -> 0.")
    (default-value :reader column-default-value
                   :initarg :default-value
                   :initform nil
-		  :documentation "The default is to insert NIL when no other value is specified. This can be adapted columnwise with this attribute.")
+		  :documentation "The default is to insert NIL when no
+		  other value is specified. This can be adapted
+		  columnwise with this attribute.")
    (value-normalizer :reader column-value-normalizer
                      :initarg :value-normalizer
                      :initform #'(lambda (v column)
@@ -110,7 +121,8 @@ Example: See the file molecule/amino-acids.lisp of the CLCB sources for an emplo
                                     v))
    (parse-function :reader column-parse-function
                    :initarg :parse-function
-		   :documentation "A function to read a column from a string."))
+		   :documentation "A function to read a column from a
+		   string."))
   (:documentation "A column is a vertical slot in a table."))
 
 (defun not-nullable (value column)
@@ -182,8 +194,7 @@ Example: See the file molecule/amino-acids.lisp of the CLCB sources for an emplo
 ;;;; Convert Table rows to objects
 ;;;; -------------------------------------------------------------------------
 (defun class->columns (class-specifier)
-  "Create named columns with types according to the slots of the given
-class."
+  "Create named columns with types according to the slots of the given class."
   (flet ((slot-type (slot)
            (getf (moptilities:slot-properties class-specifier slot)
                  :type
@@ -200,7 +211,8 @@ class."
   (vector-push-extend line table-data))
 
 (defun read-table-line (stream separator)
-  "A row is read from a stream and an array of attributes returned as splitted according to the specified separator."
+  "A row is read from a stream and an array of attributes returned as
+splitted according to the specified separator."
   (split-sequence separator (read-line stream nil nil)))
 
 (defun ordered-columns (columns col-order)
@@ -210,11 +222,13 @@ class."
                     :test #'string-equal))
           col-order))
 
-(defun text-line->table-row (line column-order)
-  "A text string is converted into a table row. The second argument allows to specify an assignment from the attributes read to the column in which they should be stored."
+(defun text-line->table-row (splitted-line column-order)
+  "A list of strings is converted into a table row. The second
+argument allows to specify an assignment from the attributes read to
+the column in which they should be stored."
   (map 'vector #'funcall
        (mapcar #'column-parse-function column-order)
-       line))
+       splitted-line))
 
 
 (defun add-table-line (line table)
@@ -301,5 +315,6 @@ class."
   (length (table-rows table)))
 
 (defun table-num-cols (table)
-  "Number of columns in a table, equivalent to ncol(table) in R. The value is undefined if no row has yet been inserted."
+  "Number of columns in a table, equivalent to ncol(table) in R. The
+value is undefined if no row has yet been inserted."
   (length (car (table-rows table))))

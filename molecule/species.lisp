@@ -25,28 +25,34 @@
 
 (defclass species () 
   ((latin
-     :accessor species-latin-name
-     :type string
-     :documentation "scientific name of species")
+    :accessor species-latin-name
+    :initarg :latin
+    :type string
+    :documentation "scientific name of species")
    (trivial
-     :accessor species-trivial-name
-     :initform nil :type string
-     :documentation "common name of species")
+    :accessor species-trivial-name
+    :initarg :trivial
+    :initform nil :type string
+    :documentation "common name of species")
    (ensembl-core
-     :accessor core-db-name
-     :initform nil :type string
-     :documentation "name of core of SQL database")
+    :accessor core-db-name
+    :initarg :ensembl-core
+    :initform nil :type string
+    :documentation "name of core of SQL database")
    (ensembl-mart
-     :accessor mart-db-name
-     :initform nil :type string
-     :documentation "name in EnsEMBL mart databases")
+    :accessor mart-db-name
+    :initarg :ensembl-mart
+    :initform nil :type string
+    :documentation "name in EnsEMBL mart databases")
    (ensembl-gene
-     :accessor short-name
-     :initform nil :type string
-     :documentation "abbreviation found in gene-, transcript- or
+    :accessor short-name
+    :initarg :ensembl-gene
+    :initform nil :type string
+    :documentation "abbreviation found in gene-, transcript- or
      protein-identifiers")
    (ncbi-id
-     :accessor ncbi
+     :accessor ncbi-id
+     :initarg :ncbi-id
      :initform nil :type clcb-utils::number-or-nil
      :documentation "ID in NCBI taxonomy database"))
   (:documentation "Utility class to prepare for comparisons of
@@ -56,7 +62,7 @@
 
 (defmethod print-object ((o species) (s stream))
   (print-unreadable-object (o s :type t :identity nil)
-    (format s "~A" (latin o))))
+    (format s "~A" (species-latin o))))
 
 
 (defun read-species (species-table-file)
@@ -65,7 +71,7 @@ appearance in EnsEMBL."
   (with-open-file (in species-table-file)
     (read-objects-from-table in 'species)))
 
-#||
+
 (defparameter *species*
   (read-species
    (make-pathname :name "species" :type "txt"
@@ -77,10 +83,11 @@ Example:
 * (car *species*)
 
 ")
-
+#||
 (defparameter *species-latin-hash* 
   (let ((species-latin-hash (make-hash-table)))
     (dolist (aa *species* species-latin-hash)
-      (setf (gethash (latin aa) species-latin-hash) aa)
-      (setf (gethash (char-downcase (latin aa)) species-latin-hash) aa)))
+      (setf (gethash (species-latin-name aa) species-latin-hash) aa)
+      (setf (gethash (char-downcase (species-latin-name aa))
+      species-latin-hash) aa)))
   "The objects representing species are retrievable only by their latin name.")||#

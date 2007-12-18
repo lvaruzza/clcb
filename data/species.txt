@@ -1,4 +1,4 @@
-latin	trivial	ensembl-core	ensembl-mart	ensembl-gene	ncbi
+latin	trivial	ensembl-core	ensembl-mart	ensembl-gene	ncbi-id
 homo sapiens	human	homo_sapiens	hsapiens		9606
 mus musculus	mouse	mus_musculus	mmusculus	MUS	10090
 rattus norvegicus	rat	rattus_norvegivus	rnorvegicus	RNO	10116
