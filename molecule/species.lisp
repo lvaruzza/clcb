@@ -24,34 +24,34 @@
 (in-package #:clcb)
 
 (defclass species () 
-  ((latin
+  ((latin-name
     :accessor species-latin-name
     :initarg :latin
     :type string
-    :documentation "scientific name of species")
-   (trivial
+    :documentation "Scientific name of species.")
+   (trivial-name
     :accessor species-trivial-name
     :initarg :trivial
     :initform nil :type string
-    :documentation "common name of species")
-   (ensembl-core
-    :accessor core-db-name
-    :initarg :ensembl-core
+    :documentation "Common name of species.")
+   (ensembl-core-db
+    :accessor species-ensembl-core-db
+    :initarg :ensembl-core-db
     :initform nil :type string
-    :documentation "name of core of SQL database")
-   (ensembl-mart
-    :accessor mart-db-name
-    :initarg :ensembl-mart
+    :documentation "Name of core of SQL database.")
+   (ensembl-mart-db
+    :accessor species-ensembl-mart-db
+    :initarg :ensembl-mart-db
     :initform nil :type string
-    :documentation "name in EnsEMBL mart databases")
+    :documentation "Name in EnsEMBL mart databases.")
    (ensembl-gene
-    :accessor short-name
+    :accessor species-ensembl-gene
     :initarg :ensembl-gene
     :initform nil :type string
-    :documentation "abbreviation found in gene-, transcript- or
-     protein-identifiers")
+    :documentation "Abbreviation found in gene-, transcript- or
+     protein-identifiers.")
    (ncbi-id
-     :accessor ncbi-id
+     :accessor species-ncbi-id
      :initarg :ncbi-id
      :initform nil :type clcb-utils::number-or-nil
      :documentation "ID in NCBI taxonomy database"))
@@ -62,7 +62,7 @@
 
 (defmethod print-object ((o species) (s stream))
   (print-unreadable-object (o s :type t :identity nil)
-    (format s "~A" (species-latin o))))
+    (format s "~A" (species-latin-name o))))
 
 
 (defun read-species (species-table-file)
@@ -76,18 +76,15 @@ appearance in EnsEMBL."
   (read-species
    (make-pathname :name "species" :type "txt"
                   :defaults *data-directory-pathname*))
-  "A global parameter with information about species in EnsEMBL.  This file is manually created and may need an update when dealing with a newly sequenced organism that we were not yet aware of.
+  "A global parameter with information about species.  Parameters are
+read from the file \"data/species.txt\".  This file is manually
+created and may need an update when dealing with a newly sequenced
+organism that we were not yet aware of.") 
 
-Example:
 
-* (car *species*)
-
-")
-#||
 (defparameter *species-latin-hash* 
-  (let ((species-latin-hash (make-hash-table)))
-    (dolist (aa *species* species-latin-hash)
-      (setf (gethash (species-latin-name aa) species-latin-hash) aa)
-      (setf (gethash (char-downcase (species-latin-name aa))
-      species-latin-hash) aa)))
-  "The objects representing species are retrievable only by their latin name.")||#
+  (let ((species-latin-hash (make-hash-table :test 'equal)))
+    (dolist (species *species* species-latin-hash)
+      (setf (gethash (species-latin-name species) species-latin-hash)
+            species)))
+  "The objects representing species are retrievable only by their latin name.")
