@@ -26,12 +26,12 @@
 (defclass species () 
   ((latin-name
     :accessor species-latin-name
-    :initarg :latin
+    :initarg :latin-name
     :type string
     :documentation "Scientific name of species.")
    (trivial-name
     :accessor species-trivial-name
-    :initarg :trivial
+    :initarg :trivial-name
     :initform nil :type string
     :documentation "Common name of species.")
    (ensembl-core-db
