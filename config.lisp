@@ -24,7 +24,8 @@
 (defpackage #:clcb-config
   (:use #:cl)
   (:export #:*data-directory-pathname*)
-  (:documentation "The config package allows for adapting the CLCB installation to the local setup."))
+  (:documentation "The config package allows for adapting the CLCB
+  installation to the local setup."))
 
 (in-package #:clcb-config)
 
@@ -35,7 +36,7 @@
 (defvar *ensembl-host*     "pc13.inb.uni-luebeck.de")
 (defvar *ensembl-database* "homo_sapiens_core_47_36i")
 (defvar *ensembl-user*     "qtl")
-(defvar *ensembl-password*   "")
+(defvar *ensembl-password* "")
 (defvar *ensembl-db-type*  :mysql)
 
 (defun ensembl-connection-data ()
