@@ -6,7 +6,7 @@ canis familiaris	dog	canis_familiaris	cfamiliaris	CAF	9615
 danio rerio	zebrafish	danio_rerio	drerio	DAR	7955
 bos taurus	cow	bos_taurus	btaurus	BTA	9913
 felis catus	cat	felis_catus	fcatus	FCA	9685
-pan troglodytes	chimp	pan_troglodytes ptroglodytes	PTR	9598
+pan troglodytes	chimp	pan_troglodytes	ptroglodytes	PTR	9598
 #gasterosteus aculeatus	three spined stickleback			GAC	69293
 #xenopus tropicalis
 #tupaia belangeri 
