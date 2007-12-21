@@ -68,6 +68,17 @@ Example:
 * (species-ensembl-mart-db (car *species*))
 
 \"hsapiens\"")
+   (ensembl-compara-db
+    :accessor species-ensembl-compara-db
+    :initarg :ensembl-compara-db
+    :initform nil :type string
+    :documentation "Short name in EnsEMBL mart databases. The latin name is identical to the name of the genome_db in compara, and the NCBI ID is identical to the taxon.
+
+Example:
+
+* (species-ensembl-mart-db (car *species*))
+
+\"hsapiens\"")
    (ensembl-gene
     :accessor species-ensembl-gene
     :initarg :ensembl-gene
