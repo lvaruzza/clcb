@@ -1,4 +1,4 @@
-latin-name	trivial-name	ensembl-core-db	ensembl-mart-db	ensembl-compara-db ensembl-gene	ncbi-id
+latin-name	trivial-name	ensembl-core-db	ensembl-mart-db	ensembl-compara-db	ensembl-gene	ncbi-id
 Homo sapiens	human	homo_sapiens	hsapiens	H.sap		9606
 Mus musculus	mouse	mus_musculus	mmusculus	M.mus	MUS	10090
 Rattus norvegicus	rat	rattus_norvegivus	rnorvegicus	R.nor	RNO	10116

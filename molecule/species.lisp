@@ -28,92 +28,42 @@
     :accessor species-latin-name
     :initarg :latin-name
     :type string
-    :documentation "Scientific name of species.
-
-Example:
-
-* (species-latin-name  (car *species*))
-
-\"homo sapiens\"")
+    :documentation "Scientific name of species.")
    (trivial-name
     :accessor species-trivial-name
     :initarg :trivial-name
     :initform nil :type string
-    :documentation "Common name of species.
-
-Example:
-
-* (species-trivial-name (car *species*))
-
-\"human\"")
+    :documentation "Common name of species.")
    (ensembl-core-db
     :accessor species-ensembl-core-db
     :initarg :ensembl-core-db
     :initform nil :type string
-    :documentation "Name of core of SQL database.
-
-Example:
-
-* (species-ensembl-core-db (car *species*))
-
-\"homo_sapiens\"")
+    :documentation "Name of core of SQL database.")
    (ensembl-mart-db
     :accessor species-ensembl-mart-db
     :initarg :ensembl-mart-db
     :initform nil :type string
-    :documentation "Name in EnsEMBL mart databases.
-
-Example:
-
-* (species-ensembl-mart-db (car *species*))
-
-\"hsapiens\"")
+    :documentation "Name in EnsEMBL mart databases.")
    (ensembl-compara-db
     :accessor species-ensembl-compara-db
     :initarg :ensembl-compara-db
     :initform nil :type string
-    :documentation "Short name in EnsEMBL mart databases. The latin name is identical to the name of the genome_db in compara, and the NCBI ID is identical to the taxon.
-
-Example:
-
-* (species-ensembl-mart-db (car *species*))
-
-\"hsapiens\"")
+    :documentation "Short name in EnsEMBL mart databases. The latin
+    name is identical to the name of the genome_db in compara, and the
+    NCBI ID is identical to the taxon.")
    (ensembl-gene
     :accessor species-ensembl-gene
     :initarg :ensembl-gene
     :initform nil :type string
     :documentation "Abbreviation found in gene-, transcript- or
-     protein-identifiers.
-
-Example:
-
-* (species-ensembl-gene (car (cdr *species*)))
-
-\"MUS\"")
+     protein-identifiers.")
    (ncbi-id
      :accessor species-ncbi-id
      :initarg :ncbi-id
      :initform nil :type clcb-utils::number-or-nil
-     :documentation "ID in NCBI taxonomy database
-* (species-ncbi-id (car *species*))
-
-9606
-     "))
+     :documentation "ID in NCBI taxonomy database."))
   (:documentation "Utility class to prepare for comparisons of
-  sequences between organisms.
-
-Example:
-
-* *species*
-
-(#<SPECIES homo sapiens> #<SPECIES mus musculus> #<SPECIES rattus norvegicus>
-  #<SPECIES canis familiaris> #<SPECIES danio rerio> #<SPECIES bos taurus>
-   #<SPECIES felis catus> #<SPECIES pan troglodytes>)
-
-
-"))
-
+  sequences between organisms."))
 
 
 (defmethod print-object ((o species) (s stream))
@@ -168,7 +118,9 @@ NIL
     (dolist (species *species* species-ensembl-gene-hash)
       (setf (gethash (species-ensembl-gene species) species-ensembl-gene-hash)
             species)))
-  "The objects representing species are retrievable by their abbreviation found in the Ensembl gene names. This helps avoiding the storage of the species with the gene object, at least in a first representation.
+  "The objects representing species are retrievable by their abbreviation
+found in the Ensembl gene names.  This helps avoiding the storage of
+the species with the gene object, at least in a first representation.
 
 Example:
 
@@ -193,20 +145,19 @@ T
 (\"9598\" \"chimp\")
 NIL
 
-Obviously, while writing this documentation, a bug in the table was found for chimp and is now fixed.
+Obviously, while writing this documentation, a bug in the table was
+found for chimp and is now fixed.
 
-* (gethash "" *SPECIES-ENSEMBL-GENE-HASH*)
+* (gethash \"\" *SPECIES-ENSEMBL-GENE-HASH*)
 
 #<SPECIES homo sapiens>
 T")
 
+
 (defun stable-id->species (stable-id)
-  "Returns the species object for any given stable ID, be it for a gene, transcript or peptide.
-
-Example: 
-
-(species-latin-name (STABLE-ID->SPECIES \"ENSMUSG0000001\")) "
-  (let ((alpha (cl-ppcre:split "[GTP]\\d+$" stable-id)))
-	(let ((beta (cl-ppcre:split "ENS" (car alpha))))
-	    (gethash (if beta (car (cdr beta)) "") *species-ensembl-gene-hash*)))
+  "Returns the species object for any given stable ID, be it for a gene,
+transcript or peptide."
+  (let* ((alpha (cl-ppcre:split "[GTPE]\\d+$" stable-id))
+         (beta (subseq (car alpha) 3)))
+    (gethash beta *species-ensembl-gene-hash*)))
 
