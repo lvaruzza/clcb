@@ -23,6 +23,23 @@ homology
 | tree_node_id               | int(10) unsigned |      |     | 0       |                |
 +----------------------------+------------------+------+-----+---------+----------------+
 
+mysql> select homology_id,stable_id,method_link_species_set_id,description,subtype from homology limit 10;
++-------------+-----------+----------------------------+------------------------+-------------------------+
+| homology_id | stable_id | method_link_species_set_id | description            | subtype                 |
++-------------+-----------+----------------------------+------------------------+-------------------------+
+|           1 | NULL      |                      20176 | within_species_paralog | Ciona intestinalis      |
+|           2 | NULL      |                      20176 | within_species_paralog | Ciona intestinalis      |
+|           3 | NULL      |                      21191 | within_species_paralog | Drosophila melanogaster |
+|           4 | NULL      |                      20059 | ortholog_one2one       | Tetraodontidae          |
+|           5 | NULL      |                      20521 | ortholog_one2one       | Culicidae               |
+|           6 | NULL      |                      20834 | ortholog_one2one       | Homo/Pan/Gorilla group  |
+|           7 | NULL      |                      20059 | ortholog_one2one       | Tetraodontidae          |
+|           8 | NULL      |                      21246 | ortholog_one2one       | Diptera                 |
+|           9 | NULL      |                      20453 | ortholog_one2one       | Ciona                   |
+|          10 | NULL      |                      20453 | ortholog_one2one       | Ciona                   |
++-------------+-----------+----------------------------+------------------------+-------------------------+
+10 rows in set (0,05 sec)
+
 homology_member
 +--------------------------+------------------+------+-----+---------+-------+
 | Field                    | Type             | Null | Key | Default | Extra |
@@ -123,17 +140,51 @@ mysql> select distinct source_name from member;
 +-------------------+
 4 rows in set (2.40 sec)
 
+||+
+
 
 select * from homology left join homology_member using(homology_id) left join member using (member_id) left join method_link_species_set on (homology.method_link_species_set_id=method_link_species_set.method_link_species_set_id) left join species_set using (species_set_id) left join genome_db using (genome_db_id) where homology.description='ortholog_one2one' and genome_db.name='Homo sapiens' and member.source_name='ENSEMBLGENE' limit 30;
 
-(defun gene-stable-id->homology-id (gene-stable-id &key (ortholog T) (paralog nil))
-  "Retrieval of set of homolog IDs that a gene is involved in. The optional parameters ortholog and paralog may be set to NIL if there shall be constraints for the links established."
-  (let query "select homology_id from homology right join homology_member using(homology_id) right join member using (member_id) where stable_id='" gene-stable-id "' source_name='ENSEMBLGENE'")
+;; should be an ensembl-object, probably ?
+
+(defclass similarity ()
+  ((id :type integer :accessor similarity-id :documentation "The ID of the Ensembl MySQL database entry in the respective table."))
+  (:documentation "The compara DB defines multiple kinds of similarity that all share a lot in their formal representation. This common superclass aims at defining some common routines for them all but as a start is only a reminder to perform proper abstraction."))
+
+(defclass domain (similarity)()(:documentation "Multiple genes are said to share a domain when these have a strong local similarity in their sequences."))
+
+(defclass homologue (similarity) () (:documentation "Orthologue or paralogue sequences are grouped in one abstract specification."))
+
+(defclass orthologue (homologue) () (:documentation "Orthologues ... not yet implemented."))
+
+(defclass paralogue (homologue) () (:documentation "Paralogues ... not yet implemented."))
+
+(defmethod print-object ((o similarity) (s stream))
+  (print-unreadable-object (o s :type t :identity nil)
+          (format s "~A" (similarity-id o))))
+
+(defmethod retrieve-genes ((o similarity))
+  (print "Not yet implemented."))
+
+
+(defun gene-stable-id->homology-ids (gene-stable-id &key )
+  "Retrieval of set of homolog IDs that a gene is involved in."
+  (let ((query (concatenate 'string "select homology_id from homology "
+			  	  "right join homology_member using(homology_id) "
+				  "right join member using (member_id) "
+				  "where stable_id='" gene-stable-id "'"
+				  " and source_name='ENSEMBLGENE'")))
+    	query)
 )
 
-(defun homology-id->gene-stable-id (homology-id &key (species nil)) 
-  "All gene IDs that are available from a particular homology ID shall be retrieved. Constrains can be given with a particular species that should be inspected only."
-  (let query "select stable_id from homology left join homology_member where homology_id=" homology-id ")
+(defun homology-id->gene-stable-ids (homology-id &key species)
+  "All gene IDs that are available from a particular homology ID shall be retrieved. Constrains can be given with a particular species that should be inspected only. The selection of homologues or paralogues should be constrained by the proper specification of species."
+  (let ((query (concatenate 'string "select stable_id from homology "
+			  	  "left join homology_member "
+				  "where homology_id = "
+				  (write-to-string homology-id)
+				  (if species (concatenate 'string " and genome_db_id = "
+							   		(if (integerp species) (write-to-string species)
+									  	"damnit, where do I get this one from, now?")) nil))))
+    query)
 )
-
-||+
