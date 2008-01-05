@@ -130,11 +130,11 @@ existance. The most reliable genes are flagged as \"known\".
 ###Example:
 * (stable-id (sample_gene_tp53))
 
-\"ENSG00000141510\" "))
+\"ENSG00000141510\" ")
 
-(defmethod stable-id (ensembl-obj)
-  (slot-value (slot-value ensembl-obj 'stable-id)
-              'stable-id))
+  (:method stable-id (ensembl-obj)
+     (slot-value (slot-value ensembl-obj 'stable-id)
+              'stable-id)))
 
 
 (defgeneric strand (bio-sequence)
@@ -913,3 +913,26 @@ Gene TP53 successfully retrieved from Ensembl.
              (chromosome seq) (lower-bound seq) (upper-bound seq))))
 
 ||#
+
+
+(defmethod homology-ids ((g gene))
+  "Returns the list of IDs in Ensembl Compara to which exactly this single gene is assigned."
+  (gene-stable-id->homology-ids (stable-id g) nil))
+
+(defgeneric homologues (ensembl-obj)
+  (:documentation "List all IDs that are in homology to a given object. For genes this will return the information from the homology assignment in Ensembl Compara."))
+
+
+(defmethod homologues ((g gene))
+  "For genes, the homology between two entries is defined by the Compara table of the same name."
+  (let* ((homology-ids (gene-stable-id->homology-ids (stable-id g) nil))
+         (stable-ids (homology-id->gene-stable-ids homology-ids)))
+    (mapcar #'fetch-by-stable-id stable-ids)))
+
+(defmethod homologues ((p translation))
+  "For translated gene products, a range of very different approaches are available, not yet implemented."
+  nil)
+
+(defmethod homologues ((pf protein-feature))
+  "For translated gene products, a range of very different approaches are available, not yet implemented."
+  nil)

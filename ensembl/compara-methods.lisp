@@ -140,6 +140,23 @@ mysql> select distinct source_name from member;
 +-------------------+
 4 rows in set (2.40 sec)
 
+mysql> select member_id,stable_id,source_name,taxon_id,genome_db_id,sequence_id,gene_member_id,chr_name from member limit 10;
++-----------+--------------------+-------------+----------+--------------+-------------+----------------+-----------+
+| member_id | stable_id          | source_name | taxon_id | genome_db_id | sequence_id | gene_member_id | chr_name  |
++-----------+--------------------+-------------+----------+--------------+-------------+----------------+-----------+
+|         1 | ENSG00000215614    | ENSEMBLGENE |     9606 |           22 |        NULL |           NULL | NT_113923 |
+|         2 | ENSP00000383514    | ENSEMBLPEP  |     9606 |           22 |           1 |              1 | NT_113923 |
+|         3 | ENSG00000212857    | ENSEMBLGENE |     9606 |           22 |        NULL |           NULL | NT_113923 |
+|         4 | ENSP00000375387    | ENSEMBLPEP  |     9606 |           22 |           2 |              3 | NT_113923 |
+|         5 | ENSG00000215610    | ENSEMBLGENE |     9606 |           22 |        NULL |           NULL | NT_113923 |
+|         6 | ENSP00000341691    | ENSEMBLPEP  |     9606 |           22 |           3 |              5 | NT_113923 |
+|         7 | ENSMUSG00000078424 | ENSEMBLGENE |    10090 |           57 |        NULL |           NULL | NT_166433 |
+|         8 | ENSMUSP00000100854 | ENSEMBLPEP  |    10090 |           57 |           4 |              7 | NT_166433 |
+|         9 | R0010W             | ENSEMBLGENE |     4932 |           44 |        NULL |           NULL | 2-micron  |
+|        10 | R0010W             | ENSEMBLPEP  |     4932 |           44 |           5 |              9 | 2-micron  |
++-----------+--------------------+-------------+----------+--------------+-------------+----------------+-----------+
+10 rows in set (0.05 sec)
+
 ||+
 
 
