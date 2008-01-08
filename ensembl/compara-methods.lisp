@@ -211,7 +211,8 @@ select * from
    (description :type (string 40)))
   (:base-table "homology")
   (:documentation "Orthologue or paralogue sequences are grouped in
-  one abstract specification."))
+  one abstract specification. It can be understood as an abstract
+  property that several genes share."))
 
 (def-view-class homology-member ()
   ((homology-id :db-kind :key
@@ -233,11 +234,173 @@ select * from
              :db-info (:join-class homology-member
                        :home-key member-id
                        :foreign-key member-id)))
+   (family   :db-kind :join
+             :db-info (:join-class family-member
+                       :home-key member-id
+                       :foreign-key member-id)))
   (:base-table "member"))
 
+(defmethod gene ((m member-view)) 
+  "The member is practially a gene but the information is stored in different databases of the Ensembl resource."
+  (fetch-by-stable-id (stable-id m)))
+
+#||
+| domain_id                  | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| stable_id                  | varchar(40)      |      | MUL |         |                |
+| method_link_species_set_id | int(10) unsigned |      |     | 0       |                |
+| description                | varchar(255)     | YES  |     | NULL    |                |
+||#
+
+(def-view-class domain ()
+  ((domain_id :db-kind :key :type integer)
+   (stable_id :db-kind :key :type (string 40))
+   (description :db-kind :key :type (string 255)))
+   (:base-table "domain")
+   (:documentation "A domain is defined on protein sequences and commonly associated with a particular protein function."))
+
+#||
+| domain_id    | int(10) unsigned |      | MUL | 0       |       |
+| member_id    | int(10) unsigned |      | MUL | 0       |       |
+| member_start | int(10)          | YES  |     | NULL    |       |
+| member_end   | int(10)          | YES  |     | NULL    |       |
+||#
+(def-view-class domain-member ()
+  ((domain-id :db-kind :key :type integer)
+   (member-id :db-kind :key :type integer)
+   (member-start :type integer)
+   (member-end :type integer))
+  (:base-table "domain_member")
+  (:documentation "Link between the domain and the gene ... or the peptide? The database is yet empty."))
+
+
+#||
+| family_id                  | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| stable_id                  | varchar(40)      |      | UNI |         |                |
+| method_link_species_set_id | int(10) unsigned |      | MUL | 0       |                |
+| description                | varchar(255)     | YES  | MUL | NULL    |                |
+| description_score          | double           | YES  |     | NULL    |                |
+||#
+
+(def-view-class family ()
+  ((family-id :db-kind :key :type integer)
+   (stable-id :db-kind :key :type (string 40))
+   (description :type (string 255))
+   (description-score :type float))
+  (:base-table "family")
+  (:documentation "Ensembl gathers genes of similar function to protein families."))
+
+#||
+| family_id  | int(10) unsigned |      | PRI | 0       |       |
+| member_id  | int(10) unsigned |      | PRI | 0       |       |
+| cigar_line | mediumtext       | YES  |     | NULL    |       |
+||#
+(def-view-class family-member ()
+  ((family-id :db-kind :key :type integer)
+   (member-id :db-kind :key :type integer))
+   (family :db-kind :join
+             :db-info (:join-class family
+                       :home-key family-id
+                       :foreign-key family-id)
+             :accessor family))
+  (:base-table "family_member")
+  (:documentation "Link between protein family and gene, represented in the member table."))
+
+
+#||
+| method_link_species_set_id | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| method_link_id             | int(10) unsigned | YES  | MUL | NULL    |                |
+| species_set_id             | int(10) unsigned |      |     | 0       |                |
+| name                       | varchar(255)     |      |     |         |                |
+| source                     | varchar(255)     |      |     | ensembl |                |
+| url                        | varchar(255)     |      |     |         |                |
+||#
+(def-view-class method-link-species-set ()
+  ((method_link_species_set_id :db-kind :key :type integer)
+   (method_link_id :type integer)
+   (species_set_id :type integer)
+   (name   :type (string 255))
+   (source :type (string 255))
+   (url    :type (string 255))
+   )
+  (:base-table "method_link_species_set")
+  (:documentation "The assignment of a gene to a homology (in homology_member) depends on the species and the method that was applied. This class bridges the homology, not the assignment iself, with this additional information."))
+
+#||
+| method_link_id | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| type           | varchar(50)      |      | MUL |         |                |
+| class          | varchar(50)      |      |     |         |                |
+||#
+
+#||
+mysql> select * from method_link;
++----------------+--------------------------+---------------------------------------+
+| method_link_id | type                     | class                                 |
++----------------+--------------------------+---------------------------------------+
+|              1 | BLASTZ_NET               | GenomicAlignBlock.pairwise_alignment  |
+|              2 | BLASTZ_NET_TIGHT         | GenomicAlignBlock.pairwise_alignment  |
+|              3 | BLASTZ_RECIP_NET         | GenomicAlignBlock.pairwise_alignment  |
+|              4 | PHUSION_BLASTN           | GenomicAlignBlock.pairwise_alignment  |
+|              5 | PHUSION_BLASTN_TIGHT     | GenomicAlignBlock.pairwise_alignment  |
+|              6 | TRANSLATED_BLAT          | GenomicAlignBlock.pairwise_alignment  |
+|              7 | BLASTZ_GROUP             | GenomicAlignBlock.pairwise_alignment  |
+|              8 | BLASTZ_GROUP_TIGHT       | GenomicAlignBlock.pairwise_alignment  |
+|            101 | SYNTENY                  | SyntenyRegion.synteny                 |
+|            201 | ENSEMBL_ORTHOLOGUES      | Homology.homology                     |
+|            202 | ENSEMBL_PARALOGUES       | Homology.homology                     |
+|            301 | FAMILY                   | Family.family                         |
+|              9 | MLAGAN                   | GenomicAlignBlock.multiple_alignment  |
+|            401 | PROTEIN_TREES            | ProteinTree.protein_tree_node         |
+|            204 | ENSEMBL_HOMOLOGUES       | Homology.homology                     |
+|             10 | PECAN                    | GenomicAlignBlock.multiple_alignment  |
+|             11 | GERP_CONSTRAINED_ELEMENT | GenomicAlignBlock.constrained_element |
+|            501 | GERP_CONSERVATION_SCORE  | ConservationScore.conservation_score  |
++----------------+--------------------------+---------------------------------------+
+||#
+
+(def-view-class method-link ()
+  ((method-link-id :db-kind :key :type integer)
+   (type :type (string 50))
+   (class :type (string 50)))
+  (:base-table "method_link")
+  (:documentation "This table lists several handfull of approaches to determine sequence similarities. It is referred to from the method-link-species-set table which in turn may be linked to from all the relationships that are describing sequence similarities of some sort."))
+
+#||
+| species_set_id | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| genome_db_id   | int(10) unsigned |      | PRI | 0       |                |
+||#
+
+(def-view-class species-set ()
+  ((species-set-id :db-kind :key :type integer)
+   (genome-db-id   :db-kind :key :type integer))
+  (:base-table "species_set")
+  (:documentation "A certain similarity may be defined for a range of species. This table implements the n:m relationship between homology and species."))
+
+
+#||
+| genome_db_id     | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| taxon_id         | int(10) unsigned |      | MUL | 0       |                |
+| name             | varchar(40)      |      | MUL |         |                |
+| assembly         | varchar(100)     |      |     |         |                |
+| assembly_default | tinyint(1)       | YES  |     | 1       |                |
+| genebuild        | varchar(100)     |      |     |         |                |
+| locator          | varchar(255)     | YES  |     | NULL    |                |
+||#
+
+(def-view-class genome-db ()
+  ((genome-db-id :db-kind :key :type integer)
+   (taxon-id     :db-kind :key :type integer)
+   (name         :db-kind :key :type (string 40))
+   (assembly     :db-kind :key :type (string 100))
+   (genebuild    :db-kind :key :type (string 100))
+   (locator      :db-kind :key :type (string 255)))
+  (:base-table "genome_db")
+  (:documentation "The genome_db table identifies species, though there may be multiple genomes per species, i.e. for the the human."))
 
 
 
+;;; The following first attempts are no longer required
+
+#||
 (def-view-class orthologue (homologue) () (:documentation "Orthologues ... not yet implemented."))
 
 (defclass paralogue (homologue) () (:documentation "Paralogues ... not yet implemented."))
@@ -271,3 +434,4 @@ select * from
 									  	"damnit, where do I get this one from, now?")) nil))))
     query)
 )
+||#
