@@ -35,6 +35,7 @@
 
 (defvar *ensembl-host*     "pc13.inb.uni-luebeck.de")
 (defvar *ensembl-database* "homo_sapiens_core_47_36i")
+(defvar *ensembl-database-compara* "ensembl_compara_47")
 (defvar *ensembl-user*     "qtl")
 (defvar *ensembl-password* "")
 (defvar *ensembl-db-type*  :mysql)
