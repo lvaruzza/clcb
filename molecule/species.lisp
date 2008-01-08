@@ -60,7 +60,8 @@
    (ncbi-id
      :accessor species-ncbi-id
      :initarg :ncbi-id
-     :initform nil :type clcb-utils::number-or-nil
+     :initform nil ;:type clcb-utils::number-or-nil
+     :type string
      :documentation "ID in NCBI taxonomy database."))
   (:documentation "Utility class to prepare for comparisons of
   sequences between organisms."))

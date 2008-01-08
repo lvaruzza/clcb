@@ -208,7 +208,7 @@ select * from
   ((homology-id :db-type :key
                          :type integer)
    (stable-id :type (string 40))
-   (description :type (string 40) :db-info (:retrieval :deferred)))
+   (description :type (string 40)))
   (:base-table "homology")
   (:documentation "Orthologue or paralogue sequences are grouped in
   one abstract specification. It can be understood as an abstract
@@ -227,17 +227,16 @@ select * from
   (:base-table "homology_member"))
 
 (def-view-class member-view ()
-  ((member-id :db-kind :key
-              :type integer)
+  ((member-id :db-kind :key :type integer)
    (stable-id :type (string 40))
    (homology :db-kind :join
              :db-info (:join-class homology-member
                        :home-key member-id
-                       :foreign-key member-id)))
+                       :foreign-key member-id))
    (family   :db-kind :join
              :db-info (:join-class family-member
-                       :home-key member-id
-                       :foreign-key member-id)))
+                       :home-key family-id
+                       :foreign-key family-id)))
   (:base-table "member"))
 
 (defmethod gene ((m member-view)) 
@@ -254,9 +253,9 @@ select * from
 (def-view-class domain ()
   ((domain_id :db-kind :key :type integer)
    (stable_id :db-kind :key :type (string 40))
-   (description :db-kind :key :type (string 255) :db-info (:retrieval :deferred)))
-   (:base-table "domain")
-   (:documentation "A domain is defined on protein sequences and commonly associated with a particular protein function. This implementation is of a pure theoretical basis since both the table domain and the table domain_member are empty."))
+   (description :db-kind :key :type (string 255)))
+  (:base-table "domain")
+  (:documentation "A domain is defined on protein sequences and commonly associated with a particular protein function. This implementation is of a pure theoretical basis since both the table domain and the table domain_member are empty."))
 
 #||
 | domain_id    | int(10) unsigned |      | MUL | 0       |       |
@@ -264,20 +263,23 @@ select * from
 | member_start | int(10)          | YES  |     | NULL    |       |
 | member_end   | int(10)          | YES  |     | NULL    |       |
 ||#
+
 (def-view-class domain-member ()
   ((domain-id :db-kind :key :type integer)
    (member-id :db-kind :key :type integer)
-   (member-start :type integer :db-info (:retrieval :deferred))
-   (member-end :type integer :db-info (:retrieval :deferred))
-   (domain :db-kind :join (:join-class domain
+   (member-start :type integer)
+   (member-end :type integer)
+   (domain :db-kind :join 
+           :db-info (:join-class domain
 			   :home-key domain-id
-			   :foreign-key domain-id)))
-   (member :db-kind :join (:join-class member-view
+			   :foreign-key domain-id))
+   (member :db-kind :join
+           :db-join (:join-class member-view
 			   :home-key member-id
-			   :foreign-key member-id)))
+			   :foreign-key member-id))
+)
   (:base-table "domain_member")
   (:documentation "Link between the domain and the gene ... or the peptide? The database is yet empty."))
-
 
 #||
 | family_id                  | int(10) unsigned |      | PRI | NULL    | auto_increment |
@@ -288,10 +290,10 @@ select * from
 ||#
 
 (def-view-class family ()
-  ((family-id :db-kind :key :type integer)
-   (stable-id :db-kind :key :type (string 40))
-   (description :type (string 255) :db-info (:retrieval :deferred))
-   (description-score :type float) :db-info (:retrieval :deferred))
+  ((family-id         :db-kind :key  :type integer)
+   (stable-id         :db-kind :key  :type (string 40))
+   (description       :db-kind :base :type (string 255))
+   (description-score :db-kind :base :type float))
   (:base-table "family")
   (:documentation "Ensembl gathers genes of similar function to protein families."))
 
@@ -300,17 +302,19 @@ select * from
 | member_id  | int(10) unsigned |      | PRI | 0       |       |
 | cigar_line | mediumtext       | YES  |     | NULL    |       |
 ||#
+
 (def-view-class family-member ()
   ((family-id :db-kind :key :type integer)
    (member-id :db-kind :key :type integer)
-   (family :db-kind :join
-             :db-info (:join-class family
-                       :home-key family-id
-                       :foreign-key family-id)
-             :accessor family)
-   (member :db-kind :join (:join-class member-view
-			   :home-key member-id
-			   :foreign-key member-id)))
+   (family    :db-kind :join
+              :db-info (:join-class family
+                        :home-key family-id
+                        :foreign-key family-id))
+   (member    :column "member"
+		   :db-kind :join 
+                   :db-info (:join-class member-view
+			      :home-key member-id
+			      :foreign-key member-id)))
   (:base-table "family_member")
   (:documentation "Link between protein family and gene, represented in the member table."))
 
@@ -327,13 +331,15 @@ select * from
   ((method-link-species-set-id :db-kind :key :type integer)
    (method-link-id :type integer)
    (species-set-id :type integer)
-   (name           :type (string 255) :db-info (:retrieval :deferred))
-   (source         :type (string 255) :db-info (:retrieval :deferred))
-   (url            :type (string 255) :db-info (:retrieval :deferred))
-   (species-set    :db-kind :join (:join-class species-set
+   (name           :type (string 255))
+   (source         :type (string 255))
+   (url            :type (string 255))
+   (species-set    :db-kind :join 
+                   :db-info (:join-class species-set
 				   :home-key species-set-id
 				   :foreign-key species-set-id))
-   (method-link    :db-kind :join (:join-class method-link
+   (method-link    :db-kind :join
+                   :db-info (:join-class method-link
 				   :home-key method-link-id
 				   :foreign-key method-link-id)))
   (:base-table "method_link_species_set")
@@ -386,9 +392,10 @@ mysql> select * from method_link;
 (def-view-class species-set ()
   ((species-set-id :db-kind :key :type integer)
    (genome-db-id   :db-kind :key :type integer)
-   (genome-db      :db-kind :join (:join-class genome-db
-				   :foreign-key genome-db-id
-				   :home-key genome-db-id)))
+   (genome-db      :db-kind :join
+		   :db-info (:join-class genome-db
+			     :foreign-key genome-db-id
+	       		     :home-key genome-db-id)))
   (:base-table "species_set")
   (:documentation "A certain similarity may be defined for a range of species. This table implements the n:m relationship between homology and species."))
 
@@ -406,10 +413,10 @@ mysql> select * from method_link;
 (def-view-class genome-db ()
   ((genome-db-id :db-kind :key :type integer)
    (taxon-id     :db-kind :key :type integer)
-   (name         :db-kind :key :type (string 40) :db-info (:retrieval :deferred))
-   (assembly     :db-kind :key :type (string 100) :db-info (:retrieval :deferred))
-   (genebuild    :db-kind :key :type (string 100) :db-info (:retrieval :deferred))
-   (locator      :db-kind :key :type (string 255)) :db-info (:retrieval :deferred))
+   (name         :db-kind :key :type (string 40))
+   (assembly     :db-kind :key :type (string 100))
+   (genebuild    :db-kind :key :type (string 100))
+   (locator      :db-kind :key :type (string 255)))
   (:base-table "genome_db")
   (:documentation "The genome_db table identifies species, though there may be multiple genomes per species, i.e. for the the human."))
 

@@ -122,6 +122,8 @@
 	   #:short-name
 	   #:*species*
 	   #:*latin-species-hash*
+	   #:*species-ncbi-id-hash*
+	   #:stable-id->species
 	   
            ;;; BIO-SEQUENCES
            #:nucleotide-sequence

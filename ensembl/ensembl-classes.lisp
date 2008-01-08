@@ -361,13 +361,13 @@ intended to be used in conjuction with stable ids.")
   ((gene-id :type integer
             :db-type :key
             :db-constraints (:primary-key :not-null))
-   (biotype :type (string 40) :db-info (:retrieval deferred))
-   (analysis-id :type integer :db-info (:retrieval deferred))
+   (biotype :type (string 40))
+   (analysis-id :type integer)
    (display-xref-id :type integer)
-   (source :type (string 20) :db-info (:retrieval deferred))
-   (status :type string :db-info (:retrieval deferred))
+   (source :type (string 20))
+   (status :type string)
    (description :type string)
-   (is-current :type integer :db-info (:retrieval deferred))
+   (is-current :type integer)
    (transcript :db-kind :join
                :db-info (:join-class transcript
                          :home-key gene-id
@@ -383,20 +383,20 @@ intended to be used in conjuction with stable ids.")
   ((protein-feature-id :type integer :db-constraints (:not-null :primary-key)
                        :db-kind :key)
    (translation-id :type integer     :db-constraints (:not-null))
-   (seq-start :type integer)
-   (seq-end   :type integer)
-   (hit-start :type integer)
-   (hit-end   :type integer)
+   (seq-start   :type integer)
+   (seq-end     :type integer)
+   (hit-start   :type integer)
+   (hit-end     :type integer)
    (analysis-id :type integer)
-   (score       :type float :db-info (:retrieval deferred))
-   (evalue      :type float :db-info (:retrieval deferred))
+   (score       :type float)
+   (evalue      :type float)
    (perc-ident  :type float)
-   (analysis  :db-kind :join
-              :db-info (:join-class analysis
-                        :home-key analysis-id
-                        :foreign-key analysis-id
-                        :set nil)
-              :accessor analysis)
+   (analysis    :db-kind :join
+                :db-info (:join-class analysis
+                          :home-key analysis-id
+                          :foreign-key analysis-id
+                          :set nil)
+                :accessor analysis)
    (translation :db-kind :join
                 :db-info (:join-class translation
                           :home-key translation-id
@@ -404,12 +404,13 @@ intended to be used in conjuction with stable ids.")
                           :set nil))))
 
 (def-ensembl-view analysis ()
-  ((analysis-id :type integer :db-constraints (:not-null :primary-key)
-                :db-kind :key)
-   (created     :type string)
-   (db         :type (varchar 120))
-   (db-version :type (varchar 40))
-   (db-file    :type (varchar 120))
+  ((analysis-id     :type integer 
+                    :db-constraints (:not-null :primary-key)
+                    :db-kind :key)
+   (created         :type string)
+   (db              :type (varchar 120))
+   (db-version      :type (varchar 40))
+   (db-file         :type (varchar 120))
    (program         :type (varchar 80))
    (program-version :type (varchar 40))
    (program-file    :type (varchar 80))

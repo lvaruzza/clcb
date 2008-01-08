@@ -47,4 +47,6 @@ classes."
      (:file "ensembl-classes"
             :depends-on ("packages"))
      (:file "ensembl-methods"
-            :depends-on ("packages" "ensembl-classes"))))
+            :depends-on ("packages" "ensembl-classes"))
+     (:file "compara-methods"
+     	    :depends-on ("packages" "ensembl-classes" "ensembl-methods"))))
