@@ -109,8 +109,6 @@ Example:
 (\"felis catus\" \"cat\")
 (\"pan troglodytes\" \"chimp\")
 NIL
-
-
 ")
 
 (defparameter *species-ensembl-gene-hash* 
@@ -152,6 +150,13 @@ found for chimp and is now fixed.
 
 #<SPECIES homo sapiens>
 T")
+
+(defparameter *species-ncbi-id-hash* 
+  (let ((species-ncbi-id-hash (make-hash-table :test 'equal)))
+    (dolist (species *species* species-ncbi-id-hash)
+      (setf (gethash (species-ncbi-id species) species-ncbi-id-hash)
+            species)))
+  "In analogy to the hashes that can assign species objects to the name or fractions of a gene identifier, this hash assigns the species to integers which are used as IDs in the NCBI taxonomy.")
 
 
 (defun stable-id->species (stable-id)

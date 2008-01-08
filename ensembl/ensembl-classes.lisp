@@ -361,13 +361,13 @@ intended to be used in conjuction with stable ids.")
   ((gene-id :type integer
             :db-type :key
             :db-constraints (:primary-key :not-null))
-   (biotype :type (string 40))
-   (analysis-id :type integer)
+   (biotype :type (string 40) :db-info (:retrieval deferred))
+   (analysis-id :type integer :db-info (:retrieval deferred))
    (display-xref-id :type integer)
-   (source :type (string 20))
-   (status :type string)
+   (source :type (string 20) :db-info (:retrieval deferred))
+   (status :type string :db-info (:retrieval deferred))
    (description :type string)
-   (is-current :type integer)
+   (is-current :type integer :db-info (:retrieval deferred))
    (transcript :db-kind :join
                :db-info (:join-class transcript
                          :home-key gene-id
@@ -388,8 +388,8 @@ intended to be used in conjuction with stable ids.")
    (hit-start :type integer)
    (hit-end   :type integer)
    (analysis-id :type integer)
-   (score       :type float)
-   (evalue      :type float)
+   (score       :type float :db-info (:retrieval deferred))
+   (evalue      :type float :db-info (:retrieval deferred))
    (perc-ident  :type float)
    (analysis  :db-kind :join
               :db-info (:join-class analysis
