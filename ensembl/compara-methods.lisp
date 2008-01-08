@@ -1,7 +1,33 @@
+;;;; Copyright (c) 2007 Steffen Moeller
+;;;;
+;;;; Permission is hereby granted, free of charge, to any person
+;;;; obtaining a copy of this software and associated documentation
+;;;; files (the "Software"), to deal in the Software without
+;;;; restriction, including without limitation the rights to use,
+;;;; copy, modify, merge, publish, distribute, sublicense, and/or sell
+;;;; copies of the Software, and to permit persons to whom the
+;;;; Software is furnished to do so, subject to the following
+;;;; conditions:
+;;;;
+;;;; The above copyright notice and this permission notice shall be
+;;;; included in all copies or substantial portions of the Software.
+;;;;
+;;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+;;;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+;;;; OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+;;;; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+;;;; HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+;;;; WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+;;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+;;;; OTHER DEALINGS IN THE SOFTWARE.
 
 ;; The aim of these classes is mostly to add links between ortholog genes.
 
-+||
+;; should be an ensembl-object, probably ?
+
+(in-package :clcb-ensembl)
+
+#||
 
 homology
 
@@ -157,22 +183,62 @@ mysql> select member_id,stable_id,source_name,taxon_id,genome_db_id,sequence_id,
 +-----------+--------------------+-------------+----------+--------------+-------------+----------------+-----------+
 10 rows in set (0.05 sec)
 
-||+
+select * from 
+ homology left join homology_member using(homology_id) left join member using (member_id) left join method_link_species_set on (homology.method_link_species_set_id=method_link_species_set.method_link_species_set_id) left join species_set using (species_set_id) left join genome_db using (genome_db_id) where homology.description='ortholog_one2one' and genome_db.name='Homo sapiens' and member.source_name='ENSEMBLGENE' limit 30;
 
+||#
 
-select * from homology left join homology_member using(homology_id) left join member using (member_id) left join method_link_species_set on (homology.method_link_species_set_id=method_link_species_set.method_link_species_set_id) left join species_set using (species_set_id) left join genome_db using (genome_db_id) where homology.description='ortholog_one2one' and genome_db.name='Homo sapiens' and member.source_name='ENSEMBLGENE' limit 30;
-
-;; should be an ensembl-object, probably ?
 
 (defclass similarity ()
-  ((id :type integer :accessor similarity-id :documentation "The ID of the Ensembl MySQL database entry in the respective table."))
-  (:documentation "The compara DB defines multiple kinds of similarity that all share a lot in their formal representation. This common superclass aims at defining some common routines for them all but as a start is only a reminder to perform proper abstraction."))
+  ((id :type integer
+       :accessor similarity-id
+       :documentation "The ID of the Ensembl MySQL database entry in
+  the respective table."))
+  (:documentation "The compara DB defines multiple kinds of similarity
+  that all share a lot in their formal representation. This common
+  superclass aims at defining some common routines for them all but as
+  a start is only a reminder to perform proper abstraction."))
 
-(defclass domain (similarity)()(:documentation "Multiple genes are said to share a domain when these have a strong local similarity in their sequences."))
+(defclass domain (similarity)
+  ()
+  (:documentation "Multiple genes are said to share a domain when
+  these have a strong local similarity in their sequences."))
 
-(defclass homologue (similarity) () (:documentation "Orthologue or paralogue sequences are grouped in one abstract specification."))
+(def-view-class homology ()
+  ((homology-id :db-type :key
+                         :type integer)
+   (stable-id :type (string 40))
+   (description :type (string 40)))
+  (:base-table "homology")
+  (:documentation "Orthologue or paralogue sequences are grouped in
+  one abstract specification."))
 
-(defclass orthologue (homologue) () (:documentation "Orthologues ... not yet implemented."))
+(def-view-class homology-member ()
+  ((homology-id :db-kind :key
+                :type integer)
+   (member-id :db-kind :key
+              :type integer)
+   (homology :db-kind :join
+             :db-info (:join-class homology
+                       :home-key homology-id
+                       :foreign-key homology-id)
+             :accessor homology))
+  (:base-table "homology_member"))
+
+(def-view-class member-view ()
+  ((member-id :db-kind :key
+              :type integer)
+   (stable-id :type (string 40))
+   (homology :db-kind :join
+             :db-info (:join-class homology-member
+                       :home-key member-id
+                       :foreign-key member-id)))
+  (:base-table "member"))
+
+
+
+
+(def-view-class orthologue (homologue) () (:documentation "Orthologues ... not yet implemented."))
 
 (defclass paralogue (homologue) () (:documentation "Paralogues ... not yet implemented."))
 
