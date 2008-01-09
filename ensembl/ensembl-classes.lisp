@@ -250,7 +250,13 @@ intended to be used in conjuction with stable ids.")
                  :db-kind :join
                  :db-info (:join-class assembly
                            :home-key seq-region-id
-                           :foreign-key cmp-seq-region-id))))
+                           :foreign-key cmp-seq-region-id))
+   (dna-align-feature :db-kind join
+		      :db-info (:join-class dna-align-feature
+				:foreign-key seq-region-id
+				:home-key seq-region-id)))
+  (:base-table "seq_region")
+  (:documentation "The same physical basepair may be described in multiple sequence regions of this table. "))
 
 
 (def-ensembl-view coord-system ()
@@ -263,6 +269,33 @@ intended to be used in conjuction with stable ids.")
    (rank :type integer :db-constraints :not-null)
    (attrib :type string #||set('default_version','sequence_level')||#)))
 
+(def-ensembl-view attrib-type ()
+  ((attrib-type-id    :db-kind :key  :type integer)
+   (code              :db-kind :key  :type (string 15))
+   (name              :db-kind :base :type (string 255))
+   (description       :db-kind :base :type string)
+   (seq-region-attrib :db-kind :join
+		      :db-info (:join-class seq-region-attrib
+                                :home-key attrib-type-id
+				:foreign-key attrib-type-id)))
+  (:base-table "attrib_type")
+  (:documentation "The attributes are assigned to sequence regions and inform about various properties that a particular sequence region may have, e.g., the number of micro RNAs or alternative IDs."))
+
+
+(def-ensembl-view seq-region-attrib ()
+  ((seq-region-id  :db-kind :key :type integer)
+   (attrib-type-id :db-kind :key :type integer)
+   (value          :db-kind :key :type string) 
+   (attrib-type    :db-kind :join
+		   :db-info (:join-class  attrib-type
+		             :home-key    attrib-type-id
+			     :foreign-key attrib-type-id))
+   (seq-region     :db-kind :join
+		   :db-info (:join-class  seq-region
+			     :home-key    seq-region-id
+			     :foreign-key seq-region-id)))
+  (:base-table "seq_region_attrib")
+  (:documentation "Additional information on the sequence region at hand."))
 
 ;;; Sequence tables
 ;;; ---------------
@@ -272,6 +305,54 @@ intended to be used in conjuction with stable ids.")
                   :db-constraints (:primary-key :not-null :unsigned))
    (sequence :type string)))
 
+(def-ensembl-view dna-align-feature ()
+  ((dna-align-feature-id :db-kind :key :type integer)
+   (seq-region-id        :db-kind :key :type integer)
+   (seq-region-start     :db-kind :base :type integer)
+   (seq-region-end       :db-kind :base :type integer)
+   (seq-region-strand    :db-kind :base :type integer)
+   (hit-start            :db-kind :base :type integer)
+   (hit-end              :db-kind :base :type integer)
+   (hit-strand           :db-kind :base :type integer)
+   (hit-name             :db-kind :key  :type (string 40))
+   (analysis-id          :db-kind :key  :type integer)
+   (score                :db-kind :base :type float)
+   (evalue               :db-kind :base :type float)
+   (perc-ident           :db-kind :base :type float)
+  ;(cigar-line           :db-kind :base :type string)
+   (external-db-id       :db-kind :key  :type integer)
+   (hcoverage            :db-kind :base :type integer)
+   (analysis             :db-kind :join
+			 :db-info (:join-class analysis
+                                   :foreign-key analysis-id
+				   :home-key analysis-id
+				   :retrieval :deferred))
+   (external-db          :db-kind :join
+			 :db-info (:join-class  external-db
+                                   :home-key    external-db-id
+                                   :foreign-key external-db-id))
+   (seq-region           :db-kind :join
+			 :db-info (:join-class  seq-region
+				   :home-key    seq-region-id
+				   :foreign-key seq-region-id)))
+  (:base-table "dna_align_feature")
+  (:documentation "All segments are investigated for sequence similarity with other known sequence databases. The comparison is identified by the hit-name and the entry in the external-db-id. Sadly, this information is not available to compare an organism with itself.
+
++----------------+--------------+
+| external_db_id | db_name      |
++----------------+--------------+
+|            700 | EMBL         | 
+|           1800 | RefSeq_dna   | 
+|           1820 | RefSeq_rna   | 
+|           3300 | miRBase      | 
+|           3800 | CCDS         | 
+|           4100 | UniGene      | 
+|           4200 | RFAM         | 
+|           7200 | IMGT/LIGM_DB | 
++----------------+--------------+
+
+
+"))
 
 
 ;;; --------------------------------------------------------------------------
@@ -298,6 +379,11 @@ intended to be used in conjuction with stable ids.")
 'KNOWN','NOVEL','PUTATIVE','PREDICTED','KNOWN_BY_PROJECTION','UNKNOWN'")
    (description :type string)
    (is-current :type integer)
+   (analysis             :db-kind :join
+			 :db-info (:join-class analysis
+                                   :foreign-key analysis-id
+				   :home-key analysis-id
+				   :retrieval :deferred))
    (gene :db-kind :join
          :db-info (:join-class gene
                                :home-key gene-id
@@ -368,6 +454,11 @@ intended to be used in conjuction with stable ids.")
    (status :type string)
    (description :type string)
    (is-current :type integer)
+   (analysis   :db-kind :join
+	       :db-info (:join-class analysis
+			 :home-key analysis-id
+			 :foreign-key analysis-id
+			 :retrieval :deferred))
    (transcript :db-kind :join
                :db-info (:join-class transcript
                          :home-key gene-id
@@ -418,7 +509,27 @@ intended to be used in conjuction with stable ids.")
    (module          :type (varchar 80))
    (module-version  :type (varchar 40))
    (gff-source      :type (varchar 40))
-   (gff-feature     :type (varchar 40))))
+   (gff-feature     :type (varchar 40))
+   (analysis-description :db-kind :join
+			 :db-info (:join-class  analysis-description
+				   :home-key    analysis-id
+				   :foreign-key analysis-id)))
+  (:base-table "analysis")
+  (:documentation "This class is referred to from most of the other tables. It indicates that some result was yielded by an automatism. Since only the DNA sequence itself is produced in the lab and everything else is indeed produced by machines, the table analysis gives insights in the provenance of the information given."))
+
+(def-ensembl-view analysis-description ()
+  ((analysis-id :db-kind :key  :type integer)
+   (description :db-kind :base :type string)
+   (display-label :db-kind :base :type string)
+   (displayable :db-kind :base :type integer)
+   (web-data :db-kind :base :type string)
+   (analysis :db-kind :join
+	     :db-info (:join-class analysis
+		       :home-key analysis-id
+		       :foreign-key analysis-id)))
+  (:base-table "analysis_description")
+  (:documentation "Human-understandable explanation about the purpose of a particular analysis."))
+
 
 (def-ensembl-class translation
   ((translation-id :type integer :db-constraints (:not-null :primary-key)
