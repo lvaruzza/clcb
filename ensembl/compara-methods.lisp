@@ -244,6 +244,7 @@ select * from
   (fetch-by-stable-id (stable-id m)))
 
 #||
+desc domain;
 | domain_id                  | int(10) unsigned |      | PRI | NULL    | auto_increment |
 | stable_id                  | varchar(40)      |      | MUL |         |                |
 | method_link_species_set_id | int(10) unsigned |      |     | 0       |                |
@@ -251,9 +252,10 @@ select * from
 ||#
 
 (def-view-class domain ()
-  ((domain_id :db-kind :key :type integer)
-   (stable_id :db-kind :key :type (string 40))
-   (description :db-kind :key :type (string 255)))
+  ((domain_id                  :db-kind :key  :type integer)
+   (stable_id                  :db-kind :key  :type (string 40))
+   (method-link-species-set-id :db-kind :base :type integer)
+   (description                :db-kind :base :type (string 255)))
   (:base-table "domain")
   (:documentation "A domain is defined on protein sequences and commonly associated with a particular protein function. This implementation is of a pure theoretical basis since both the table domain and the table domain_member are empty."))
 
@@ -265,19 +267,18 @@ select * from
 ||#
 
 (def-view-class domain-member ()
-  ((domain-id :db-kind :key :type integer)
-   (member-id :db-kind :key :type integer)
-   (member-start :type integer)
-   (member-end :type integer)
-   (domain :db-kind :join 
-           :db-info (:join-class domain
-			   :home-key domain-id
-			   :foreign-key domain-id))
-   (member :db-kind :join
-           :db-join (:join-class member-view
-			   :home-key member-id
-			   :foreign-key member-id))
-)
+  ((domain-id    :db-kind :key  :type integer)
+   (member-id    :db-kind :key  :type integer)
+   (member-start :db-kind :base :type integer)
+   (member-end   :db-kind :base :type integer)
+   (domain       :db-kind :join 
+                 :db-info (:join-class domain
+                           :home-key domain-id
+                           :foreign-key domain-id))
+   (member       :db-kind :join
+                 :db-info (:join-class member-view
+                           :home-key member-id
+                           :foreign-key member-id)))
   (:base-table "domain_member")
   (:documentation "Link between the domain and the gene ... or the peptide? The database is yet empty."))
 
@@ -328,20 +329,20 @@ select * from
 | url                        | varchar(255)     |      |     |         |                |
 ||#
 (def-view-class method-link-species-set ()
-  ((method-link-species-set-id :db-kind :key :type integer)
-   (method-link-id :type integer)
-   (species-set-id :type integer)
-   (name           :type (string 255))
-   (source         :type (string 255))
-   (url            :type (string 255))
-   (species-set    :db-kind :join 
-                   :db-info (:join-class species-set
-				   :home-key species-set-id
-				   :foreign-key species-set-id))
-   (method-link    :db-kind :join
-                   :db-info (:join-class method-link
-				   :home-key method-link-id
-				   :foreign-key method-link-id)))
+  ((method-link-species-set-id :db-kind :key  :type integer)
+   (method-link-id             :db-kind :key  :type integer)
+   (species-set-id             :db-kind :base :type integer)
+   (name                       :db-kind :base :type (string 255))
+   (source                     :db-kind :base :type (string 255))
+   (url                        :db-kind :base :type (string 255))
+   (species-set                :db-kind :join 
+                               :db-info (:join-class species-set
+                                         :home-key species-set-id
+                                         :foreign-key species-set-id))
+   (method-link                :db-kind :join
+                               :db-info (:join-class method-link
+                                         :home-key method-link-id
+                                         :foreign-key method-link-id)))
   (:base-table "method_link_species_set")
   (:documentation "The assignment of a gene to a homology (in homology_member) depends on the species and the method that was applied. This class bridges the homology, not the assignment iself, with this additional information."))
 
@@ -422,7 +423,164 @@ mysql> select * from method_link;
 
 (defmethod species ((gdb genome-db)) 
   "Retrieves the species of that genome-db entry from CLCB's species hash."
-  (gethash (taxon-id gdb) clcb:*species-ncbi-id-hash*))
+  (gethash (slot-value gdb 'taxon-id) clcb:*species-ncbi-id-hash*))
+
+
+#||
+desc synteny_region;
+| synteny_region_id          | int(10) unsigned |      | PRI | NULL    | auto_increment | 
+| method_link_species_set_id | int(10) unsigned |      | MUL | 0       |                | 
+||#
+
+(def-view-class synteny-region ()
+  ((synteny-region-id :db-kind :key :type integer)
+   (method-link-species-set-id :db-kind :key :type integer)
+   (method-link-species-set    :db-kind :join 
+                               :db-info (:join-class method-link-species-set
+                                         :home-key method-link-species-set-id
+                                         :foreign-key method-link-species-set-id)))
+  (:base-table "synteny_region")
+  (:documentation "Abstract concept of a region that is syntenic between multiple organisms."))
+
+#||
+desc dnafrag_region;
+| synteny_region_id | int(10) unsigned |      | MUL | 0       |       | 
+| dnafrag_id        | int(10) unsigned |      | MUL | 0       |       | 
+| dnafrag_start     | int(10) unsigned |      |     | 0       |       | 
+| dnafrag_end       | int(10) unsigned |      |     | 0       |       | 
+| dnafrag_strand    | tinyint(4)       |      |     | 0       |       | 
+||#
+(def-view-class dnafrag-region ()
+  ((synteny-region-id :db-kind :key  :type integer)
+   (dnafrag-id        :db-kind :key  :type integer)
+   (dnafrag-start     :db-kind :base :type integer)
+   (dnafrag-end       :db-kind :base :type integer)
+   (dnafrag-strand    :db-kind :base :type integer)
+   (synteny-region    :db-kind :join
+		      :db-info (:join-class synteny-region
+				:home-key synteny-region-id
+				:foreign-key synteny-region-id))
+   (dnafrag           :db-kind :join 
+		      :db-info (:join-class dnafrag
+				:home-key dnafrag-id
+				:foreign-key dnafrag-id)))
+  (:base-table "dnafrag_region")
+  (:documentation "Link between abstract syntenies and tangible genomic regions fo some organism."))
+
+
+#||
+desc dnafrag;
+| dnafrag_id        | int(10) unsigned |      | PRI | NULL    | auto_increment | 
+| length            | int(11)          |      |     | 0       |                | 
+| name              | varchar(40)      |      |     |         |                | 
+| genome_db_id      | int(10) unsigned |      | MUL | 0       |                | 
+| coord_system_name | varchar(40)      | YES  |     | NULL    |                | 
+||#
+(def-view-class dnafrag ()
+  ((dnafrag-id        :db-kind :key  :type integer)
+   (length            :db-kind :base :type integer)   
+   (name              :db-kind :base :type (string 40))   
+   (genome-db-id      :db-kind :base :type integer)   
+   (coord_system_name :db-kind :base :type (string 40))   
+   (genome-db         :db-kind :join 
+		      :db-info (:join-class genome-db
+                                :foreign-key genome-db-id
+                                :home-key genome-db-id))
+   (genomic-align    :db-kind :join
+		     :db-info (:join-class "genomic-align"
+                               :home-key dnafrag-id
+                               :foreign-key dnafrag-id)))
+  (:base-table "dnafrag")
+  (:documentation "A region that is part of a genome assembly in the core databases."))
+
+#||
+desc genomic_align_block
+| genomic_align_block_id     | bigint(20) unsigned |      | PRI | NULL    | auto_increment | 
+| method_link_species_set_id | int(10) unsigned    |      | MUL | 0       |                | 
+| score                      | double              | YES  |     | NULL    |                | 
+| perc_id                    | tinyint(3) unsigned | YES  |     | NULL    |                | 
+| length                     | int(10)             | YES  |     | NULL    |                | 
+| group_id                   | bigint(20) unsigned | YES  |     | NULL    |                | 
+||#
+
+(def-view-class genomic-align-block ()
+  ((genomic-align-block-id      :db-kind :key  :type integer)
+   (method-link-species-set-id  :db-kind :key  :type integer)
+   (score                       :db-kind :base :type float)
+   (perc-id                     :db-kind :base :type integer)
+   (length                      :db-kind :base :type integer)
+   (group-id                    :db-kind :base :type integer)
+   (method-link-species-set     :db-kind :join 
+                                :db-info (:join-class method-link-species-set
+                                          :home-key method-link-species-set-id
+                                          :foreign-key method-link-species-set-id))
+   (genomic-align-group         :db-kind :join 
+				:db-info (:join-class genomic-align-group
+					  :home-key group-id
+					  :foreign-key group-id))
+   (genomic-align               :db-kind :join
+				:db-info (:join-class genomic-align
+					  :home-key genomic-align-block-id
+					  :foreign-key genomic-align-block-id)))
+   (:base-table "genomic_align_block")
+   (:documentation "Abstract specification of a genomic region that appears similar between multiple species."))
+
+
+#||
+desc genomic_align;
+| genomic_align_id           | bigint(20) unsigned |      | PRI | NULL    | auto_increment | 
+| genomic_align_block_id     | bigint(20) unsigned |      | MUL | 0       |                | 
+| method_link_species_set_id | int(10) unsigned    |      |     | 0       |                | 
+| dnafrag_id                 | int(10) unsigned    |      | MUL | 0       |                | 
+| dnafrag_start              | int(10)             |      |     | 0       |                | 
+| dnafrag_end                | int(10)             |      |     | 0       |                | 
+| dnafrag_strand             | tinyint(4)          |      |     | 0       |                | 
+| cigar_line                 | mediumtext          | YES  |     | NULL    |                | 
+| level_id                   | tinyint(2) unsigned |      |     | 0       |                | 
+||#
+(def-view-class  genomic-align ()
+  ((genomic-align-id           :db-kind :key  :type integer)
+   (genomic-align-block-id     :db-kind :key  :type integer)
+   (method-link-species-set-id :db-kind :base :type integer)
+   (dnafrag-id                 :db-kind :key  :type integer)
+   (dnafrag-start              :db-kind :base :type integer)
+   (dnafrag-end                :db-kind :base :type integer)
+   (dnafrag-strand             :db-kind :base :type integer)
+   ;(cigar-line                 :db-kind :base :type string)
+   (level-id                   :db-kind :base :type integer)
+   (method-link-species-set    :db-kind :join 
+			       :db-info (:join-class method-link-species-set
+                                         :home-key method-link-species-set-id
+                                         :foreign-key method-link-species-set-id))
+   (dnafrag                    :db-kind :join 
+			       :db-info (:join-class dnafrag
+                                         :home-key dnafrag-id
+                                         :foreign-key dnafrag-id))
+   (genomic-align-block        :db-kind :join
+			       :db-info (:join-class genomic-align-block
+                                         :home-key genomic-align-block-id
+                                         :foreign-key genomic-align-block-id)))
+  (:base-table "genomic_align")
+  (:documentation "The tabe links a fraction of a DNA fragment that appears similar to another genomic region of another species. Intra-species links are not represented in this analysis."))
+
+
+#||
+desc genomic_align_group;
+| group_id         | bigint(20) unsigned |      | MUL | NULL    | auto_increment | 
+| type             | varchar(40)         |      |     |         |                | 
+| genomic_align_id | bigint(20) unsigned |      | MUL | 0       |                | 
+||#
+(def-view-class genomic-align-group ()
+  ((group-id         :db-kind :key  :type integer)
+   (type             :db-kind :base :type (string 40))
+   (genomic-align-id :db-kind :key :type integer)
+   (genomic-align    :db-kind :join
+		     :db-info (:join-class "genomic-align"
+                               :home-key genomic-align-id
+                               :foreign-key genomic-align-id)))
+  (:base-table "genomic_align_group")
+  (:documentation "The exact meaning of this class remains unclear, no entries in table of version 47"))
+
 
 ;;; The following first attempts are no longer required
 
