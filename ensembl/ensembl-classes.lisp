@@ -160,7 +160,8 @@ intended to be used in conjuction with stable ids.")
                             (and (integerp x)
                                  (<= seq-region-start x seq-region-end))))
                       :allocation :class
-                      :db-kind :virtual)))
+                      :db-kind :virtual))
+  (:documentation "Represents genomic sequences. The data has reached a stage such that the DNA sequence can indeed be represented in form of a chromosomal block. Though, for some organisms the DNA sequence may not yet be consecutive. If you are interested to learn about all the fractions of the genome that have been sequenced then you want to inspect the repository of traces that Ensembl provides separatedly."))
 
 
 (defmacro def-ensembl-class (class-name slots &key dna-sequence stable-id-char)
@@ -350,9 +351,24 @@ intended to be used in conjuction with stable ids.")
 |           4200 | RFAM         | 
 |           7200 | IMGT/LIGM_DB | 
 +----------------+--------------+
-
-
 "))
+
+(def-ensembl-view external-db ()
+  ((external_db_id :db-kind :key :type integer)
+   (db_name                :type (string 28))
+   (db_release             :type (string 255))
+   (status                 :type (string 15))
+   (dbprimary_acc_linkable :type integer)
+   (display_label_linkable :type integer)
+   (priority               :type integer)
+   (db_display_name        :type (string 255))
+   (type                   :type (string 25))
+   (secondary_db_name      :type (string 255))
+   (secondary_db_table     :type (string 255))
+   (dna-align-feature :db-kind :join
+		      :db-info ()))
+   (:base-table "external_db")
+   (:documentation ""))
 
 
 ;;; --------------------------------------------------------------------------
@@ -465,7 +481,9 @@ intended to be used in conjuction with stable ids.")
                          :foreign-key gene-id
                          :set t)))
   :stable-id-char #\g
-  :dna-sequence t)
+  :dna-sequence t
+  (:documentation "Segment of genomic or mitochondrial DNA that is coding for RNA or protein.")
+)
 
 ;;; --------------------------------------------------------------------------
 ;;; Proteins and Protein Features
@@ -492,7 +510,9 @@ intended to be used in conjuction with stable ids.")
                 :db-info (:join-class translation
                           :home-key translation-id
                           :foreign-key translation-id
-                          :set nil))))
+                          :set nil)))
+  (:documentation "Description of a segment of a protein.")
+)
 
 (def-ensembl-view analysis ()
   ((analysis-id     :type integer 
@@ -561,7 +581,9 @@ intended to be used in conjuction with stable ids.")
                               :home-key translation-id
                               :foreign-key translation-id)
                     :accessor protein-feature))
-  :stable-id-char #\p)
+  :stable-id-char #\p
+  :documentation "Translation is the product of a transcript. There is only one peptide per mRNA, which may be biologically bogus due to alternative translation initiation."
+)
 
 
 
