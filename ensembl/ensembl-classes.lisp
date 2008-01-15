@@ -127,7 +127,44 @@ intended to be used in conjuction with stable ids.")
               ,@class-args))))
 
 
-(def-ensembl-view dna-sequence ()
+(defmacro def-ensembl-class (class-name slots &rest class-args)
+  (flet ((pop-class-arg-keyword (keyword)
+           (prog1
+               (cadr (find keyword class-args :key #'car))
+             (setf class-args (remove keyword class-args :key #'car)))))
+    (let ((stable-id-char (pop-class-arg-keyword :stable-id-char))
+          (dna-sequence   (pop-class-arg-keyword :dna-sequence)))
+      (with-symbol-prefixing-function (table-concat class-name)
+        `(progn
+           ,(when stable-id-char
+                  `(progn
+                     (def-ensembl-stable-id-view ,class-name)
+                     (def-fetch-by-stable-id-method ,class-name)
+                     (push (cons ,stable-id-char ',class-name)
+                           *char-class-alist*)))
+           (def-ensembl-view ,class-name (,@(when dna-sequence '(dna-sequence)))
+             ,(append ;; If the object has a stable id, we need to link
+               ;; to the appropriate table.
+               (when stable-id-char
+                 `((stable-id
+                    :db-kind :join
+                    :db-info (:join-class ,(table-concat "-STABLE-ID")
+                              :home-key ,(table-concat "-ID")
+                              :foreign-key ,(table-concat "-ID")
+                              :set nil))))
+               ;; The slot definitions for the table.
+               slots)
+             ,@class-args))))))
+
+
+
+;;;; -------------------------------------------------------------------------
+;;;; Class definitions
+;;;; -------------------------------------------------------------------------
+
+;;; Coordinate Systems and Sequences
+;;; --------------------------------
+(def-ensembl-class dna-sequence
   ((seq-region-id :type integer
                   :db-constraints :not-null
                   :initarg :seq-region-id)
@@ -171,43 +208,6 @@ intended to be used in conjuction with stable ids.")
   separatedly."))
 
 
-(defmacro def-ensembl-class (class-name slots &rest class-args)
-  (flet ((class-arg-keyword (keyword)
-           (prog1
-               (cadr (find keyword class-args :key #'car))
-             (setf class-args (remove keyword class-args :key #'car)))))
-    (let ((stable-id-char (class-arg-keyword :stable-id-char))
-          (dna-sequence   (class-arg-keyword :dna-sequence)))
-      (with-symbol-prefixing-function (table-concat class-name)
-        `(progn
-           ,(when stable-id-char
-                  `(progn
-                     (def-ensembl-stable-id-view ,class-name)
-                     (def-fetch-by-stable-id-method ,class-name)
-                     (push (cons ,stable-id-char ',class-name)
-                           *char-class-alist*)))
-           (def-ensembl-view ,class-name (,@(when dna-sequence '(dna-sequence)))
-             ,(append ;; If the object has a stable id, we need to link
-               ;; to the appropriate table.
-               (when stable-id-char
-                 `((stable-id
-                    :db-kind :join
-                    :db-info (:join-class ,(table-concat "-STABLE-ID")
-                              :home-key ,(table-concat "-ID")
-                              :foreign-key ,(table-concat "-ID")
-                              :set nil))))
-               ;; The slot definitions for the table.
-               slots)
-             ,@class-args))))))
-
-
-
-;;;; --------------------------------------------------------------------------
-;;;; Class definitions
-;;;; -------------------------------------------------------------------------
-
-;;; Coordinate Systems and Sequences
-;;; --------------------------------
 (def-ensembl-class assembly
   ((asm-seq-region-id :type integer
                       :db-kind :key
@@ -244,7 +244,7 @@ intended to be used in conjuction with stable ids.")
                              :set nil))))
 
 
-(def-ensembl-view seq-region ()
+(def-ensembl-class seq-region
   ((seq-region-id :type integer
                   :db-kind :key
                   :db-constraints (:primary-key :not-null :unsigned))
@@ -509,7 +509,7 @@ coding for RNA or protein."))
 ;;; --------------------------------------------------------------------------
 ;;; Proteins and Protein Features
 ;;; --------------------------------------------------------------------------
-(def-ensembl-view protein-feature ()
+(def-ensembl-class protein-feature
   ((protein-feature-id :type integer :db-constraints (:not-null :primary-key)
                        :db-kind :key)
    (translation-id :type integer     :db-constraints (:not-null))
@@ -534,7 +534,7 @@ coding for RNA or protein."))
                           :set nil)))
   (:documentation "Description of a segment of a protein."))
 
-(def-ensembl-view analysis ()
+(def-ensembl-class analysis
   ((analysis-id     :type integer 
                     :db-constraints (:not-null :primary-key)
                     :db-kind :key)
