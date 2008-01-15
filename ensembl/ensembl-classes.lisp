@@ -103,7 +103,7 @@ intended to be used in conjuction with stable ids.")
                 options)))
     `(def-view-class ,name ,supers ,slots ,cl-options)))
 
-(defmacro def-ensembl-stable-id-view (ensembl-class)
+(defmacro def-ensembl-stable-id-view (ensembl-class &rest class-args)
   "Define an CLSQL view class for a *_stable_id table in EnsEMBL."
   (with-symbol-prefixing-function (table-concat ensembl-class)
     `(progn (def-ensembl-view ,(table-concat '-stable-id) ()
@@ -123,7 +123,8 @@ intended to be used in conjuction with stable ids.")
                 :db-info (:join-class ,(table-concat)
                           :home-key ,(table-concat '-ID)
                           :foreign-key ,(table-concat '-ID)
-                          :set nil)))))))
+                          :set nil)))
+              ,@class-args))))
 
 
 (def-ensembl-view dna-sequence ()
@@ -161,29 +162,43 @@ intended to be used in conjuction with stable ids.")
                                  (<= seq-region-start x seq-region-end))))
                       :allocation :class
                       :db-kind :virtual))
-  (:documentation "Represents genomic sequences. The data has reached a stage such that the DNA sequence can indeed be represented in form of a chromosomal block. Though, for some organisms the DNA sequence may not yet be consecutive. If you are interested to learn about all the fractions of the genome that have been sequenced then you want to inspect the repository of traces that Ensembl provides separatedly."))
+  (:documentation "Represents genomic sequences. The data has reached
+  a stage such that the DNA sequence can indeed be represented in form
+  of a chromosomal block. Though, for some organisms the DNA sequence
+  may not yet be consecutive. If you are interested to learn about all
+  the fractions of the genome that have been sequenced then you want
+  to inspect the repository of traces that Ensembl provides
+  separatedly."))
 
 
-(defmacro def-ensembl-class (class-name slots &key dna-sequence stable-id-char)
-  (with-symbol-prefixing-function (table-concat class-name)
-    `(progn
-       ,(when stable-id-char
-              `(progn
-                (def-ensembl-stable-id-view ,class-name)
-                (def-fetch-by-stable-id-method ,class-name)
-                (push (cons ,stable-id-char ',class-name) *char-class-alist*)))
-       (def-ensembl-view ,class-name (,@(when dna-sequence '(dna-sequence)))
-          ,(append ;; If the object has a stable id, we need to link
-                   ;; to the appropriate table.
-                   (when stable-id-char
-                     `((stable-id
-                        :db-kind :join
-                        :db-info (:join-class ,(table-concat "-STABLE-ID")
-                                  :home-key ,(table-concat "-ID")
-                                  :foreign-key ,(table-concat "-ID")
-                                  :set nil))))
-                   ;; The slot definitions for the table.
-                   slots)))))
+(defmacro def-ensembl-class (class-name slots &rest class-args)
+  (flet ((class-arg-keyword (keyword)
+           (prog1
+               (cadr (find keyword class-args :key #'car))
+             (setf class-args (remove keyword class-args :key #'car)))))
+    (let ((stable-id-char (class-arg-keyword :stable-id-char))
+          (dna-sequence   (class-arg-keyword :dna-sequence)))
+      (with-symbol-prefixing-function (table-concat class-name)
+        `(progn
+           ,(when stable-id-char
+                  `(progn
+                     (def-ensembl-stable-id-view ,class-name)
+                     (def-fetch-by-stable-id-method ,class-name)
+                     (push (cons ,stable-id-char ',class-name)
+                           *char-class-alist*)))
+           (def-ensembl-view ,class-name (,@(when dna-sequence '(dna-sequence)))
+             ,(append ;; If the object has a stable id, we need to link
+               ;; to the appropriate table.
+               (when stable-id-char
+                 `((stable-id
+                    :db-kind :join
+                    :db-info (:join-class ,(table-concat "-STABLE-ID")
+                              :home-key ,(table-concat "-ID")
+                              :foreign-key ,(table-concat "-ID")
+                              :set nil))))
+               ;; The slot definitions for the table.
+               slots)
+             ,@class-args))))))
 
 
 
@@ -280,7 +295,9 @@ intended to be used in conjuction with stable ids.")
                                 :home-key attrib-type-id
 				:foreign-key attrib-type-id)))
   (:base-table "attrib_type")
-  (:documentation "The attributes are assigned to sequence regions and inform about various properties that a particular sequence region may have, e.g., the number of micro RNAs or alternative IDs."))
+  (:documentation "The attributes are assigned to sequence regions and
+  inform about various properties that a particular sequence region
+  may have, e.g., the number of micro RNAs or alternative IDs."))
 
 
 (def-ensembl-view seq-region-attrib ()
@@ -337,7 +354,11 @@ intended to be used in conjuction with stable ids.")
 				   :home-key    seq-region-id
 				   :foreign-key seq-region-id)))
   (:base-table "dna_align_feature")
-  (:documentation "All segments are investigated for sequence similarity with other known sequence databases. The comparison is identified by the hit-name and the entry in the external-db-id. Sadly, this information is not available to compare an organism with itself.
+  (:documentation "All segments are investigated for sequence
+  similarity with other known sequence databases. The comparison is
+  identified by the hit-name and the entry in the
+  external-db-id. Sadly, this information is not available to compare
+  an organism with itself.
 
 +----------------+--------------+
 | external_db_id | db_name      |
@@ -415,8 +436,8 @@ intended to be used in conjuction with stable ids.")
                           :home-key transcript-id
                           :foreign-key transcript-id
                           :set nil)))
-  :dna-sequence t
-  :stable-id-char #\t)
+  (:dna-sequence t)
+  (:stable-id-char #\t))
 
 
 (def-ensembl-class exon
@@ -433,8 +454,8 @@ intended to be used in conjuction with stable ids.")
                               :home-key exon-id
                               :foreign-key exon-id
                               :set nil)))
-  :stable-id-char #\e
-  :dna-sequence t)
+  (:stable-id-char #\e)
+  (:dna-sequence t))
 
 
 (def-ensembl-view exon-transcript ()
@@ -480,10 +501,10 @@ intended to be used in conjuction with stable ids.")
                          :home-key gene-id
                          :foreign-key gene-id
                          :set t)))
-  :stable-id-char #\g
-  :dna-sequence t
-  (:documentation "Segment of genomic or mitochondrial DNA that is coding for RNA or protein.")
-)
+  (:stable-id-char #\g)
+  (:dna-sequence t)
+  (:documentation "Segment of genomic or mitochondrial DNA that is
+coding for RNA or protein."))
 
 ;;; --------------------------------------------------------------------------
 ;;; Proteins and Protein Features
@@ -511,8 +532,7 @@ intended to be used in conjuction with stable ids.")
                           :home-key translation-id
                           :foreign-key translation-id
                           :set nil)))
-  (:documentation "Description of a segment of a protein.")
-)
+  (:documentation "Description of a segment of a protein."))
 
 (def-ensembl-view analysis ()
   ((analysis-id     :type integer 
@@ -581,9 +601,10 @@ intended to be used in conjuction with stable ids.")
                               :home-key translation-id
                               :foreign-key translation-id)
                     :accessor protein-feature))
-  :stable-id-char #\p
-  :documentation "Translation is the product of a transcript. There is only one peptide per mRNA, which may be biologically bogus due to alternative translation initiation."
-)
+  (:stable-id-char #\p)
+  (:documentation "Translation is the product of a transcript. There
+  is only one peptide per mRNA, which may be biologically bogus due to
+  alternative translation initiation."))
 
 
 
