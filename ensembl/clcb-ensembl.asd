@@ -29,10 +29,9 @@
 
 (defsystem clcb-ensembl
     :description "EnsEMBL -- Access to the EnsEMBL genome database."
-    :long-description
-    "CLCB-ENSEMBL aims to provide a convenient interface to the
-EnsEMBL MySQL database via CLSQL and some additional wrapper
-classes."
+    :long-description "CLCB-ENSEMBL aims to provide a convenient
+    interface to the EnsEMBL MySQL database via CLSQL and some
+    additional wrapper classes."
     :version "0.1"
     :author "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
     :maintainer "Albert Krewinkel <krewink@inb.uni-luebeck.de>"

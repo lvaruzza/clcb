@@ -39,7 +39,7 @@
     :licence "MIT"
     :depends-on ("iterate"
                  "cl-ppcre"
-                 "split-sequence"
+                 "split-sequence";; Why doesn't ppcre suffice?
                  "moptilities"
                  "alexandria"
 		 "metabang-bind"

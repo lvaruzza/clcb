@@ -127,8 +127,8 @@ sequence tags (ESTs)."))
 
 (defmethod print-object ((seq bio-sequence) stream)
   "The sequence object is printed to an output stream. This is fairly
-handy but somehow we feel that some more abstract and more generic
-mechanism is required."  
+  handy but somehow we feel that some more abstract and more generic
+  mechanism is required."
   (print-unreadable-object (seq stream :type t)
     (flet ((print-slot-if-bound (slot-name)
            (when (slot-boundp seq slot-name)
@@ -146,7 +146,7 @@ mechanism is required."
   ((feature-type :accessor feature-type
                  :initarg :feature-type))
   (:documentation "A property of interest that is referred to from a
-biological entity, i.e, a biological sequence."))
+  biological entity, i.e, a biological sequence."))
 
 (defgeneric shuffle-sequence (seq)
   (:documentation "Return a randomly shuffled copy of the sequence." )
@@ -159,12 +159,11 @@ biological entity, i.e, a biological sequence."))
 
 (defun orthogonal-coded (char)
   "Return the character as an orthogonal coded vector.  Vectors are
-orthogonal iff their scalar product equals zero. The scalar product of
-concatenations of othogonal coded bases gives the number of
-nucleotides that the sequences have in common.
-
-http://en.wikipedia.org/wiki/Orthogonal_array
-"
+   orthogonal iff their scalar product equals zero. The scalar product of
+   concatenations of othogonal coded bases gives the number of
+   nucleotides that the sequences have in
+   common.
+   http://en.wikipedia.org/wiki/Orthogonal_array"
   (declare (type character char))
   (flet ((char-eq (c)
            (char-equal char c)))
@@ -182,8 +181,8 @@ character. Please extend `orthogonal-coded' to support this character.
 (defgeneric orthogonal-coded-seq (seq)
   ;;FIXME: Missing documentation
   (:documentation "Take an nucleotide sequence and generate an
-orthogonal coded copy of the sequence.  Albert, please describe what
-orthogonal coded means and when it is used."))
+   orthogonal coded copy of the sequence.  Albert, please describe what
+   orthogonal coded means and when it is used."))
 
 (defmethod orthogonal-coded-seq ((seq string))
   ;;FIXME: Missing documentation
@@ -208,19 +207,20 @@ orthogonal coded means and when it is used."))
 
 (defgeneric aa-coords->nt-coords (coord)
   (:documentation "Convert coordinates from amino acids to
-nucleotides.  This works for simple integers as well as for intervals.
-Note that the first monomere has the index 1 in eather coordinate
-system, nucleotide as well as amino acid.  If the coordinate is a
-single number, it is mapped to the _first_ nucleotide which codes for
-the corresponding amino acid. If the argument is an interval on an
-amino acid sequence, the result is an interval that spans the whole
-nucleotide sequence which codes for the corresponding amino acids.
+   nucleotides.  This works for simple integers as well as for
+   intervals.  Note that the first monomere has the index 1 in eather
+   coordinate system, nucleotide as well as amino acid.  If the
+   coordinate is a single number, it is mapped to the _first_
+   nucleotide which codes for the corresponding amino acid. If the
+   argument is an interval on an amino acid sequence, the result is an
+   interval that spans the whole nucleotide sequence which codes for
+   the corresponding amino acids.
 
-### Examples
-(aa->nt 1)
-=> 1
-(aa->nt 3)
-=> 7 "))
+   ### Examples
+   (aa->nt 1)
+   => 1
+   (aa->nt 3)
+   => 7 "))
 
 (defmethod aa-coords->nt-coords ((coord integer))
   (1+ (* 3 (1- coord))))
@@ -232,12 +232,13 @@ nucleotide sequence which codes for the corresponding amino acids.
 
 (defgeneric nt-coords->aa-coords (coord)
   (:documentation "Convert from coordinates in nucleotides to
-                   coordinates in amino acids.
-Example:
+   coordinates in amino acids.
 
-* (mapcar #'nt-coords->aa-coords (list 1 2 3 4 5 6 7 8 9))
+   Example:
 
-(1 1 1 2 2 2 3 3 3)"))
+   * (mapcar #'nt-coords->aa-coords (list 1 2 3 4 5 6 7 8 9))
+
+   (1 1 1 2 2 2 3 3 3)"))
 
 (defmethod nt-coords->aa-coords ((coord integer))
   (multiple-value-bind (aa-1 rest) (truncate (1- coord) 3)
@@ -268,11 +269,11 @@ Example:
             :initarg :translation
             :documentation "The protein the transcript is coding for, if any."
             :initform nil))
-   (:documentation "An transcript describes a RNA sequence that can be
-spliced into a mature mRNA.  Exons are the elements that make up the
-mRNA.  All sequence elements which are cut out in the splicing process
-are called introns and can be thought to be the relative complements of
-the exons within the transcript."))
+   (:documentation "A transcript describes a RNA sequence that can be
+    spliced into a mature mRNA.  Exons are the elements that make up
+    the mRNA.  All sequence elements which are cut out in the splicing
+    process are called introns and can be thought to be the relative
+    complements of the exons within the transcript."))
 
 (defclass exon (nucleotide-sequence)
   ((transcript :accessor transcript
@@ -280,7 +281,12 @@ the exons within the transcript."))
                :documentation "The transcript corresponding to this exon.")
    (circular :allocation :class
              :initform nil))
-  (:documentation "Exons are those regions of the transcript of the genomic DNA that leave the nucleus and are read out to form the amino acid sequence. A single gene is very likely to have multiple variants that are assembled from different exons. The exonic regions from different transcript may overlap when mapped back onto the genome."))
+  (:documentation "Exons are those regions of the transcript of the
+  genomic DNA that leave the nucleus and are read out to form the
+  amino acid sequence. A single gene is very likely to have multiple
+  variants that are assembled from different exons. The exonic regions
+  from different transcript may overlap when mapped back onto the
+  genome."))
 
 (defclass protein (amino-acid-sequence)
   ((transcript :initarg :transcript
@@ -288,24 +294,44 @@ the exons within the transcript."))
                :documentation "The transcript which codes for this protein.")
    (features :initarg :features
              :accessor protein-features
-             :documentation "Slot harboring the features of that protein sequence. This may be post-translational modifications or links to protein domain databases that are manifested by a respective sequence similarity at that particular region."))
-  (:documentation "Proteins are the class of molecules that most biochemical functions are attributed to."))
+             :documentation "Slot harboring the features of that
+             protein sequence. This may be post-translational
+             modifications or links to protein domain databases that
+             are manifested by a respective sequence similarity at
+             that particular region."))
+  (:documentation "Proteins are the class of molecules that most
+  biochemical functions are attributed to."))
 
 (defclass protein-feature (feature)
   ((protein :initarg protein
             :accessor protein
             :accessor translation
-            :documentation "The link back to the protein to which this feature belongs.")
+            :documentation "The link back to the protein to which this
+            feature belongs.")
    (feat-start :initarg :start
                :accessor feat-start
                :accessor lower-bound)
    (feat-end :initarg :end
              :accessor feat-end
              :accessor upper-bound))
-  (:documentation "Whenever a fragment of a protein sequence is known to be special, then this class, the protein feature, is how this knowledge should be expressed formally. The name 'feature' is derived from the term 'feature-table' as it is used in the EMBL-formatted sequence databases like 'uniprot'. EnsEMBL and UniProt collaborate on protein annotation."))
+  (:documentation "Whenever a fragment of a protein sequence is known
+  to be special, then this class, the protein feature, is how this
+  knowledge should be expressed formally. The name 'feature' is
+  derived from the term 'feature-table' as it is used in the
+  EMBL-formatted sequence databases like 'uniprot'. EnsEMBL and
+  UniProt collaborate on protein annotation."))
 
 (defclass transmembrane-helix (protein-feature)
   ((sidedness :initarg nil
-	      :documentation "With N-terminus inside and C-terminus outside, a membrane-spanning helix has an in-out topology. The alternative is an out-in topology. The default is nil. The sidedness is most difficult to predict."))
-  (:documentation "Membrane proteins are essential to understand for the pharmaceutical industry and they are fascinating in their own right. There are many things that one wants to know about membrane-spanning regions in proteins. Their sidedness is of concern, but also information about their aromatic ring or the distribution of stop-signals around them."))
+	      :documentation "With N-terminus inside and C-terminus
+	      outside, a membrane-spanning helix has an in-out
+	      topology. The alternative is an out-in topology. The
+	      default is nil. The sidedness is most difficult to
+	      predict."))
+  (:documentation "Membrane proteins are essential to understand for
+  the pharmaceutical industry and they are fascinating in their own
+  right. There are many things that one wants to know about
+  membrane-spanning regions in proteins. Their sidedness is of
+  concern, but also information about their aromatic ring or the
+  distribution of stop-signals around them."))
 
