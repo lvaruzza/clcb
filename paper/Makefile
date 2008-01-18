@@ -13,6 +13,6 @@ paper.pdf: paper.tex paper.bbl
 	pdflatex $<
 
 look: paper.pdf
-	`which xpdf || which acroread || which kpdf` paper.pdf
+	`which xpdf || which kpdf || which acroread` paper.pdf
 
 .PHONY: look

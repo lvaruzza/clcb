@@ -1,66 +1,117 @@
-\documentclass{article}
-\author{Albert Krewinkel$^*$ \and Steffen M{\"{o}}ller}
-\title{Coherent Lisp access to resources in Computational Biology}
-\date{\today}
-\begin{document}
-\maketitle
-{\small University of L{\"{u}}beck, Institute for Neuro- and Bioinformatics, D-23538 L\"ubeck\\
+\documentclass{bioinfo}
+\copyrightyear{2008}
+\pubyear{2008}
 
-$^*$to whom correspondence should be addressed: krewink@inb.uni-luebeck.de
-}
+\usepackage{tikz}
+\usetikzlibrary{shapes}
+\usepackage{fancyvrb}
+\usepackage{subfigure}
+\usepackage[british]{babel}
+
+%\date{\today}
+
+\begin{document}
+
+\firstpage{1}
+
+\title[CLCB: Lisp for Computational Biology]{CLCB: Coherent Lisp access to resources in Computational Biology}
+\author[A. Krewinkel and S. M{\"{o}}ller]{Albert Krewinkel\footnote{To whom correspondence should
+        be addressed}\ \   and Steffen M{\"{o}}ller}
+\address{University of L{\"{u}}beck, Institute for Neuro- and Bioinformatics, 23538 L\"ubeck, Germany}
+
+\maketitle
+
 \begin{abstract}
+\section{Summary:}
 This work introduces a Lisp package for accessing information in the
 genome database EnsEMBL and thereby integrating data of SNPs, genes,
-transcripts and proteins.
+transcripts and proteins. 
+%
+For the programmer this work transforms the Ensembl core databases
+into structures that are intuitively accessed much like the BioMart
+warehouse. However, these links remain dynamic and may be extended
+smoothly across databases and arbitrary external data sources.
+%
+CLCB further provides an additional abstract level to work with those
+biological objects that have no database link. Sequence features are
+modelled as intervals and set operations have been defined on these
+allowing for sophisticated filters across all biological domains.
 
-{\bf Availability:} http://clcb.sf.net
+\section{Availability:} \href{http://clcb.sf.net}{http://clcb.sf.net}
+\section{Contact:} \href{krewink@inb.uni-luebeck.de}{krewink@inb.uni-luebeck.de}
+
 \end{abstract}
 
 \section{Introduction}
 
 Computational biology experiences a steady gain not only in the sheer
-volume of data that needs to be processed. The data that is stored becomes
-more and more interconnected as well. There is an interplay of sequence
-similarity and intergenomics, of sequence variation and expression data
-or protein features.
+volume of data that needs to be processed. The data that is stored
+becomes more and more interconnected as well. For instance, to investigate
+the impact of genomic variations, one will address sources of sequence
+similarity for intergenomics, retrieve protein features possibly affected
+and retrieve expression data for the gene itself and its neighbours in
+molecular pathway  databases.
 
 The volume of data is coped with the old technology of relational
-databases and since the IT develops faster than that data rate, this
+databases and since the IT still develops faster than that data rate, this
 is save. The models for interactions of the data, however, need to be
 transferred between the human and the machine. The community approaches
-behind BioJava, BioPerl or BioRuby have provided an enormous wealth of
-tricks for dealing with data in computational biology, but the interaction
-with those data is not addressed.
+behind BioJava \citep{biojava}, BioPerl \citep{bioperl:2002} or BioRuby
+\citep{bioruby} have provided an enormous wealth of
+tricks for dealing with data in computational biology. These however are not
+meant to express complex data structures. The agent community has not yet
+presented a solution either \citep{agents:2007}.
 
 The motivation behind the here presented work lies in the hunch that
 by strengthening the functional aspects of programming languages, this
 situation can be helped.  A technology older than relational databases,
 the programming language Lisp, was employed to model interactions
-between biological entities in the EnsEMBL core and SNP databases. To
+between biological entities in the EnsEMBL \citep{BiAnCaChClCoCoCuCuCuDoDuFeFlGrHaHeHoHu06}
+core and SNP databases. To
 the end use this functions much like prepared tables of BioMart but
-without constraints on the semantic links of the data and, admittedly,
-more interactions with the database.
+without constraints on the semantic links between the data entries.
 
-\section{Results}
+\section{Approach}
+
+The here presented work has two layers. One for the abstract representation of biological enties,
+the other for the link of these to the Ensembl database. Every table
+in Ensembl is represented as a Lisp class. When one would express a
+join statement in SQL, the Lisp classes provide a member function to
+dynamically retrieve thus linked objects. This principle was applied to
+the core databases, compara and variation.
+
+
+\section{Methods}
+\begin{methods}
+The development was performed with Debian Linux for SBCL and Common Lisp. The Ensembl
+compara and core MySQL databases have been installed locally, which is not required
+for the use of this library. The databases are accessed with the CLSQL
+package\footnote{See \href{http://clsql.b9.com/}{http://clsql.b9.com/}}.
+\end{methods}
 
 \section{Discussion}
 
-The common myths about Lisp have all long been debunked. Lisp integrates
-principles from functional, iterative and object-oriented programming and
-its macro system provides it with an unparalleled flexibility. The
-functional programming brings computational biology has advantages. The
-programmer follows the data through the code and operations may be passed 
-as entities between functions. This allows to think about the function of,
-e.g. a nuclease, in complete analogy to the enzyme on a molecular level:
-both can be added to a set of target sequences.
+The common myths about Lisp have all long been debunked\footnote{See
+\href{http://www.lispworks.com/products/myths\_and\_legends.html}{http://www.lispworks.com/products/myths\_and\_legends.html}}.
+Lisp integrates principles from functional, iterative and object-oriented
+programming and its macro system provides it with an unparalleled
+flexibility. When applying functional programming techniques, the computational biologist
+follows the data through the code and operations may be passed as
+entities between functions. This allows to
+think about the function of, e.g. a nuclease, in complete analogy to
+the enzyme on a molecular level: both can be added to a set of target
+sequences.
 
 The CLCB library is moderately complete for its application on the EnsEMBL
-database. The success that the statistics envirionment R \cite{Rbioinformatics}
+database. The success that the statistics envirionment R \citep{Rbioinformatics}
 has in the field of bioinformatics, which shared many concepts of a
 functional language, is indicative of the potential that Lisp has for
 computational biology.
 
-\bibliographystyle{plain}
+
+\bibliographystyle{natbib}
+\begin{methods}
 \bibliography{clcb}
+\end{methods}
 
 \end{document}
