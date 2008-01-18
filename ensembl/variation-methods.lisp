@@ -1,10 +1,34 @@
 ;; This packages aims at characterising the link from genes to SNPs
 
-#||
+(in-package :clcb-ensembl)
 
-mysql> desc variation;
-+-------------------+-----------------------------------------------------------------+------+-----+---------+----------------+
-| Field             | Type                                                            | Null | Key | Default | Extra          |
+#||
+ 
+select * from source limit 10;
++-----------+----------------------------------+---------+
+| source_id | name                             | version |
++-----------+----------------------------------+---------+
+|         1 | dbSNP                            |     127 |
+|         3 | HGVbase                          |      15 |
+|         5 | TSC                              |       1 |
+|        11 | ENSEMBL:Watson                   |    NULL |
+|        10 | ENSEMBL:Venter                   |    NULL |
+|         9 | Affy GenomeWideSNP_6.0           |    NULL |
+|         8 | ENSEMBL:celera                   |    NULL |
+|         7 | Affy GeneChip 100K Mapping Array |    NULL |
+|         6 | Affy GeneChip 500K Mapping Array |    NULL |
++-----------+----------------------------------+---------+
+
+||#
+
+(def-view-class source ()
+  ((source-id :db-type :key :type integer)
+   (name :db-type base :type (string 255))
+   (version :db-type base :type integer))
+  (:base-table "source")
+  (:documentation "This class answers how a particular variation was defined. A link from here to the variations with that same source ID is not feasible without extra constraints on the variations because of the large number that will be assigned to a single source."))
+
+#|| 				variation
 +-------------------+-----------------------------------------------------------------+------+-----+---------+----------------+
 | variation_id      | int(10) unsigned                                                |      | PRI | NULL    | auto_increment |
 | source_id         | int(10) unsigned                                                |      |     | 0       |                |
@@ -12,21 +36,7 @@ mysql> desc variation;
 | validation_status | set('cluster','freq','submitter','doublehit','hapmap','failed') | YES  |     | NULL    |                |
 | ancestral_allele  | text                                                            | YES  |     | NULL    |                |
 +-------------------+-----------------------------------------------------------------+------+-----+---------+----------------+
-5 rows in set (0.04 sec)
 
-mysql> desc allele;
-+--------------+------------------+------+-----+---------+----------------+
-| Field        | Type             | Null | Key | Default | Extra          |
-+--------------+------------------+------+-----+---------+----------------+
-| allele_id    | int(10) unsigned |      | PRI | NULL    | auto_increment |
-| variation_id | int(10) unsigned |      | MUL | 0       |                |
-| allele       | varchar(255)     | YES  |     | NULL    |                |
-| frequency    | float            | YES  |     | NULL    |                |
-| sample_id    | int(10) unsigned | YES  |     | NULL    |                |
-+--------------+------------------+------+-----+---------+----------------+
-5 rows in set (0.04 sec)
-
-mysql> select * from variation limit 10;
 +--------------+-----------+------+------------------------+------------------+
 | variation_id | source_id | name | validation_status      | ancestral_allele |
 +--------------+-----------+------+------------------------+------------------+
@@ -41,9 +51,30 @@ mysql> select * from variation limit 10;
 |            9 |         1 | rs11 | NULL                   | C                |
 |           10 |         1 | rs12 | submitter              | A                |
 +--------------+-----------+------+------------------------+------------------+
-10 rows in set (0.05 sec)
+||#
 
-mysql> select * from allele limit 10;
+(def-view-class variation ()
+  ((variation-id :db-type :key :type integer)
+   (source-id :db-type :base :type integer)
+   (source :db-type :join :db-info (:join-class source
+				    :foreign-key source-id
+				    :home-key source-id
+				    :retrieval :delayed))
+   (name :db-type :key :type (string 255))
+   (validation-status :db-type :base (string 15))
+   (ancesteral-allele :db-type :base string))
+  (:base-table "variation")
+  (:documentation "This class identifies the abstract notion of a nucleotide polymorphism. The 'name' attribute is the frequently found rs0000 identifyer of a SNP. With this class is specified what to look for, but the individuum has not yet been inspected."))
+
+#||			 allele
++--------------+------------------+------+-----+---------+----------------+
+| allele_id    | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| variation_id | int(10) unsigned |      | MUL | 0       |                |
+| allele       | varchar(255)     | YES  |     | NULL    |                |
+| frequency    | float            | YES  |     | NULL    |                |
+| sample_id    | int(10) unsigned | YES  |     | NULL    |                |
++--------------+------------------+------+-----+---------+----------------+
+
 +-----------+--------------+--------+-----------+-----------+
 | allele_id | variation_id | allele | frequency | sample_id |
 +-----------+--------------+--------+-----------+-----------+
@@ -59,6 +90,138 @@ mysql> select * from allele limit 10;
 |        10 |            1 | C      |     0.978 |       661 |
 +-----------+--------------+--------+-----------+-----------+
 10 rows in set (0.04 sec)
+||#
+
+(def-view-class allele ()
+  ((allele-id :db-type :key :type integer)
+   (variation-id :db-type :key :type integer)
+   (variation :db-type :join :db-info (:join-class variation
+				       :foreign-key variation-id
+				       :home-key variation-id
+				       :retrieval :delayed))
+   (allele :db-type :base :type (string 255))
+   (frequency :db-type :base :type float)
+   (sample-id :db-type :base :type integer)
+   (sample :db-type :join :db-info (:join-class sample
+				    :foreign-key sample-id
+				    :home-key sample-id)))
+   (:base-table "allele")
+   (:documentation "The allele links the abstract notion of a variation with a particular study (see class 'sample') that identified that allele. However, the sample may also refer to 'individuals'."))
+  
+#|| 		sample
++-------------+------------------+------+-----+---------+----------------+
+| sample_id   | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| name        | varchar(255)     |      | MUL |         |                |
+| size        | int(11)          | YES  |     | NULL    |                |
+| description | text             | YES  |     | NULL    |                |
++-------------+------------------+------+-----+---------+----------------+
+||#
+
+(def-view-class sample ()
+  ((sample-id :db-type :key :type integer)
+   (name :db-type :key :type (string 255))
+   (size :db-type :base :type integer)
+   (description :db-type :base :type string))
+  (:base-table "sample")
+  (:documentation "The sample represents the study (or sometimes the single individuum) with a collection of individuals that was studied for SNPs."))
+
+
+#||			 individual;
+| +-----------------------------+---------------------------------+------+-----+---------+-------+
+| | sample_id                   | int(10) unsigned                |      | PRI | 0       |       |
+| | gender                      | enum('Male','Female','Unknown') |      |     | Unknown |       |
+| | father_individual_sample_id | int(10) unsigned                | YES  |     | NULL    |       |
+| | mother_individual_sample_id | int(10) unsigned                | YES  |     | NULL    |       |
+| | individual_type_id          | int(10) unsigned                |      |     | 0       |       |
+| +-----------------------------+---------------------------------+------+-----+---------+-------+
+||#
+
+(def-view-class individual ()
+   ((sample-id :db-type :key :type integer)
+    (gender :db-type :base :type (string 10))
+    (father_individual_sample_id :db-type :base :type integer)
+    (mother_individual_sample_id :db-type :base :type integer)
+    (individual_type_id :db-type :base :type integer))
+   (:base-table "individual")
+   (:documentation "This class identifies relationships between samples."))
+
+#||
+individual_type
++--------------------+------------------+------+-----+---------+----------------+
+| individual_type_id | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| name               | varchar(255)     |      |     |         |                |
+| description        | text             | YES  |     | NULL    |                |
++--------------------+------------------+------+-----+---------+----------------+
+||#
+
+(def-view-class individual-type ()
+  ((individual-type-id :db-type :key :type integer)
+   (name :db-type :base :type (string 255))
+   (description :db-type :base :type string))
+  (:base-table "individual_type")
+  (:documentation "Presentation of further information on indivuals genotyped (fully_inbred, partly_inbred, outbread, mutant)."))
+
+#||					 transcript_variation;
++-------------------------+-------------------------------+------+-----+---------+----------------+
+| transcript_variation_id | int(10) unsigned              |      | PRI | NULL    | auto_increment |
+| transcript_id           | int(10) unsigned              |      | MUL | 0       |                |
+| variation_feature_id    | int(10) unsigned              |      | MUL | 0       |                |
+| cdna_start              | int(11)                       | YES  |     | NULL    |                |
+| cdna_end                | int(11)                       | YES  |     | NULL    |                |
+| translation_start       | int(11)                       | YES  |     | NULL    |                |
+| translation_end         | int(11)                       | YES  |     | NULL    |                |
+| peptide_allele_string   | varchar(255)                  | YES  |     | NULL    |                |
+| consequence_type        | set('ESSENTIAL_SPLICE_SITE','STOP_GAINED','STOP_LOST','COMPLEX_INDEL','FRAMESHIFT_CODING','NON_SYNONYMOUS_CODING','SPLICE_SITE','SYNONYMOUS_CODING','REGULATORY_REGION','5PRIME_UTR','3PRIME_UTR','INTRONIC','UPSTREAM','DOWNSTREAM') |      | MUL |  
+||#
+
+(def-view-class transcript-variation ()
+  ((transcript-variation-id :db-type :key :type integer)
+   (transcript-id :db-type :key :type integer)
+   (variation-feature-id :db-type :key :type integer)
+   (cdna-start :db-type :base :type integer)
+   (cdna-end :db-type :base :type integer)
+   (translation-start :db-type :base :type integer)
+   (translation-end :db-type :base :type integer)
+   (peptide-allele-string :db-type :base :type integer)
+   (consequence-type :db-type :base :type (string 50)))
+  (:base-table "transcript_variation")
+  (:documentation "A link from a transcript to a SNP."))
+
+#|| 			variation_feature
+| variation_feature_id | int(10) unsigned       |      | PRI | NULL       | auto_increment |
+| seq_region_id        | int(10) unsigned       |      | MUL | 0          |                |
+| seq_region_start     | int(11)                |      |     | 0          |                |
+| seq_region_end       | int(11)                |      |     | 0          |                |
+| seq_region_strand    | tinyint(4)             |      |     | 0          |                |
+| variation_id         | int(10) unsigned       |      | MUL | 0          |                |
+| allele_string        | text                   | YES  |     | NULL       |                |
+| variation_name       | varchar(255)           | YES  |     | NULL       |                |
+| map_weight           | int(11)                |      |     | 0          |                |
+| flags                | set('genotyped')       | YES  |     | NULL       |                |
+| source_id            | int(10) unsigned       |      |     | 0          |                |
+| validation_status    | set('cluster','freq','submitter','doublehit','hapmap')    | YES  |     | NULL       |                |
+| consequence_type     | set('ESSENTIAL_SPLICE_SITE','STOP_GAINED','STOP_LOST','COMPLEX_INDEL','FRAMESHIFT_CODING','NON_SYNONYMOUS_CODING','SPLICE_SITE','SYNONYMOUS_CODING','REGULATORY_REGION','5PRIME_UTR','3PRIME_UTR','INTRONIC','UPSTREAM','DOWNSTREAM','INTERGENIC') |      |     | INTERGENIC |                |
+| +----------------------+----------------------+------+-----+------------+----------------+
+||#
+(def-view-class variation-feature ()
+ ((variation_feature_id :db-type :key  :type integer)
+  (seq_region_id        :db-type :key  :type integer)
+  (seq_region_start     :db-type :base :type integer)
+  (seq_region_end       :db-type :base :type integer)
+  (seq_region_strand    :db-type :base :type integer)
+  (variation_id         :db-type :key  :type integer)
+  (allele_string        :db-type :base :type string)
+  (variation_name       :db-type :base :type (string 255))
+  (map_weight           :db-type :base :type integer)
+  (flags                :db-type :base :type (string 15))
+  (source_id            :db-type :base :type integer)
+  (validation_status    :db-type :base :type (string 15))
+  (consequence_type     :db-type :base :type (string 30)))
+ (:base-table "variation_feature")
+ (:documentation "Link from transcript_variation to the abstract representation of a validation."))
+
+
+#||
 
 select * from allele_group_allele join variation using (variation_id)
 		join variation_group_variation using(variation_id)
@@ -135,7 +298,6 @@ mysql> select * from variation_feature limit 10;
 |             12219634 |        225652 |             6306 |           6306 |                 1 |      4384489 | C/T           | rs7047363      |          2 | NULL  |         1 | NULL              | UPSTREAM              |
 +----------------------+---------------+------------------+----------------+-------------------+--------------+---------------+----------------+------------+-------+-----------+-------------------+-----------------------+
 
-||#
 
 ;; To access a strech of DNA 
 
@@ -145,3 +307,4 @@ Du weisst besser als ich, wie man von den seq_regions auf die absoluten Koordina
   "Returns SNPs located in that interval."
   (let (query "select seq_region_id, seq_region_start, seq_region_end, seq_region_strand, variation_id, variation_name, consequence_type from variation_feature join homo_sapiens_core_47_36i.seq_region using (seq_region_id) where ....)
     ))
+||#
