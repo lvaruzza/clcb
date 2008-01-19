@@ -199,6 +199,7 @@ intended to be used in conjuction with stable ids.")
                                  (<= seq-region-start x seq-region-end))))
                       :allocation :class
                       :db-kind :virtual))
+  (:base-table (concatenate 'string *ensembl-database* "." "dna_sequence"))
   (:documentation "Represents genomic sequences. The data has reached
   a stage such that the DNA sequence can indeed be represented in form
   of a chromosomal block. Though, for some organisms the DNA sequence
@@ -271,7 +272,7 @@ intended to be used in conjuction with stable ids.")
 		      :db-info (:join-class dna-align-feature
 				:foreign-key seq-region-id
 				:home-key seq-region-id)))
-  (:base-table "seq_region")
+  (:base-table (concatenate 'string *ensembl-database* "." "seq_region"))
   (:documentation "The same physical basepair may be described in multiple sequence regions of this table. "))
 
 
@@ -294,7 +295,7 @@ intended to be used in conjuction with stable ids.")
 		      :db-info (:join-class seq-region-attrib
                                 :home-key attrib-type-id
 				:foreign-key attrib-type-id)))
-  (:base-table "attrib_type")
+  (:base-table (concatenate 'string *ensembl-database* "." "attrib_type"))
   (:documentation "The attributes are assigned to sequence regions and
   inform about various properties that a particular sequence region
   may have, e.g., the number of micro RNAs or alternative IDs."))
@@ -312,7 +313,7 @@ intended to be used in conjuction with stable ids.")
 		   :db-info (:join-class  seq-region
 			     :home-key    seq-region-id
 			     :foreign-key seq-region-id)))
-  (:base-table "seq_region_attrib")
+  (:base-table (concatenate 'string *ensembl-database* "." "seq_region_attrib"))
   (:documentation "Additional information on the sequence region at hand."))
 
 ;;; Sequence tables
@@ -353,7 +354,7 @@ intended to be used in conjuction with stable ids.")
 			 :db-info (:join-class  seq-region
 				   :home-key    seq-region-id
 				   :foreign-key seq-region-id)))
-  (:base-table "dna_align_feature")
+  (:base-table (concatenate 'string *ensembl-database* "." "dna_align_feature"))
   (:documentation "All segments are investigated for sequence
   similarity with other known sequence databases. The comparison is
   identified by the hit-name and the entry in the
@@ -388,8 +389,8 @@ intended to be used in conjuction with stable ids.")
    (secondary_db_table     :type (string 255))
    (dna-align-feature :db-kind :join
 		      :db-info ()))
-   (:base-table "external_db")
-   (:documentation ""))
+  (:base-table (concatenate 'string *ensembl-database* "." "external_db"))
+  (:documentation ""))
 
 
 ;;; --------------------------------------------------------------------------
@@ -503,6 +504,7 @@ intended to be used in conjuction with stable ids.")
                          :set t)))
   (:stable-id-char #\g)
   (:dna-sequence t)
+  (:base-table (concatenate 'string *ensembl-database* "." "gene"))
   (:documentation "Segment of genomic or mitochondrial DNA that is
 coding for RNA or protein."))
 
@@ -532,6 +534,7 @@ coding for RNA or protein."))
                           :home-key translation-id
                           :foreign-key translation-id
                           :set nil)))
+  (:base-table (concatenate 'string *ensembl-database* "." "protein_feature"))
   (:documentation "Description of a segment of a protein."))
 
 (def-ensembl-class analysis
@@ -554,7 +557,7 @@ coding for RNA or protein."))
 			 :db-info (:join-class  analysis-description
 				   :home-key    analysis-id
 				   :foreign-key analysis-id)))
-  (:base-table "analysis")
+  (:base-table (concatenate 'string *ensembl-database* "." "analysis"))
   (:documentation "This class is referred to from most of the other tables. It indicates that some result was yielded by an automatism. Since only the DNA sequence itself is produced in the lab and everything else is indeed produced by machines, the table analysis gives insights in the provenance of the information given."))
 
 (def-ensembl-view analysis-description ()
@@ -567,7 +570,7 @@ coding for RNA or protein."))
 	     :db-info (:join-class analysis
 		       :home-key analysis-id
 		       :foreign-key analysis-id)))
-  (:base-table "analysis_description")
+  (:base-table (concatenate 'string *ensembl-database* "." "analysis_description"))
   (:documentation "Human-understandable explanation about the purpose of a particular analysis."))
 
 
@@ -602,6 +605,7 @@ coding for RNA or protein."))
                               :foreign-key translation-id)
                     :accessor protein-feature))
   (:stable-id-char #\p)
+  (:base-table (concatenate 'string *ensembl-database* "." "translation"))
   (:documentation "Translation is the product of a transcript. There
   is only one peptide per mRNA, which may be biologically bogus due to
   alternative translation initiation."))
