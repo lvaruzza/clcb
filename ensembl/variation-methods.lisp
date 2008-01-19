@@ -60,11 +60,47 @@ select * from source limit 10;
 				    :foreign-key source-id
 				    :home-key source-id
 				    :retrieval :delayed))
+   (synonyms :db-type :join :db-info (:join-class variation-synonym
+				      :foreign-key variation-id
+				      :home-key variation-id
+				      :retrieval :delayed))
    (name :db-type :key :type (string 255))
    (validation-status :db-type :base (string 15))
    (ancesteral-allele :db-type :base string))
   (:base-table "variation")
   (:documentation "This class identifies the abstract notion of a nucleotide polymorphism. The 'name' attribute is the frequently found rs0000 identifyer of a SNP. With this class is specified what to look for, but the individuum has not yet been inspected."))
+
+#||				 variation_synonym;
++----------------------+------------------+------+-----+---------+----------------+
+| variation_synonym_id | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| variation_id         | int(10) unsigned |      | MUL | 0       |                |
+| source_id            | int(10) unsigned |      |     | 0       |                |
+| name                 | varchar(255)     | YES  | MUL | NULL    |                |
+| moltype              | varchar(50)      | YES  |     | NULL    |                |
++----------------------+------------------+------+-----+---------+----------------+
+
++----------------------+--------------+-----------+--------------+---------+
+| variation_synonym_id | variation_id | source_id | name         | moltype |
++----------------------+--------------+-----------+--------------+---------+
+|             30433778 |            5 |         3 | SNP000691890 | NULL    |
+|             30433779 |            6 |         3 | SNP000691891 | NULL    |
+|             30433787 |           19 |         3 | SNP000691893 | NULL    |
++----------------------+--------------+-----------+--------------+---------+
+||#
+
+(def-view-class variation-synonym ()
+  ((variation-synonym-id :db-type :key  :type integer)
+   (variation-id         :db-type :key  :type integer)
+   (source-id            :db-type :base :type integer)
+   (source               :db-type :join :db-info (:join-class source
+	        			          :foreign-key source-id
+        				          :home-key source-id
+        				          :retrieval :delayed))
+   (name                 :db-type :key  :type (string 255))
+   (moltype              :db-type :base :type (string 255)))
+  (:base-table "variation_synonym")
+  (:documentation "Other names of a given variation, e.g., the SNP00000 IDs of The SNP Consortium (TSC)."))
+
 
 #||			 allele
 +--------------+------------------+------+-----+---------+----------------+
@@ -161,6 +197,55 @@ individual_type
   (:base-table "individual_type")
   (:documentation "Presentation of further information on indivuals genotyped (fully_inbred, partly_inbred, outbread, mutant)."))
 
+
+#||			 individual_population
++----------------------+------------------+------+-----+---------+-------+
+| individual_sample_id | int(10) unsigned |      | PRI | 0       |       |
+| population_sample_id | int(10) unsigned |      | PRI | 0       |       |
++----------------------+------------------+------+-----+---------+-------+
+||#
+
+(def-view-class individual-population ()
+  ((individual-sample-id :db-kind :key :type integer)
+   (population-sample-id :db-kind :key :type integer)
+   (population-genotype :db-kind :join :db-info (:join-class population-genotype
+						 :home-key population-sample-id
+						 :foreign-key sample-id) )
+   (individual :db-kind :join :db-info (:join-class population-genotype
+						 :home-key individual-sample-id
+						 :foreign-key sample-id) ))
+  (:base-table "individual_population")
+  (:documentation "The sample IDs of populations and individuals are different, but an individual may belong to a larger study and thus be assignable to that other sample ID. The table 'population' contains the sample-id as the only attribute. The assignment is hence rather a grouping of individuals."))
+
+#||			 population_genotype;
++------------------------+------------------+------+-----+---------+----------------+
+| Field                  | Type             | Null | Key | Default | Extra          |
++------------------------+------------------+------+-----+---------+----------------+
+| population_genotype_id | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| variation_id           | int(10) unsigned |      | MUL | 0       |                |
+| allele_1               | varchar(255)     | YES  |     | NULL    |                |
+| allele_2               | varchar(255)     | YES  |     | NULL    |                |
+| frequency              | float            | YES  |     | NULL    |                |
+| sample_id              | int(10) unsigned | YES  | MUL | NULL    |                |
++------------------------+------------------+------+-----+---------+----------------+
+||#
+
+(def-view-class population-genotype ()
+  ((population-genotype-id :db-type :key :type integer)
+   (variation-id :db-type :key :type integer)
+   (variation :db-type :join :db-info (:join-class variation
+				       :foreign-key variation-id
+				       :home-key variation-id))
+   (allele-1 :db-type :base :type (string 255))
+   (allele-2 :db-type :base :type (string 255))
+   (frequency :db-type :key :type float)
+   (sample-id :db-type :key :type integer)
+   (individual-population :db-type :join :db-info (:join-class individual-population
+						   :foreign-key population-sample-id
+						   :home-key sample-id)))
+  (:base-table "population_genotype")
+  (:documentation "Populations may be treated like individuals, only that the distribution of alleles will be of arbitrary frequencies. The sample ID may be used to link the population to individuals - for few populations only."))
+
 #||					 transcript_variation;
 +-------------------------+-------------------------------+------+-----+---------+----------------+
 | transcript_variation_id | int(10) unsigned              |      | PRI | NULL    | auto_increment |
@@ -178,6 +263,9 @@ individual_type
   ((transcript-variation-id :db-type :key :type integer)
    (transcript-id :db-type :key :type integer)
    (variation-feature-id :db-type :key :type integer)
+   (variation-feature :db-type :join :db-info (:join-class variation-feature
+					       :foreign-key variation-feature-id
+					       :home-key variation-feature-id ))
    (cdna-start :db-type :base :type integer)
    (cdna-end :db-type :base :type integer)
    (translation-start :db-type :base :type integer)
@@ -202,87 +290,7 @@ individual_type
 | validation_status    | set('cluster','freq','submitter','doublehit','hapmap')    | YES  |     | NULL       |                |
 | consequence_type     | set('ESSENTIAL_SPLICE_SITE','STOP_GAINED','STOP_LOST','COMPLEX_INDEL','FRAMESHIFT_CODING','NON_SYNONYMOUS_CODING','SPLICE_SITE','SYNONYMOUS_CODING','REGULATORY_REGION','5PRIME_UTR','3PRIME_UTR','INTRONIC','UPSTREAM','DOWNSTREAM','INTERGENIC') |      |     | INTERGENIC |                |
 | +----------------------+----------------------+------+-----+------------+----------------+
-||#
-(def-view-class variation-feature ()
- ((variation_feature_id :db-type :key  :type integer)
-  (seq_region_id        :db-type :key  :type integer)
-  (seq_region_start     :db-type :base :type integer)
-  (seq_region_end       :db-type :base :type integer)
-  (seq_region_strand    :db-type :base :type integer)
-  (variation_id         :db-type :key  :type integer)
-  (allele_string        :db-type :base :type string)
-  (variation_name       :db-type :base :type (string 255))
-  (map_weight           :db-type :base :type integer)
-  (flags                :db-type :base :type (string 15))
-  (source_id            :db-type :base :type integer)
-  (validation_status    :db-type :base :type (string 15))
-  (consequence_type     :db-type :base :type (string 30)))
- (:base-table "variation_feature")
- (:documentation "Link from transcript_variation to the abstract representation of a validation."))
 
-
-#||
-
-select * from allele_group_allele join variation using (variation_id)
-		join variation_group_variation using(variation_id)
-		join variation_group using (variation_group_id)
-		join variation_group_feature using (variation_group_id)
-		join source on variation_group.source_id = source.source_id
-limit 10;
-
-select * from allele_group_allele join variation using (variation_id)
-		join variation_feature using (variation_id) 
-limit 10;
-
-select * from allele join sample using (sample_id)
-limit 10;
-
-
-mysql> select * from variation_group_feature limit 10;
-+----------------------------+---------------+------------------+----------------+-------------------+--------------------+----------------------+
-variation_group_feature_id | seq_region_id | seq_region_start | seq_region_end | seq_region_strand | variation_group_id | variation_group_name |
-+----------------------------+---------------+------------------+----------------+-------------------+--------------------+----------------------+
-|                          1 |        226028 |         30190299 |       30233361 |                 1 |                  2 | PERLEGEN:B000001     |
-|                          2 |        226028 |         30738720 |       30787661 |                -1 |                  3 | PERLEGEN:B000002     |
-|                          3 |        226028 |         30978759 |       31009767 |                 1 |                  4 | PERLEGEN:B000003     |
-|                          4 |        226028 |         36824334 |       36857707 |                 1 |                  5 | PERLEGEN:B000004     |
-|                          5 |        226028 |         24318475 |       24340467 |                 1 |                  6 | PERLEGEN:B000005     |
-|                          6 |        226028 |         23895381 |       23929680 |                 1 |                  7 | PERLEGEN:B000006     |
-|                          7 |        226028 |         30532670 |       30567734 |                 1 |                  8 | PERLEGEN:B000007     |
-|                          8 |        226028 |         24371534 |       24412984 |                 1 |                  9 | PERLEGEN:B000008     |
-|                          9 |        226028 |         24192378 |       24206203 |                -1 |                 10 | PERLEGEN:B000009     |
-|                         10 |        226028 |         27986621 |       28011953 |                 1 |                 11 | PERLEGEN:B000010     |
-+----------------------------+---------------+------------------+----------------+-------------------+--------------------+----------------------+
-
-mysql> select * from variation_group limit 10;
-+--------------------+------------------+-----------+-----------+
-variation_group_id | name             | source_id | type      |
-+--------------------+------------------+-----------+-----------+
-|                  1 | DBMHC:ABDR       |         1 | haplotype |
-|                  2 | PERLEGEN:B000001 |         1 | haplotype |
-|                  3 | PERLEGEN:B000002 |         1 | haplotype |
-|                  4 | PERLEGEN:B000003 |         1 | haplotype |
-|                  5 | PERLEGEN:B000004 |         1 | haplotype |
-|                  6 | PERLEGEN:B000005 |         1 | haplotype |
-|                  7 | PERLEGEN:B000006 |         1 | haplotype |
-|                  8 | PERLEGEN:B000007 |         1 | haplotype |
-|                  9 | PERLEGEN:B000008 |         1 | haplotype |
-|                 10 | PERLEGEN:B000009 |         1 | haplotype |
-+--------------------+------------------+-----------+-----------+
-10 rows in set (0.04 sec)
-
-mysql> desc variation_group;
-+--------------------+-------------------------+------+-----+---------+----------------+
-| Field              | Type                    | Null | Key | Default | Extra          |
-+--------------------+-------------------------+------+-----+---------+----------------+
-| variation_group_id | int(10) unsigned        |      | PRI | NULL    | auto_increment |
-| name               | varchar(255)            | YES  | MUL | NULL    |                |
-| source_id          | int(10) unsigned        |      |     | 0       |                |
-| type               | enum('haplotype','tag') | YES  |     | NULL    |                |
-+--------------------+-------------------------+------+-----+---------+----------------+
-4 rows in set (0.04 sec)
-
-mysql> select * from variation_feature limit 10;
 +----------------------+---------------+------------------+----------------+-------------------+--------------+---------------+----------------+------------+-------+-----------+-------------------+-----------------------+
 | variation_feature_id | seq_region_id | seq_region_start | seq_region_end | seq_region_strand | variation_id | allele_string | variation_name | map_weight | flags | source_id | validation_status | consequence_type      |
 +----------------------+---------------+------------------+----------------+-------------------+--------------+---------------+----------------+------------+-------+-----------+-------------------+-----------------------+
@@ -298,13 +306,109 @@ mysql> select * from variation_feature limit 10;
 |             12219634 |        225652 |             6306 |           6306 |                 1 |      4384489 | C/T           | rs7047363      |          2 | NULL  |         1 | NULL              | UPSTREAM              |
 +----------------------+---------------+------------------+----------------+-------------------+--------------+---------------+----------------+------------+-------+-----------+-------------------+-----------------------+
 
-
-;; To access a strech of DNA 
-
-Du weisst besser als ich, wie man von den seq_regions auf die absoluten Koordinaten kommt und wieder zurueck...
-
-(defun chromosome+interval->snps (chromsome interval) 
-  "Returns SNPs located in that interval."
-  (let (query "select seq_region_id, seq_region_start, seq_region_end, seq_region_strand, variation_id, variation_name, consequence_type from variation_feature join homo_sapiens_core_47_36i.seq_region using (seq_region_id) where ....)
-    ))
 ||#
+(def-view-class variation-feature ()
+  ((variation-feature-id :db-type :key  :type integer)
+   (seq-region-id        :db-type :key  :type integer)
+   (seq-region-start     :db-type :base :type integer)
+   (seq-region-end       :db-type :base :type integer)
+   (seq-region-strand    :db-type :base :type integer)
+   (variation-id         :db-type :key  :type integer)
+   (variation            :db-type :join :db-info (:join-class variation
+  					          :home-key variation-id
+ 					          :foreign-key variation-id
+						  :retrieval :delayed))
+   (allele-string        :db-type :base :type string)
+   (variation-name       :db-type :base :type (string 255))
+   (map-weight           :db-type :base :type integer)
+   (flags                :db-type :base :type (string 15))
+   (source-id            :db-type :base :type integer)
+   (source :db-type :join :db-info (:join-class source
+				    :foreign-key source-id
+				    :home-key source-id
+				    :retrieval :delayed))
+   (validation-status    :db-type :base :type (string 15))
+   (consequence-type     :db-type :base :type (string 30)))
+  (:base-table "variation_feature")
+  (:documentation "Link from transcript_variation to the abstract representation of a validation."))
+
+
+
+#||				variation_group_feature
+
++----------------------------+------------------+------+-----+---------+----------------+
+| variation_group_feature_id | int(10) unsigned |      | PRI | NULL    | auto_increment |
+| seq_region_id              | int(10) unsigned |      | MUL | 0       |                |
+| seq_region_start           | int(11)          |      |     | 0       |                |
+| seq_region_end             | int(11)          |      |     | 0       |                |
+| seq_region_strand          | tinyint(4)       |      |     | 0       |                |
+| variation_group_id         | int(10) unsigned |      | MUL | 0       |                |
+| variation_group_name       | varchar(255)     | YES  |     | NULL    |                |
++----------------------------+------------------+------+-----+---------+----------------+
+
++-------+---------------+------------------+----------------+-------+--------+----------------------+
+| variation_group_feature_id               |      seq_region_strand |        | variation_group_name |
+|       | seq_region_id | seq_region_start | seq_region_end |       | variation_group_id            |
+|     1 |        226028 |         30190299 |       30233361 |     1 |      2 | PERLEGEN:B000001     |
+|     2 |        226028 |         30738720 |       30787661 |    -1 |      3 | PERLEGEN:B000002     |
+|     3 |        226028 |         30978759 |       31009767 |     1 |      4 | PERLEGEN:B000003     |
+|     4 |        226028 |         36824334 |       36857707 |     1 |      5 | PERLEGEN:B000004     |
+|     5 |        226028 |         24318475 |       24340467 |     1 |      6 | PERLEGEN:B000005     |
+|     6 |        226028 |         23895381 |       23929680 |     1 |      7 | PERLEGEN:B000006     |
+|     7 |        226028 |         30532670 |       30567734 |     1 |      8 | PERLEGEN:B000007     |
+|     8 |        226028 |         24371534 |       24412984 |     1 |      9 | PERLEGEN:B000008     |
+|     9 |        226028 |         24192378 |       24206203 |    -1 |     10 | PERLEGEN:B000009     |
+|    10 |        226028 |         27986621 |       28011953 |     1 |     11 | PERLEGEN:B000010     |
++-------+---------------+------------------+----------------+-------+--------+----------------------+
+
+||#
+
+(def-view-class variation-group-feature ()
+  ((variation-group-feature-id :db-type :key :type integer)
+	   (seq-region-id :db-type :key :type integer)
+	   (seq-region-start :db-type :base :type integer)
+	   (seq-region-end :db-type :base :type integer)
+	   (seq-region-strand :db-type :base :type integer)
+	   (variation-group-id :db-type :key :type integer)
+	   (variation-group :db-type :join :db-info (:join-class variation-group
+						     :home-key variation-group-id
+						     :foreign-key variation-group-id))
+	   (variation-group-name :db-type :base :type (string 255)))
+	  (:base-table "variation_group_feature")
+	  (:documentation "The class assigns a sequence region to a group of variations."))
+
+#||					variation_group
+
++--------------------+-------------------------+------+-----+---------+----------------+
+| variation_group_id | int(10) unsigned        |      | PRI | NULL    | auto_increment |
+| name               | varchar(255)            | YES  | MUL | NULL    |                |
+| source_id          | int(10) unsigned        |      |     | 0       |                |
+| type               | enum('haplotype','tag') | YES  |     | NULL    |                |
++--------------------+-------------------------+------+-----+---------+----------------+
+	 
++--------------------+------------------+-----------+-----------+
+| variation_group_id | name             | source_id | type      |
++--------------------+------------------+-----------+-----------+
+|                  1 | DBMHC:ABDR       |         1 | haplotype |
+|                  2 | PERLEGEN:B000001 |         1 | haplotype |
+|                  3 | PERLEGEN:B000002 |         1 | haplotype |
+|                  4 | PERLEGEN:B000003 |         1 | haplotype |
+|                  5 | PERLEGEN:B000004 |         1 | haplotype |
+|                  6 | PERLEGEN:B000005 |         1 | haplotype |
+|                  7 | PERLEGEN:B000006 |         1 | haplotype |
+|                  8 | PERLEGEN:B000007 |         1 | haplotype |
+|                  9 | PERLEGEN:B000008 |         1 | haplotype |
+|                 10 | PERLEGEN:B000009 |         1 | haplotype |
++--------------------+------------------+-----------+-----------+
+
+||#
+
+(def-view-class variation-group ()
+  ((variation-group-id :db-type :key :type integer)
+   (name :db-type :key :type (string 255))
+   (source-id :db-type :base :type integer)
+   (type :db-type :base :type (string 10))
+  (:base-table "variation_group")
+  (:documentation "This class combines a set of variations to one. One particular motivation may be an observed strong linkage disequilibrium from which one assumes the variation to be located on a single haplotype. Actually, in version 37 of this database there is no other type specified."))
+
+
