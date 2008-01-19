@@ -1,3 +1,26 @@
+;;;; Copyright (c) 2007 Steffen Moeller
+;;;;
+;;;; Permission is hereby granted, free of charge, to any person
+;;;; obtaining a copy of this software and associated documentation
+;;;; files (the "Software"), to deal in the Software without
+;;;; restriction, including without limitation the rights to use,
+;;;; copy, modify, merge, publish, distribute, sublicense, and/or sell
+;;;; copies of the Software, and to permit persons to whom the
+;;;; Software is furnished to do so, subject to the following
+;;;; conditions:
+;;;;
+;;;; The above copyright notice and this permission notice shall be
+;;;; included in all copies or substantial portions of the Software.
+;;;;
+;;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+;;;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+;;;; OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+;;;; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+;;;; HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+;;;; WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+;;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+;;;; OTHER DEALINGS IN THE SOFTWARE.
+
 ;; This packages aims at characterising the link from genes to SNPs
 
 (in-package :clcb-ensembl)
@@ -25,7 +48,7 @@ select * from source limit 10;
   ((source-id :db-type :key :type integer)
    (name :db-type base :type (string 255))
    (version :db-type base :type integer))
-  (:base-table "source")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "source"))
   (:documentation "This class answers how a particular variation was defined. A link from here to the variations with that same source ID is not feasible without extra constraints on the variations because of the large number that will be assigned to a single source."))
 
 #|| 				variation
@@ -58,16 +81,14 @@ select * from source limit 10;
    (source-id :db-type :base :type integer)
    (source :db-type :join :db-info (:join-class source
 				    :foreign-key source-id
-				    :home-key source-id
-				    :retrieval :delayed))
+				    :home-key source-id))
    (synonyms :db-type :join :db-info (:join-class variation-synonym
 				      :foreign-key variation-id
-				      :home-key variation-id
-				      :retrieval :delayed))
+				      :home-key variation-id))
    (name :db-type :key :type (string 255))
-   (validation-status :db-type :base (string 15))
-   (ancesteral-allele :db-type :base string))
-  (:base-table "variation")
+   (validation-status :db-type :base :type (string 15))
+   (ancesteral-allele :db-type :base :type string))
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "variation"))
   (:documentation "This class identifies the abstract notion of a nucleotide polymorphism. The 'name' attribute is the frequently found rs0000 identifyer of a SNP. With this class is specified what to look for, but the individuum has not yet been inspected."))
 
 #||				 variation_synonym;
@@ -98,7 +119,7 @@ select * from source limit 10;
         				          :retrieval :delayed))
    (name                 :db-type :key  :type (string 255))
    (moltype              :db-type :base :type (string 255)))
-  (:base-table "variation_synonym")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "variation_synonym"))
   (:documentation "Other names of a given variation, e.g., the SNP00000 IDs of The SNP Consortium (TSC)."))
 
 
@@ -141,7 +162,7 @@ select * from source limit 10;
    (sample :db-type :join :db-info (:join-class sample
 				    :foreign-key sample-id
 				    :home-key sample-id)))
-   (:base-table "allele")
+   (:base-table (concatenate 'string *ensembl-database-variation* "." "allele"))
    (:documentation "The allele links the abstract notion of a variation with a particular study (see class 'sample') that identified that allele. However, the sample may also refer to 'individuals'."))
   
 #|| 		sample
@@ -158,7 +179,7 @@ select * from source limit 10;
    (name :db-type :key :type (string 255))
    (size :db-type :base :type integer)
    (description :db-type :base :type string))
-  (:base-table "sample")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "sample"))
   (:documentation "The sample represents the study (or sometimes the single individuum) with a collection of individuals that was studied for SNPs."))
 
 
@@ -178,7 +199,7 @@ select * from source limit 10;
     (father_individual_sample_id :db-type :base :type integer)
     (mother_individual_sample_id :db-type :base :type integer)
     (individual_type_id :db-type :base :type integer))
-   (:base-table "individual")
+   (:base-table (concatenate 'string *ensembl-database-variation* "." "individual"))
    (:documentation "This class identifies relationships between samples."))
 
 #||
@@ -194,7 +215,7 @@ individual_type
   ((individual-type-id :db-type :key :type integer)
    (name :db-type :base :type (string 255))
    (description :db-type :base :type string))
-  (:base-table "individual_type")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "individual_type"))
   (:documentation "Presentation of further information on indivuals genotyped (fully_inbred, partly_inbred, outbread, mutant)."))
 
 
@@ -214,7 +235,7 @@ individual_type
    (individual :db-kind :join :db-info (:join-class population-genotype
 						 :home-key individual-sample-id
 						 :foreign-key sample-id) ))
-  (:base-table "individual_population")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "individual_population"))
   (:documentation "The sample IDs of populations and individuals are different, but an individual may belong to a larger study and thus be assignable to that other sample ID. The table 'population' contains the sample-id as the only attribute. The assignment is hence rather a grouping of individuals."))
 
 #||			 population_genotype;
@@ -243,7 +264,7 @@ individual_type
    (individual-population :db-type :join :db-info (:join-class individual-population
 						   :foreign-key population-sample-id
 						   :home-key sample-id)))
-  (:base-table "population_genotype")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "population_genotype"))
   (:documentation "Populations may be treated like individuals, only that the distribution of alleles will be of arbitrary frequencies. The sample ID may be used to link the population to individuals - for few populations only."))
 
 #||					 transcript_variation;
@@ -272,7 +293,7 @@ individual_type
    (translation-end :db-type :base :type integer)
    (peptide-allele-string :db-type :base :type integer)
    (consequence-type :db-type :base :type (string 50)))
-  (:base-table "transcript_variation")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "transcript_variation"))
   (:documentation "A link from a transcript to a SNP."))
 
 #|| 			variation_feature
@@ -329,7 +350,7 @@ individual_type
 				    :retrieval :delayed))
    (validation-status    :db-type :base :type (string 15))
    (consequence-type     :db-type :base :type (string 30)))
-  (:base-table "variation_feature")
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "variation_feature"))
   (:documentation "Link from transcript_variation to the abstract representation of a validation."))
 
 
@@ -374,7 +395,7 @@ individual_type
 						     :home-key variation-group-id
 						     :foreign-key variation-group-id))
 	   (variation-group-name :db-type :base :type (string 255)))
-	  (:base-table "variation_group_feature")
+	  (:base-table (concatenate 'string *ensembl-database-variation* "." "variation_group_feature"))
 	  (:documentation "The class assigns a sequence region to a group of variations."))
 
 #||					variation_group
@@ -407,8 +428,8 @@ individual_type
   ((variation-group-id :db-type :key :type integer)
    (name :db-type :key :type (string 255))
    (source-id :db-type :base :type integer)
-   (type :db-type :base :type (string 10))
-  (:base-table "variation_group")
+   (type :db-type :base :type (string 10)))
+  (:base-table (concatenate 'string *ensembl-database-variation* "." "variation_group"))
   (:documentation "This class combines a set of variations to one. One particular motivation may be an observed strong linkage disequilibrium from which one assumes the variation to be located on a single haplotype. Actually, in version 37 of this database there is no other type specified."))
 
 

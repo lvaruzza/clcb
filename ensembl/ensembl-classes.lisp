@@ -501,7 +501,13 @@ intended to be used in conjuction with stable ids.")
                :db-info (:join-class transcript
                          :home-key gene-id
                          :foreign-key gene-id
-                         :set t)))
+                         :set t))
+   (compara-member :db-kind :join
+                   :db-info (:join-class member
+			     :foreign-key stable-id
+			     :home-key stable-id
+			     ))
+   )
   (:stable-id-char #\g)
   (:dna-sequence t)
   (:base-table (concatenate 'string *ensembl-database* "." "gene"))

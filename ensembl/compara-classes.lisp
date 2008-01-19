@@ -27,12 +27,8 @@
 
 (in-package :clcb-ensembl)
 
-#||
+#||                                    homology
 
-homology
-
-+----------------------------+------------------+------+-----+---------+----------------+
-| Field                      | Type             | Null | Key | Default | Extra          |
 +----------------------------+------------------+------+-----+---------+----------------+
 | homology_id                | int(10) unsigned |      | PRI | NULL    | auto_increment |
 | stable_id                  | varchar(40)      | YES  |     | NULL    |                |
@@ -49,7 +45,6 @@ homology
 | tree_node_id               | int(10) unsigned |      |     | 0       |                |
 +----------------------------+------------------+------+-----+---------+----------------+
 
-mysql> select homology_id,stable_id,method_link_species_set_id,description,subtype from homology limit 10;
 +-------------+-----------+----------------------------+------------------------+-------------------------+
 | homology_id | stable_id | method_link_species_set_id | description            | subtype                 |
 +-------------+-----------+----------------------------+------------------------+-------------------------+
@@ -64,11 +59,12 @@ mysql> select homology_id,stable_id,method_link_species_set_id,description,subty
 |           9 | NULL      |                      20453 | ortholog_one2one       | Ciona                   |
 |          10 | NULL      |                      20453 | ortholog_one2one       | Ciona                   |
 +-------------+-----------+----------------------------+------------------------+-------------------------+
-10 rows in set (0,05 sec)
 
-homology_member
-+--------------------------+------------------+------+-----+---------+-------+
-| Field                    | Type             | Null | Key | Default | Extra |
+||#
+
+
+#||                                  homology_member
+
 +--------------------------+------------------+------+-----+---------+-------+
 | homology_id              | int(10) unsigned |      | PRI | 0       |       |
 | member_id                | int(10) unsigned |      | PRI | 0       |       |
@@ -81,13 +77,11 @@ homology_member
 | perc_id                  | int(10)          | YES  |     | NULL    |       |
 | perc_pos                 | int(10)          | YES  |     | NULL    |       |
 +--------------------------+------------------+------+-----+---------+-------+
-10 rows in set (0.04 sec)
+||#
 
 
-member
+#||                                      member
 
-+----------------+------------------+------+-----+---------+----------------+
-| Field          | Type             | Null | Key | Default | Extra          |
 +----------------+------------------+------+-----+---------+----------------+
 | member_id      | int(10) unsigned |      | PRI | NULL    | auto_increment |
 | stable_id      | varchar(40)      |      | MUL |         |                |
@@ -105,7 +99,12 @@ member
 | display_label  | varchar(128)     | YES  |     | NULL    |                |
 +----------------+------------------+------+-----+---------+----------------+
 
-mysql> desc method_link_species_set;
+||#
+
+
+
+
+#||                             method_link_species_set
 +----------------------------+------------------+------+-----+---------+----------------+
 | Field                      | Type             | Null | Key | Default | Extra          |
 +----------------------------+------------------+------+-----+---------+----------------+
@@ -116,10 +115,10 @@ mysql> desc method_link_species_set;
 | source                     | varchar(255)     |      |     | ensembl |                |
 | url                        | varchar(255)     |      |     |         |                |
 +----------------------------+------------------+------+-----+---------+----------------+
-6 rows in set (0.05 sec)
+||#
 
 
-mysql> select * from genome_db limit 30;
+#||                                  genome_db
 +--------------+----------+-------------------------------+------------+------------------+--------------------+---------+
 | genome_db_id | taxon_id | name                          | assembly   | assembly_default | genebuild          | locator |
 +--------------+----------+-------------------------------+------------+------------------+--------------------+---------+
@@ -155,7 +154,11 @@ mysql> select * from genome_db limit 30;
 |           52 |    43179 | Spermophilus tridecemlineatus | SQUIRREL   |                1 | 2006-10-Ensembl    |         |
 +--------------+----------+-------------------------------+------------+------------------+--------------------+---------+
 
-mysql> select distinct source_name from member;
+||#
+
+#||                                         member
+
+select distinct source_name from member;
 +-------------------+
 | source_name       |
 +-------------------+
@@ -164,9 +167,7 @@ mysql> select distinct source_name from member;
 | Uniprot/SPTREMBL  |
 | Uniprot/SWISSPROT |
 +-------------------+
-4 rows in set (2.40 sec)
 
-mysql> select member_id,stable_id,source_name,taxon_id,genome_db_id,sequence_id,gene_member_id,chr_name from member limit 10;
 +-----------+--------------------+-------------+----------+--------------+-------------+----------------+-----------+
 | member_id | stable_id          | source_name | taxon_id | genome_db_id | sequence_id | gene_member_id | chr_name  |
 +-----------+--------------------+-------------+----------+--------------+-------------+----------------+-----------+
@@ -181,7 +182,7 @@ mysql> select member_id,stable_id,source_name,taxon_id,genome_db_id,sequence_id,
 |         9 | R0010W             | ENSEMBLGENE |     4932 |           44 |        NULL |           NULL | 2-micron  |
 |        10 | R0010W             | ENSEMBLPEP  |     4932 |           44 |           5 |              9 | 2-micron  |
 +-----------+--------------------+-------------+----------+--------------+-------------+----------------+-----------+
-10 rows in set (0.05 sec)
+
 
 select * from 
  homology left join homology_member using(homology_id) left join member using (member_id) left join method_link_species_set on (homology.method_link_species_set_id=method_link_species_set.method_link_species_set_id) left join species_set using (species_set_id) left join genome_db using (genome_db_id) where homology.description='ortholog_one2one' and genome_db.name='Homo sapiens' and member.source_name='ENSEMBLGENE' limit 30;
@@ -209,7 +210,7 @@ select * from
                          :type integer)
    (stable-id :type (string 40))
    (description :type (string 40)))
-  (:base-table "homology")
+  (:base-table (concatenate *ensembl-database-compara* "." "homology"))
   (:documentation "Orthologue or paralogue sequences are grouped in
   one abstract specification. It can be understood as an abstract
   property that several genes share."))
@@ -224,7 +225,8 @@ select * from
                        :home-key homology-id
                        :foreign-key homology-id)
              :accessor homology))
-  (:base-table "homology_member"))
+  (:base-table (concatenate *ensembl-database-compara* "." "homology_member"))
+  (:documentation "Link between a gene that is part of the homology-relationship and the abstract notion of that homology itself."))
 
 (def-view-class member-view ()
   ((member-id :db-kind :key :type integer)
@@ -237,7 +239,7 @@ select * from
              :db-info (:join-class family-member
                        :home-key family-id
                        :foreign-key family-id)))
-  (:base-table "member"))
+  (:base-table (concatenate *ensembl-database-compara* "." "member")))
 
 (defmethod gene ((m member-view)) 
   "The member is practially a gene but the information is stored in different databases of the Ensembl resource."
@@ -256,7 +258,7 @@ desc domain;
    (stable_id                  :db-kind :key  :type (string 40))
    (method-link-species-set-id :db-kind :base :type integer)
    (description                :db-kind :base :type (string 255)))
-  (:base-table "domain")
+  (:base-table (concatenate *ensembl-database-compara* "." "domain"))
   (:documentation "A domain is defined on protein sequences and commonly associated with a particular protein function. This implementation is of a pure theoretical basis since both the table domain and the table domain_member are empty."))
 
 #||
@@ -279,7 +281,7 @@ desc domain;
                  :db-info (:join-class member-view
                            :home-key member-id
                            :foreign-key member-id)))
-  (:base-table "domain_member")
+  (:base-table (concatenate *ensembl-database-compara* "." "domain_member"))
   (:documentation "Link between the domain and the gene ... or the peptide? The database is yet empty."))
 
 #||
@@ -295,7 +297,7 @@ desc domain;
    (stable-id         :db-kind :key  :type (string 40))
    (description       :db-kind :base :type (string 255))
    (description-score :db-kind :base :type float))
-  (:base-table "family")
+  (:base-table (concatenate *ensembl-database-compara* "." "family"))
   (:documentation "Ensembl gathers genes of similar function to protein families."))
 
 #||
@@ -316,7 +318,7 @@ desc domain;
                    :db-info (:join-class member-view
 			      :home-key member-id
 			      :foreign-key member-id)))
-  (:base-table "family_member")
+  (:base-table (concatenate *ensembl-database-compara* "." "family_member"))
   (:documentation "Link between protein family and gene, represented in the member table."))
 
 
@@ -343,7 +345,7 @@ desc domain;
                                :db-info (:join-class method-link
                                          :home-key method-link-id
                                          :foreign-key method-link-id)))
-  (:base-table "method_link_species_set")
+  (:base-table (concatenate *ensembl-database-compara* "." "method_link_species_set"))
   (:documentation "The assignment of a gene to a homology (in homology_member) depends on the species and the method that was applied. This class bridges the homology, not the assignment iself, with this additional information."))
 
 #||
@@ -382,7 +384,7 @@ mysql> select * from method_link;
   ((method-link-id :db-kind :key :type integer)
    (type :type (string 50))
    (class :type (string 50)))
-  (:base-table "method_link")
+  (:base-table (concatenate *ensembl-database-compara* "." "method_link"))
   (:documentation "This table lists several handfull of approaches to determine sequence similarities. It is referred to from the method-link-species-set table which in turn may be linked to from all the relationships that are describing sequence similarities of some sort."))
 
 #||
@@ -397,7 +399,7 @@ mysql> select * from method_link;
 		   :db-info (:join-class genome-db
 			     :foreign-key genome-db-id
 	       		     :home-key genome-db-id)))
-  (:base-table "species_set")
+  (:base-table (concatenate *ensembl-database-compara* "." "species_set"))
   (:documentation "A certain similarity may be defined for a range of species. This table implements the n:m relationship between homology and species."))
 
 
@@ -418,7 +420,7 @@ mysql> select * from method_link;
    (assembly     :db-kind :key :type (string 100))
    (genebuild    :db-kind :key :type (string 100))
    (locator      :db-kind :key :type (string 255)))
-  (:base-table "genome_db")
+  (:base-table (concatenate *ensembl-database-compara* "." "genome_db"))
   (:documentation "The genome_db table identifies species, though there may be multiple genomes per species, i.e. for the the human."))
 
 (defmethod species ((gdb genome-db)) 
@@ -439,7 +441,7 @@ desc synteny_region;
                                :db-info (:join-class method-link-species-set
                                          :home-key method-link-species-set-id
                                          :foreign-key method-link-species-set-id)))
-  (:base-table "synteny_region")
+  (:base-table (concatenate *ensembl-database-compara* "." "synteny_region"))
   (:documentation "Abstract concept of a region that is syntenic between multiple organisms."))
 
 #||
@@ -464,7 +466,7 @@ desc dnafrag_region;
 		      :db-info (:join-class dnafrag
 				:home-key dnafrag-id
 				:foreign-key dnafrag-id)))
-  (:base-table "dnafrag_region")
+  (:base-table (concatenate *ensembl-database-compara* "." "dnafrag_region"))
   (:documentation "Link between abstract syntenies and tangible genomic regions fo some organism."))
 
 
@@ -490,7 +492,7 @@ desc dnafrag;
 		     :db-info (:join-class "genomic-align"
                                :home-key dnafrag-id
                                :foreign-key dnafrag-id)))
-  (:base-table "dnafrag")
+  (:base-table (concatenate *ensembl-database-compara* "." "dnafrag"))
   (:documentation "A region that is part of a genome assembly in the core databases."))
 
 #||
@@ -522,7 +524,7 @@ desc genomic_align_block
 				:db-info (:join-class genomic-align
 					  :home-key genomic-align-block-id
 					  :foreign-key genomic-align-block-id)))
-   (:base-table "genomic_align_block")
+   (:base-table (concatenate *ensembl-database-compara* "." "genomic_align_block"))
    (:documentation "Abstract specification of a genomic region that appears similar between multiple species."))
 
 
@@ -560,7 +562,7 @@ desc genomic_align;
 			       :db-info (:join-class genomic-align-block
                                          :home-key genomic-align-block-id
                                          :foreign-key genomic-align-block-id)))
-  (:base-table "genomic_align")
+  (:base-table (concatenate *ensembl-database-compara* "." "genomic_align"))
   (:documentation "The tabe links a fraction of a DNA fragment that appears similar to another genomic region of another species. Intra-species links are not represented in this analysis."))
 
 
@@ -578,7 +580,7 @@ desc genomic_align_group;
 		     :db-info (:join-class "genomic-align"
                                :home-key genomic-align-id
                                :foreign-key genomic-align-id)))
-  (:base-table "genomic_align_group")
+  (:base-table (concatenate *ensembl-database-compara* "." "genomic_align_group"))
   (:documentation "The exact meaning of this class remains unclear, no entries in table of version 47"))
 
 
