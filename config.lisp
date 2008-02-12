@@ -23,7 +23,11 @@
 
 (defpackage #:clcb-config
   (:use #:cl)
-  (:export #:*data-directory-pathname*)
+  (:export #:*data-directory-pathname*
+           #:*ensembl-host*
+           #:*ensembl-database-compara*
+           #:*ensembl-db-type*
+           #:ensembl-connection-data)
   (:documentation "The config package allows for adapting the CLCB
   installation to the local setup."))
 

@@ -225,8 +225,14 @@ select * from
                        :home-key homology-id
                        :foreign-key homology-id)
              :accessor homology))
-  (:base-table (concatenate *ensembl-database-compara* "." "homology_member"))
+  (:base-table (concatenate 'string
+  *ensembl-database-compara* "." "homology_member"))
   (:documentation "Link between a gene that is part of the homology-relationship and the abstract notion of that homology itself."))
+
+(defun compara-table-name (table)
+  (concatenate 'string clcb-config::*ensembl-database-compara*
+               "."
+               table))
 
 (def-view-class member-view ()
   ((member-id :db-kind :key :type integer)
@@ -239,7 +245,7 @@ select * from
              :db-info (:join-class family-member
                        :home-key family-id
                        :foreign-key family-id)))
-  (:base-table (concatenate *ensembl-database-compara* "." "member")))
+  (:base-table #.(compara-table-name "member")))
 
 (defmethod gene ((m member-view)) 
   "The member is practially a gene but the information is stored in different databases of the Ensembl resource."

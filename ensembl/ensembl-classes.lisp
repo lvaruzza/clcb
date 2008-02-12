@@ -273,7 +273,8 @@ intended to be used in conjuction with stable ids.")
 				:foreign-key seq-region-id
 				:home-key seq-region-id)))
   (:base-table (concatenate 'string *ensembl-database* "." "seq_region"))
-  (:documentation "The same physical basepair may be described in multiple sequence regions of this table. "))
+  (:documentation "The same physical basepair may be described in
+  multiple sequence regions of this table. "))
 
 
 (def-ensembl-view coord-system ()
@@ -503,14 +504,14 @@ intended to be used in conjuction with stable ids.")
                          :foreign-key gene-id
                          :set t))
    (compara-member :db-kind :join
-                   :db-info (:join-class member
+                   :db-info (:join-class member-view
 			     :foreign-key stable-id
 			     :home-key stable-id
 			     ))
    )
   (:stable-id-char #\g)
   (:dna-sequence t)
-  (:base-table (concatenate 'string *ensembl-database* "." "gene"))
+  ;;  (:base-table (concatenate 'string *ensembl-database* "." "gene"))
   (:documentation "Segment of genomic or mitochondrial DNA that is
 coding for RNA or protein."))
 
