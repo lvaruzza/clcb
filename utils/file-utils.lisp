@@ -35,7 +35,7 @@
     ,@body))
 
 (defmacro with-lines-from-file ((line filename) &body body)
-  `(with-input-file (in filename)
+  `(with-input-file (in ,filename)
     (loop for ,line = (read-line in nil)
      while ,line
      do (progn ,@body))))

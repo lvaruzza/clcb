@@ -119,7 +119,7 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 
 
 ;;; -------------------------------------
-;;; Multi Interval (= a set of intervals)
+;;; Multi Interval (= a set of disjunct intervals)
 (defclass multi-interval (interval)
   ((intervals :accessor intervals
               :initarg :intervals
@@ -410,10 +410,11 @@ http://en.wikipedia.org/wiki/Interval_%28mathematics%29
 
 
 (defun parse-interval-expression (stream subchar min-args)
-  (declare (ignore char))
+  (declare (ignore subchar min-args))
   (let ((lower (read stream t nil))
         (comma (read-char stream t nil))
         (upper (read stream t nil)))
+    (declare (ignore comma))
     `(make-interval 'integer-interval ,lower ,upper)))
 
 (set-dispatch-macro-character #\# #\i #'parse-interval-expression)
