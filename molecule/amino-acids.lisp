@@ -34,18 +34,18 @@
     :documentation "Three letters denoting an amino acid.")
    (isoelectric-point
     :accessor isoelectric-point :initarg :isoelectric-point
-    :initform 7f0               :type    utils::number-or-nil
+    :initform 7f0               :type    clcb-utils::number-or-nil
     :documentation "The pH at which an amino acids becomes neutral.")
    (pk1COOH    :accessor pk1COOH    :initarg :pk1COOH    :initform nil
-               :type     utils::number-or-nil)
+               :type     clcb-utils::number-or-nil)
    (pk2COOH    :accessor pk2COOH    :initarg :pk2COOH    :initform nil
-               :type     utils::number-or-nil)
+               :type     clcb-utils::number-or-nil)
    (pk1NH2     :accessor pk1NH2     :initarg :pk1NH2     :initform nil
-               :type     utils::number-or-nil)
+               :type     clcb-utils::number-or-nil)
    (pk2NH2     :accessor pk2NH2     :initarg :pk2NH2     :initform nil
-               :type     utils::number-or-nil)
+               :type     clcb-utils::number-or-nil)
    (hydropathy :accessor hydropathy :initarg :hydropathy :initform nil
-               :type     utils::number-or-nil
+               :type     clcb-utils::number-or-nil
 	       :documentation "The Kyte-Doolitle scoring of amino
 acids for their compatibility with polar water or apolar fatty
 acids."))
