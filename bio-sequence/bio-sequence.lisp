@@ -23,54 +23,75 @@
 
 (in-package #:clcb)
 
-(defclass bio-sequence (molecule integer-interval)
+(defclass trivial-bio-sequence (molecule integer-interval)
   ((id :accessor bio-sequence-id
        :initarg :id
-       :initform ""
-       :documentation "The primary ID of the sequence (genbank etc.)")
-   (name :accessor bio-sequence-name
-         :initarg :name
-         :initform "Unknown"
-         :documentation "The sequence's name.")
+       :documentation "Unique identifier of the sequence.  In cases
+       where an sequence is read from a database, this will often be
+       the primary key under which the sequence is filed.")
    (seq :accessor bio-sequence-seq
+        :accessor seq
         :initarg :seq
         :initform nil
         :documentation "The actual sequence information. This can be
-of any type, but will normally be of type `string'.")
-   (description :accessor bio-sequence-description
-                :initarg :description
-                :documentation "The descripitions of the object.")
+        of any type, but will normally be of type `string'.")
    (seq-start :accessor seq-start
-              :accessor lower-bound
               :initarg :seq-start
+              ;; Interval comparability
+              :accessor lower-bound
+              :initarg :lower
               :initform 1
-	      :documentation "Particularly those sequences that are part of another sequence may be preferably start their numbering with the parental position."
-	      )
+	      :documentation "Start position of the sequence.
+	      Particularly those sequences that are part of another
+	      sequence may be preferably start their numbering with
+	      the parental position.  Defaults to 1."  )
    (seq-end :accessor seq-end
+            :initarg :seq-end
+            ;; Interval comparability
             :accessor upper-bound
-            :initarg :seq-end))
-   (:documentation "A biological sequence is a polymeric macromolecule
-of nucelic acids (with a phorsphor-sugar backbone) or of amino acids
-with various side-chaines. In daily routine, one does not use the full
-genome but some fraction of it. And in this fraction we are interested
-in smaller fractions that have (or are presumed to have) properties of
-our interest. These regions, consecutive stretches within something
-larger, may handily be understood as intervals and CLCB offers such an
-interface to them."))
+            :initarg :upper
+            :documentation "End position of the sequence.  If this
+            slot isn't set explicetly, it will be set to the length of
+            the `seq' slot."))
+  (:documentation "This is the base class for all types of biological
+   polymeric macromolecules which are build by a sequence of
+   monomeres.  This includes nucelic acids as well as proteins and
+   peptides.
 
+   In daily routine, one does not use the full sequence but some
+   fraction of it. And in this fraction we are interested in smaller
+   fractions that have (or are presumed to have) properties of our
+   interest. These regions, consecutive stretches within something
+   larger, may handily be understood as intervals and CLCB offers such
+   an interface to them."))
 
-(defmethod initialize-instance :after ((seq bio-sequence) &rest args)
+(defmethod initialize-instance :after ((seq trivial-bio-sequence) &rest args)
   (declare (ignore args))
   (unless (slot-boundp seq 'seq-end)
     (setf (seq-end seq) (length (bio-sequence-seq seq)))))
+
+
+
+
+(defclass bio-sequence-record (trivial-bio-sequence)
+  ((name :accessor bio-sequence-name
+         :initarg :name
+         :initform "Unknown"
+         :documentation "The sequence's name.")
+   (description :accessor bio-sequence-description
+                :initarg :description
+                :documentation "The descripitions of the object."))
+   (:documentation "A biological sequence is a polymeric macromolecule
+    of nucelic acids (with a phorsphor-sugar backbone) or of amino
+    acids with various side-chaines. "))
+
 
 
 (defclass nucleotide-sequence (bio-sequence)
   ((circular :accessor circular-p
              :initarg :circular
              :initform nil
-             :documentation "This is true iff the sequence is circular
-                             (O RLY?)")
+             :documentation "True iff the sequence is circular (O RLY?).")
    (alphabet :accessor alphabet
              :initarg :alphabet
              :initform nil
@@ -82,33 +103,34 @@ interface to them."))
            :initform 0
            :type (integer -1 1)
 	   :documentation "The direction in which the feature is found
-on the genome, if applicable. The number 1 denotes the direction from
-the small chromosomal arm (p like petit) to the larger (q). For
-bacterial chromosomes, it's a matter of convention which strand is
-named +1 and -1, respectively."))
+           on the genome, if applicable. The number 1 denotes the
+           direction from the small chromosomal arm (p like petit) to
+           the larger (q). For bacterial chromosomes, it's a matter of
+           convention which strand is named +1 and -1,
+           respectively."))
+
   (:documentation "Nucleotide sequences can be retrieved from genomic
-databases (like Ensembl) which is implemented in CBCL. From Ensembl,
-nucleotides can also be retrieved as genes (with exons and introns) or
-transcripts. Specialised databases offer information on expressed
-sequence tags (ESTs)."))
+   databases (like Ensembl) which is implemented in CBCL. From
+   Ensembl, nucleotides can also be retrieved as genes (with exons and
+   introns) or transcripts. Specialised databases offer information on
+   expressed sequence tags (ESTs)."))
+
+
 
 (defclass amino-acid-sequence (bio-sequence) ()
   (:documentation "A real protein or at least some smallish peptide."))
 
+
+
 (defun copy-bio-sequence (seq)
   "Return a fresh copy of the bio-sequence object."
-  ;; Copying all slot by themself is probably pretty stupid, but I
-  ;; can't think of a better solution right now (Well, Gary King's MOP
-  ;; based copy function would do => will implement)
-  (moptilities:copy-template seq)
-  #||(make-instance 'bio-sequence
-                 :id (bio-sequence-id seq)
-                 :name (bio-sequence-name seq)
-                 :seq (bio-sequence-seq seq)
-                 :mol-weight (mol-weight seq))||#
-)
+  (moptilities:copy-template seq))
 
-(defmethod make-interval ((bio-seq bio-sequence) lower upper &rest args)
+
+;;;; =========================================================================
+;;;; Define interval compartible behavior of bio-sequences
+;;;; =========================================================================
+(defmethod make-interval ((bio-seq trivial-bio-sequence) lower upper &rest args)
   (declare (ignore args))
   (let ((new-seq (moptilities:copy-template bio-seq)))
     (setf (lower-bound new-seq) lower
@@ -118,11 +140,14 @@ sequence tags (ESTs)."))
               (subseq (bio-sequence-seq new-seq) (1- lower) upper)))
     new-seq))
 
-(defmethod make-interval ((class (eql (find-class 'nucleotide-sequence)))
-                          lower upper &rest args)
-  (make-instance class
-                 :seq-start lower
-                 :seq-end upper))
+;; (defmethod make-interval ((class #.(find-class 'trivial-bio-sequence))
+;;                           lower upper &rest args)
+;;   (apply #'make-instance class
+;;          :seq-start lower
+;;          :seq-end upper
+;;          args))
+
+
 
 
 (defmethod print-object ((seq bio-sequence) stream)
