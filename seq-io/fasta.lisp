@@ -24,42 +24,70 @@
 (in-package #:clcb)
 
 (defun read-fasta-header (stream)
-  "FASTA files may comprise many separate sequences. Each starts with a single line prefixed with a greate sign '>'. It first lists the accession number (or other sensible identifier) and optionally shows  some human readable additional information."
-  (read-line stream))
+  "FASTA files may comprise many separate sequences. Each starts with
+   a single line prefixed with a greate sign '>'.  It first lists the
+   accession number (or other sensible identifier) and optionally
+   shows some human readable additional information."
+  (loop for line = (read-line stream)
+     when (starts-with #\> line)
+     return (subseq line 1)))
 
 
 (defun read-sequence-data (stream)
-  "The sequence information is read from the stream. The header of the fasta file is expected to be removed before this function is called. Otherwise, an empty string is returned."
+  "The sequence information is read from the stream.  The header of the
+  fasta file is expected to be removed before this function is
+  called.  Otherwise, an empty string is returned."
   (apply #'concatenate 'string
-    (loop for line = (read-line stream nil nil)
-          while (and line
-                     (not (starts-with line ">")))
-          collect line)))
+    (loop
+       for line = (read-line stream nil nil)
+       while (and line (< 0 (length line)))
+       collect line
+       until (char= (peek-char t stream nil #\>) #\>))))
 
-(defun read-next-fasta-entry (stream)
+(defun read-next-fasta-entry (&optional (stream *standard-input*)
+                              (eof-error-p t)
+                              eof-value)
   "Read and return the next fasta entry from the stream."
-  (let ((name-line (read-line stream nil nil)))
-    (if (not name-line)
-        nil
-        (let ((name (subseq name-line 1)))
-          (make-instance 'bioseq
-                         :id (first (split #\space name))
-                         :name name
-                         :seq (read-sequence-data stream))))))
+  (handler-case
+      (let ((name-line (read-fasta-header stream)))
+        (make-instance 'bio-sequence-record
+                       :id (first (split #\space name-line))
+                       :name name-line
+                       :seq (delete #\space (read-sequence-data stream))))
+     (end-of-file (c)
+       (if eof-error-p
+           (error c)
+           eof-value))))
 
-(defun parse-fasta-file (file &key (single-entries-as-list nil))
+(defun parse-fasta-file (file &key (single-entry-as-list nil))
   "Returns a list of bioseq objects, or a single bioseq object if the
-file contains only one entry."
-  (with-open-file (str file
-                       :direction :input)
+   file contains only one entry."
+  (with-open-file (str file :direction :input)
     (let ((res (loop for bioseq-obj = (read-next-fasta-entry str)
                      until (null bioseq-obj)
                      collect bioseq-obj)))
-      (if (and (not single-entries-as-list)
+      (if (and (not single-entry-as-list)
                (null (cdr res)))
           (car res)
           res))))
 
+
+;;;; =========================================================================
+;;;; Iterate generator for easy handling of the entries
+;;;; =========================================================================
+(defmacro do-fasta-records ((var stream &optional result) &body body)
+  (let ((block-name (gensym "DO-FASTA-BLOCK")))
+   `(block ,block-name
+      (loop for ,var = (read-next-fasta-entry ,stream nil nil)
+            until (null ,var)
+            do (progn ,@body))
+      (return-from ,block-name ,result))))
+ 
+
+
+;;;; =========================================================================
+;;;; Write Fasta File
+;;;; =========================================================================
 (defun write-fasta (bioseq stream)
   "Write bioseq to stream in fasta format."
   (format stream ">~A~%" (bio-sequence-name bioseq))
