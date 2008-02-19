@@ -323,6 +323,7 @@
                    (intervals mi1)))))
 
 (def-commutative-method intersection2 (si (ei (eql +empty-interval+)))
+  (declare (ignore si))
   ei)
 
 (def-commutative-method intersection2 (si (mi abstract-multi-interval))
