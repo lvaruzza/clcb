@@ -43,6 +43,7 @@
                  "moptilities"
                  "alexandria"
 		 "metabang-bind"
+                 "trivial-intervals"
 		 )
     :components
     ((:doc-file "README")

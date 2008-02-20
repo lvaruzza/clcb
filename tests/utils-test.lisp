@@ -1,6 +1,6 @@
 (defpackage clcb-tests
   (:use #:common-lisp
-        #:interval
+        #:trivial-intervals
         #:lift))
 
 (in-package #:clcb-tests)

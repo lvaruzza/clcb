@@ -21,7 +21,7 @@
 ;;;; FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 ;;;; OTHER DEALINGS IN THE SOFTWARE.
 
-(defpackage #:interval
+(defpackage #:trivial-intervals
   (:use #:common-lisp
         #:iterate)
   (:import-from #:moptilities copy-template)
@@ -42,10 +42,14 @@
            #:interval-empty-p
            #:singleton-p
            #:interval-=
+
+           ;; Set theoretic methods
+           #:interval-intersection
+           #:interval-union
            ))
 
 
-(in-package :interval)
+(in-package :trivial-intervals)
 
 ;;;; =========================================================================
 ;;;; METHODS ON INTERVALS
@@ -287,7 +291,7 @@
         (progn (push i1 acc)
                 (setf i1 i2)))))
 
-(defun union-intervals (&rest args)
+(defun interval-union (&rest args)
   (let ((empty-removed   (remove-if #'interval-empty-p
                                     (apply #'list-of-simple-intervals args))))
     (if (null empty-removed)
@@ -302,6 +306,9 @@
 
 ;;; -------------
 ;;; Intersections
+
+;; Rewrite needed: It should be predictable which interval is cloned.
+
 (defun ordered-intersection2 (i1 i2)
   (make-interval i1
                  (lower-number i2)
@@ -332,7 +339,7 @@
                   (intervals mi))))
 
 
-(defun intervals-intersection (&rest intervals)
+(defun interval-intersection (&rest intervals)
   (if (some #'interval-empty-p intervals)
       +empty-interval+
       (multiple-value-bind (lower upper)
@@ -386,15 +393,16 @@
       (check-type right-sq-bracket (eql #\]))
       (make-instance (if (and (integerp lower-number)
                               (integerp upper-number))
-                         'interval::integer-interval
-                         'interval::trivial-interval)
+                         'trivial-intervals:integer-interval
+                         'trivial-intervals:trivial-interval)
                      :lower lower-number
                      :upper upper-number))))
 
-;; pretty-printing
-(set-pprint-dispatch 'trivial-interval
-  (lambda(stream object)
-    (format stream "#[~A,~A]"
-            (lower-number object)
-            (upper-number object))))
-
+;; ;; pretty-printing
+;; (set-pprint-dispatch 'trivial-interval
+;;   (lambda(stream object)
+;;     (format stream "#[~A,~A]"
+;;             (lower-number object)
+;;             (upper-number object))))
+(defmethod print-object ((object trivial-interval) (stream stream))
+  (format stream "#[~A,~A]" (lower-number object) (upper-number object)))

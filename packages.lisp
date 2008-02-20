@@ -31,7 +31,7 @@
         #:split-sequence
         #:alexandria
 	)
-  (:nicknames #:utils #:clcb.utils)
+  (:nicknames #:clcb.utils)
   (:export ;; string utils
            #:string->type
 
@@ -57,30 +57,31 @@
            #:float-or-nil
            #:number-or-nil
 
-           ;; interval
-           #:next-element-fn
-           #:previous-element-fn
-           #:next-element-in-set
-           #:previous-element-in-set
-           #:element-member-fn
-           #:+empty-interval+
-           #:elementary-interval
-           #:multi-interval
-           #:integer-interval
-           #:make-interval
-           #:lower-bound
-           #:upper-bound
-           #:lower-bound-included-p
-           #:upper-bound-included-p
-           #:convex-hull
-           #:interval-empty-p
-           #:intervals
-           #:interval-union
-           #:interval-intersection
-           #:interval-relative-complement
-           #:interval-superset
-           #:interval-elements
-           #:interval-nth-element))
+;;            ;; interval
+;;            #:next-element-fn
+;;            #:previous-element-fn
+;;            #:next-element-in-set
+;;            #:previous-element-in-set
+;;            #:element-member-fn
+;;            #:+empty-interval+
+;;            #:elementary-interval
+;;            #:multi-interval
+;;            #:integer-interval
+;;            #:make-interval
+;;            #:lower-bound
+;;            #:upper-bound
+;;            #:lower-bound-included-p
+;;            #:upper-bound-included-p
+;;            #:convex-hull
+;;            #:interval-empty-p
+;;            #:intervals
+;;            #:interval-union
+;;            #:interval-intersection
+;;            #:interval-relative-complement
+;;            #:interval-superset
+;;            #:interval-elements
+;;            #:interval-nth-element
+))
 
 
 
@@ -90,7 +91,9 @@
         #:iterate
         #:alexandria
         #:clcb-config
-        #:clcb-utils)
+        #:clcb-utils
+        #:trivial-intervals)
+  (:import-from #:trivial-intervals #:lower #:upper)
   (:export ;; molecule
            #:molecule
            #:molecule-name
