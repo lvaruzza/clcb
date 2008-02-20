@@ -23,36 +23,44 @@
 
 (in-package #:clcb)
 
+
 (defclass trivial-bio-sequence (molecule integer-interval)
-  ((id :accessor bio-sequence-id
-       :initarg :id
-       :documentation "Unique identifier of the sequence.  In cases
-       where an sequence is read from a database, this will often be
-       the primary key under which the sequence is filed.")
-   (seq :accessor bio-sequence-seq
-        :accessor seq
-        :initarg :seq
-        :initform nil
-        :documentation "The actual sequence information. This can be
-        of any type, but will normally be of type `string'.")
-   (seq-start :accessor seq-start
-              :initarg :seq-start
-              ;; Interval comparability
-              :accessor lower-bound
-              :initarg :lower
-              :initform 1
-	      :documentation "Start position of the sequence.
-	      Particularly those sequences that are part of another
-	      sequence may be preferably start their numbering with
-	      the parental position.  Defaults to 1."  )
-   (seq-end :accessor seq-end
-            :initarg :seq-end
-            ;; Interval comparability
-            :accessor upper-bound
-            :initarg :upper
-            :documentation "End position of the sequence.  If this
-            slot isn't set explicetly, it will be set to the length of
-            the `seq' slot."))
+  ((id
+    :accessor bio-sequence-id
+    :initarg :id
+    :documentation "Unique identifier of the sequence.  In cases where
+    an sequence is read from a database, this will often be the
+    primary key under which the sequence is filed.")
+   (seq
+    :accessor bio-sequence-seq
+    :accessor seq
+    :initarg :seq
+    :initform nil
+    :documentation "The actual sequence information. This can be of
+    any type, but will normally be of type `string'.")
+   (lower
+    :accessor seq-start
+    :initarg :seq-start
+    :initform 1
+    :documentation "Start position of the sequence.  Particularly
+    those sequences that are part of another sequence may be
+    preferably start their numbering with the parental position.
+    Defaults to 1."  )
+   (upper
+    :accessor seq-end
+    :initarg :seq-end
+    :documentation "End position of the sequence.  If this slot isn't
+    set explicetly, it will be set to the length of the `seq' slot.")
+   (direct-superseq
+    :accessor direct-superseq
+    :initarg direct-superseq
+    :documentation "Bio-sequence to which this object is relative to.
+    May be the object itself.")
+   (direct-subseqs
+    :accessor subseqs
+    :initarg :subseqs
+    :documentation ""))
+  
   (:documentation "This is the base class for all types of biological
    polymeric macromolecules which are build by a sequence of
    monomeres.  This includes nucelic acids as well as proteins and
@@ -65,11 +73,22 @@
    larger, may handily be understood as intervals and CLCB offers such
    an interface to them."))
 
+
 (defmethod initialize-instance :after ((seq trivial-bio-sequence) &rest args)
   (declare (ignore args))
-  (unless (slot-boundp seq 'seq-end)
-    (setf (seq-end seq) (length (bio-sequence-seq seq)))))
+  (unless (slot-boundp seq 'upper)
+    (setf (seq-end seq) (length (bio-sequence-seq seq))))
+  ;; If no superseq was specified, set it to be the sequence itself.
+  (unless (slot-boundp seq 'direct-superseq)
+    (setf (direct-superseq seq) seq)))
 
+;;; Printing
+(defmethod print-object ((object trivial-bio-sequence) (stream stream))
+  (print-unreadable-object (object stream :type t :identity nil)
+    (format stream "\"~A\" [~A,~A]"
+            (bio-sequence-id object)
+            (seq-start object)
+            (seq-end object))))
 
 
 
@@ -87,7 +106,7 @@
 
 
 
-(defclass nucleotide-sequence (bio-sequence)
+(defclass nucleotide-sequence (bio-sequence-record)
   ((circular :accessor circular-p
              :initarg :circular
              :initform nil
@@ -117,7 +136,7 @@
 
 
 
-(defclass amino-acid-sequence (bio-sequence) ()
+(defclass amino-acid-sequence (bio-sequence-record) ()
   (:documentation "A real protein or at least some smallish peptide."))
 
 
@@ -149,22 +168,29 @@
 
 
 
+(defgeneric bio-subseq (bio-sequence start &optional end relative-to)
+  (:documentation "Return a slice of the bio-sequence from start to end.")
+  #+nil(:method ((seq trivial-bio-sequence) (start integer) (end integer))
+         (let ((new-seq (make-interval seq start end)))
+           (setf (bio-sequence-seq new-seq)
+                 (subseq (seq seq) (st))))))
 
-(defmethod print-object ((seq bio-sequence) stream)
-  "The sequence object is printed to an output stream. This is fairly
-  handy but somehow we feel that some more abstract and more generic
-  mechanism is required."
-  (print-unreadable-object (seq stream :type t)
-    (flet ((print-slot-if-bound (slot-name)
-           (when (slot-boundp seq slot-name)
-             (format stream " ~(~A~): ~A" slot-name
-                     (slot-value seq slot-name)))))
-      (mapcar #'print-slot-if-bound '(id name)))))
+
+;; (defmethod print-object ((seq trivial-bio-sequence) stream)
+;;   "The sequence object is printed to an output stream. This is fairly
+;;   handy but somehow we feel that some more abstract and more generic
+;;   mechanism is required."
+;;   (print-unreadable-object (seq stream :type t)
+;;     (flet ((print-slot-if-bound (slot-name)
+;;            (when (slot-boundp seq slot-name)
+;;              (format stream " ~(~A~): ~A" slot-name
+;;                      (slot-value seq slot-name)))))
+;;       (mapcar #'print-slot-if-bound '(id name)))))
 
 
 (defgeneric bio-sequence-length (seq)
   (:documentation "Return the number of monomers in this sequence.")
-  (:method ((seq bio-sequence)) (length (bio-sequence-seq seq))))
+  (:method ((seq trivial-bio-sequence)) (length (bio-sequence-seq seq))))
 
 
 (defclass feature (integer-interval)
@@ -175,7 +201,7 @@
 
 (defgeneric shuffle-sequence (seq)
   (:documentation "Return a randomly shuffled copy of the sequence." )
-  (:method ((seq bio-sequence)) 
+  (:method ((seq trivial-bio-sequence)) 
     (let ((shuffled (copy-bio-sequence seq)))
       (setf (bio-sequence-seq shuffled)
             (nshuffle-vector (bio-sequence-seq shuffled)))
