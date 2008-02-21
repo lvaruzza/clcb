@@ -23,8 +23,7 @@
 
 (in-package #:clcb)
 
-
-(defclass trivial-bio-sequence (molecule integer-interval)
+(defclass abstract-bio-sequence (molecule abstract-interval)
   ((id
     :accessor bio-sequence-id
     :initarg :id
@@ -36,31 +35,22 @@
     :accessor seq
     :initarg :seq
     :initform nil
-    :documentation "The actual sequence information. This can be of
-    any type, but will normally be of type `string'.")
-   (lower
-    :accessor seq-start
-    :initarg :seq-start
-    :initform 1
-    :documentation "Start position of the sequence.  Particularly
-    those sequences that are part of another sequence may be
-    preferably start their numbering with the parental position.
-    Defaults to 1."  )
-   (upper
-    :accessor seq-end
-    :initarg :seq-end
-    :documentation "End position of the sequence.  If this slot isn't
-    set explicetly, it will be set to the length of the `seq' slot.")
+    :type sequence
+    :documentation "The actual sequence information. This can be any
+    object of type sequence, but will normally be of type
+    `string'.")
    (direct-superseq
     :accessor direct-superseq
     :initarg direct-superseq
+    :initform nil
+    :type (or nil abstract-bio-sequence)
     :documentation "Bio-sequence to which this object is relative to.
     May be the object itself.")
    (direct-subseqs
-    :accessor subseqs
+    :accessor direct-subseqs
     :initarg :subseqs
+    :type sequence
     :documentation ""))
-  
   (:documentation "This is the base class for all types of biological
    polymeric macromolecules which are build by a sequence of
    monomeres.  This includes nucelic acids as well as proteins and
@@ -72,6 +62,35 @@
    interest. These regions, consecutive stretches within something
    larger, may handily be understood as intervals and CLCB offers such
    an interface to them."))
+
+(defclass trivial-bio-sequence (abstract-bio-sequence integer-interval)
+  ((lower
+    :accessor seq-start
+    :initarg :seq-start
+    :initform 1
+    :documentation "Start position of the sequence.  Particularly
+    those sequences that are part of another sequence may be
+    preferably start their numbering with the parental position.
+    Defaults to 1."  )
+   (upper
+    :accessor seq-end
+    :initarg :seq-end
+    :documentation "End position of the sequence.  If this slot isn't
+    set explicetly, it will be set to the length of the `seq' slot.")))
+
+
+(defclass fragmented-bio-sequence (abstract-bio-sequence)
+  ((seq-fragments
+    :accessor seq-fragments
+    :accessor intervals     ; For compliance with the interval protokoll
+    :initarg :seq-fragments
+    :type sequence
+    :initform nil
+    :documentation "The fragments of this sequence, each one being a
+    bio-sequence itself."))
+  (:documentation "A bio sequence which is constructed from two or
+  more elementary sequences.  A well known examples for this would be
+  a spliced mRNA, which is constituted by a number of exons."))
 
 
 (defmethod initialize-instance :after ((seq trivial-bio-sequence) &rest args)
@@ -90,6 +109,16 @@
             (seq-start object)
             (seq-end object))))
 
+
+(defun super-sequences (bio-sequence)
+  "Return a list of super-sequences, where each list element is the
+  superseq of is predecessor (if any)."
+  (declare (type abstract-bio-sequence bio-sequence))
+  (let ((direct-superseq (direct-superseq bio-sequence)))
+    (if (or (eq (direct-superseq direct-superseq) direct-superseq)
+            (null direct-superseq))
+        (list direct-superseq)
+        (cons direct-superseq (super-sequences direct-superseq)))))
 
 
 (defclass bio-sequence-record (trivial-bio-sequence)
@@ -152,8 +181,8 @@
 (defmethod make-interval ((bio-seq trivial-bio-sequence) lower upper &rest args)
   (declare (ignore args))
   (let ((new-seq (moptilities:copy-template bio-seq)))
-    (setf (lower-bound new-seq) lower
-          (upper-bound new-seq) upper)
+    (setf (lower-number new-seq) lower
+          (upper-number new-seq) upper)
     (when (not (null (bio-sequence-seq new-seq)))
         (setf (bio-sequence-seq new-seq)
               (subseq (bio-sequence-seq new-seq) (1- lower) upper)))
@@ -168,12 +197,17 @@
 
 
 
-(defgeneric bio-subseq (bio-sequence start &optional end relative-to)
+(defgeneric bio-subseq (bio-sequence start &optional end)
   (:documentation "Return a slice of the bio-sequence from start to end.")
-  #+nil(:method ((seq trivial-bio-sequence) (start integer) (end integer))
-         (let ((new-seq (make-interval seq start end)))
-           (setf (bio-sequence-seq new-seq)
-                 (subseq (seq seq) (st))))))
+  (:method ((seq trivial-bio-sequence) (start integer)
+            &optional (end (bio-sequence-length seq)))
+    (let ((new-seq (make-interval seq start end)))
+      (setf (bio-sequence-seq new-seq)
+            (subseq (seq seq) (1- start) end))
+      (setf (direct-superseq new-seq) seq)
+      ;; Side effects... I'm not sure I like that.
+      #+nil(push new-seq (direct-subseqs seq))
+      new-seq)))
 
 
 ;; (defmethod print-object ((seq trivial-bio-sequence) stream)

@@ -59,7 +59,7 @@
                            (:file "tables")
                            (:file "file-utils")
                            (:file "string-utils")
-                           (:file "interval"))
+                           #+nil(:file "interval"))
               :depends-on ("packages"))
 
      (:module "data"
