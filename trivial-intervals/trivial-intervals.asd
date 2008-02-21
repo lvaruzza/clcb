@@ -34,7 +34,7 @@
     :author "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
     :maintainer "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
     :licence "MIT"
-    :depends-on ("moptilities"
-                 "alexandria")
+    :depends-on ("iterate"
+                 "moptilities")
     :components
     ((:file "trivial-intervals")))

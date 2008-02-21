@@ -324,7 +324,7 @@
                      i1 
                      i2))
   (:method ((mi1 abstract-multi-interval) (mi2 abstract-multi-interval))
-    (apply #'union-intervals
+    (apply #'interval-union
            (mapcar #'(lambda (x)
                        (intersection2 x mi2))
                    (intervals mi1)))))
@@ -334,7 +334,7 @@
   ei)
 
 (def-commutative-method intersection2 (si (mi abstract-multi-interval))
-  (apply #'union-intervals
+  (apply #'interval-union
           (mapcar #'(lambda (x) (intersection2 si x))
                   (intervals mi))))
 
@@ -347,7 +347,7 @@
                 (maximizing (lower-number itv) into lo)
                 (minimizing (upper-number itv) into up)
                 (when (< up lo)
-                  (return-from intervals-intersection +empty-interval+))
+                  (return-from interval-intersection +empty-interval+))
                 (finally (return (values lo up))))
         (make-interval (car intervals) lower upper))))
 
