@@ -79,7 +79,8 @@
     set explicetly, it will be set to the length of the `seq' slot.")))
 
 
-(defclass fragmented-bio-sequence (abstract-bio-sequence)
+(defclass fragmented-bio-sequence (abstract-bio-sequence
+                                   abstract-multi-interval)
   ((seq-fragments
     :accessor seq-fragments
     :accessor intervals     ; For compliance with the interval protokoll
@@ -92,36 +93,28 @@
   more elementary sequences.  A well known examples for this would be
   a spliced mRNA, which is constituted by a number of exons."))
 
-
-(defmethod initialize-instance :after ((seq trivial-bio-sequence) &rest args)
-  (declare (ignore args))
-  (unless (slot-boundp seq 'upper)
-    (setf (seq-end seq) (length (bio-sequence-seq seq))))
-  ;; If no superseq was specified, set it to be the sequence itself.
-  (unless (slot-boundp seq 'direct-superseq)
-    (setf (direct-superseq seq) seq)))
-
-;;; Printing
-(defmethod print-object ((object trivial-bio-sequence) (stream stream))
-  (print-unreadable-object (object stream :type t :identity nil)
-    (format stream "\"~A\" [~A,~A]"
-            (bio-sequence-id object)
-            (seq-start object)
-            (seq-end object))))
-
-
-(defun super-sequences (bio-sequence)
-  "Return a list of super-sequences, where each list element is the
-  superseq of is predecessor (if any)."
-  (declare (type abstract-bio-sequence bio-sequence))
-  (let ((direct-superseq (direct-superseq bio-sequence)))
-    (if (or (eq (direct-superseq direct-superseq) direct-superseq)
-            (null direct-superseq))
-        (list direct-superseq)
-        (cons direct-superseq (super-sequences direct-superseq)))))
+(defmacro define-bio-sequence (bio-seq-name superclasses
+                               &body slots-and-docs)
+  (flet ((prefixed-class-name-symbol (prefix)
+           (intern
+            (concatenate 'string (string prefix) (string bio-seq-name)))))
+    `(progn
+       (defclass ,bio-seq-name
+           ,(if (some #'(lambda (x) (subtypep x 'abstract-bio-sequence))
+                      superclasses)
+                superclasses
+                (append superclasses '(abstract-bio-sequence)))
+         ,@slots-and-docs)
+       (defclass ,(prefixed-class-name-symbol 'trivial-) 
+           (,bio-seq-name trivial-bio-sequence)
+         ())
+       (defclass ,(prefixed-class-name-symbol 'fragmented-)
+           (,bio-seq-name fragmented-bio-sequence)
+         ())
+       (find-class ',bio-seq-name))))
 
 
-(defclass bio-sequence-record (trivial-bio-sequence)
+(define-bio-sequence bio-sequence-record ()
   ((name :accessor bio-sequence-name
          :initarg :name
          :initform "Unknown"
@@ -129,13 +122,13 @@
    (description :accessor bio-sequence-description
                 :initarg :description
                 :documentation "The descripitions of the object."))
-   (:documentation "A biological sequence is a polymeric macromolecule
-    of nucelic acids (with a phorsphor-sugar backbone) or of amino
-    acids with various side-chaines. "))
+  (:documentation "A biological sequence is a polymeric macromolecule
+   of nucelic acids (with a phorsphor-sugar backbone) or of amino
+   acids with various side-chaines. "))
 
 
 
-(defclass nucleotide-sequence (bio-sequence-record)
+(define-bio-sequence nucleotide-sequence (bio-sequence-record)
   ((circular :accessor circular-p
              :initarg :circular
              :initform nil
@@ -164,9 +157,47 @@
    expressed sequence tags (ESTs)."))
 
 
-
-(defclass amino-acid-sequence (bio-sequence-record) ()
+(define-bio-sequence amino-acid-sequence (bio-sequence-record) ()
   (:documentation "A real protein or at least some smallish peptide."))
+
+
+
+(defmethod initialize-instance :after ((seq trivial-bio-sequence) &rest args)
+  (declare (ignore args))
+  (unless (slot-boundp seq 'upper)
+    (setf (seq-end seq) (length (bio-sequence-seq seq))))
+  ;; If no superseq was specified, set it to be the sequence itself.
+  (unless (slot-boundp seq 'direct-superseq)
+    (setf (direct-superseq seq) seq)))
+
+;;; Printing
+(defmethod print-object ((object trivial-bio-sequence) (stream stream))
+  (print-unreadable-object (object stream :type t :identity nil)
+    (format stream "\"~A\" [~A,~A]"
+            (bio-sequence-id object)
+            (seq-start object)
+            (seq-end object))))
+
+(defun super-sequence-root-p (bio-sequence)
+  "Return true iff `bio-sequence' is the topmost node in a tree of
+  subsequences -- this is the case exactly when there exists no other
+  bio-sequence object to which bio-sequence is a sub-sequence."
+  (with-accessors ((ds direct-superseq)) bio-sequence
+    (or (null ds)
+        (eq (direct-superseq ds) ds)
+        (eq ds t))))
+
+(defun super-sequences (bio-sequence)
+  "Return a list of super-sequences, where each list element is the
+  superseq of is predecessor (if any)."
+  (declare (type abstract-bio-sequence bio-sequence))
+  (let ((direct-superseq (direct-superseq bio-sequence)))
+    (if (or (eq (direct-superseq direct-superseq) direct-superseq)
+            (null direct-superseq))
+        (list direct-superseq)
+        (cons direct-superseq (super-sequences direct-superseq)))))
+
+
 
 
 
@@ -233,87 +264,36 @@
   (:documentation "A property of interest that is referred to from a
   biological entity, i.e, a biological sequence."))
 
-(defgeneric shuffle-sequence (seq)
-  (:documentation "Return a randomly shuffled copy of the sequence." )
-  (:method ((seq trivial-bio-sequence)) 
-    (let ((shuffled (copy-bio-sequence seq)))
-      (setf (bio-sequence-seq shuffled)
-            (nshuffle-vector (bio-sequence-seq shuffled)))
-      shuffled)))
-
-
-(defun orthogonal-coded (char)
-  "Return the character as an orthogonal coded vector.  Vectors are
-   orthogonal iff their scalar product equals zero. The scalar product of
-   concatenations of othogonal coded bases gives the number of
-   nucleotides that the sequences have in
-   common.
-   http://en.wikipedia.org/wiki/Orthogonal_array"
-  (declare (type character char))
-  (flet ((char-eq (c)
-           (char-equal char c)))
-    (the (simple-array single-float (*))
-      (make-array 4 :initial-contents
-                  (cond ((char-eq #\a) #(1f0 0f0 0f0 0f0))
-                        ((char-eq #\c) #(0f0 1f0 0f0 0f0))
-                        ((char-eq #\g) #(0f0 0f0 1f0 0f0))
-                        ((char-eq #\t) #(0f0 0f0 0f0 1f0))
-                        (t (error "Unknown nucleotide
-character. Please extend `orthogonal-coded' to support this character.
-")))
-                  :element-type 'single-float))))
-
-(defgeneric orthogonal-coded-seq (seq)
-  ;;FIXME: Missing documentation
-  (:documentation "Take an nucleotide sequence and generate an
-   orthogonal coded copy of the sequence.  Albert, please describe what
-   orthogonal coded means and when it is used."))
-
-(defmethod orthogonal-coded-seq ((seq string))
-  ;;FIXME: Missing documentation
-  "Albert"
-  (loop
-     with orth-seq = (make-array (* (length seq) 4)
-                                 :element-type 'single-float)
-     for cur-pos fixnum from 0 below (length orth-seq) by 4
-     for char character across seq do
-     (setf (subseq orth-seq cur-pos (+ cur-pos 4))
-           (orthogonal-coded char))
-     finally (return orth-seq)))
-
-(defun score-word (word scoring-word)
-  "Albert"
-  (reduce #'+ (map 'vector #'* word scoring-word)))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Coordinates on bio-sequences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(declaim (inline %aa->nt))
+(defun %aa->nt (int) (1+ (* 3 (1- int))))
 
-(defgeneric aa-coords->nt-coords (coord)
+(defgeneric aa-coords->nt-coords (coordinate)
   (:documentation "Convert coordinates from amino acids to
    nucleotides.  This works for simple integers as well as for
-   intervals.  Note that the first monomere has the index 1 in eather
-   coordinate system, nucleotide as well as amino acid.  If the
-   coordinate is a single number, it is mapped to the _first_
-   nucleotide which codes for the corresponding amino acid. If the
-   argument is an interval on an amino acid sequence, the result is an
-   interval that spans the whole nucleotide sequence which codes for
-   the corresponding amino acids.
+   intervals.  Note that the first monomere has the index 1 in either
+   coordinate system, nucleotide as well as amino acid.  This methods
+   returns an interval spanning the whole nucleotide sequence which
+   codes for the corresponding amino acid.  If an integer `i' is
+   given, it is interpreted as the interval #[i,i].
 
    ### Examples
-   (aa->nt 1)
+   (aa-coords->nt-coords 1)
    => 1
    (aa->nt 3)
    => 7 "))
 
 (defmethod aa-coords->nt-coords ((coord integer))
-  (1+ (* 3 (1- coord))))
+  (let ((start (%aa->nt coord)))
+    (make-interval 'integer-interval start (+ 2 start))))
 
 (defmethod aa-coords->nt-coords ((interval integer-interval))
   (make-interval interval
-                 (aa-coords->nt-coords (lower-bound interval))
-                 (+ 2 (aa-coords->nt-coords (upper-bound interval)))))
+                 (%aa->nt (lower-number interval))
+                 (+ 2 (%aa->nt (upper-number interval)))))
 
 (defgeneric nt-coords->aa-coords (coord)
   (:documentation "Convert from coordinates in nucleotides to
