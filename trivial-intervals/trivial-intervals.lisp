@@ -406,3 +406,13 @@
 ;;             (upper-number object))))
 (defmethod print-object ((object trivial-interval) (stream stream))
   (format stream "#[~A,~A]" (lower-number object) (upper-number object)))
+
+
+
+;;; ----------------------------------
+;;; Load Form
+;;; ----------------------------------
+(defmethod make-load-form ((interval trivial-interval) &optional environment)
+    (make-load-form-saving-slots interval
+                                 :slot-names '(lower upper)
+                                 :environment environment))
