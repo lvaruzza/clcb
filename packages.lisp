@@ -90,6 +90,7 @@
         #:cl-ppcre
         #:iterate
         #:alexandria
+        #:metabang-bind
         #:clcb-config
         #:clcb-utils
         #:trivial-intervals)
@@ -128,25 +129,40 @@
 	   #:*species-ncbi-id-hash*
 	   #:stable-id->species
 	   
-           ;;; BIO-SEQUENCES
+
+           ;;; BIO-SEQUENCES types
+           #:abstract-bio-sequence
+           #:trivial-bio-sequence
+           #:fragmented-bio-sequence
+
+           #:bio-sequence-id
+           #:bio-sequence-name
+           #:bio-sequence-description
+           #:bio-sequence-seq
+           #:seq
+           #:bio-sequence-length
+           #:seq-fragments
+           #:seq-start
+           #:seq-end
+
+           #:bio-sequence-record
            #:nucleotide-sequence
            #:amino-acid-sequence
            #:alphabet
            #:feature
 
            ;; bio-sequence
-           #:bio-sequence
-           #:bio-sequence-id
-           #:bio-sequence-name
-           #:bio-sequence-description
-           #:bio-sequence-seq
-           #:bio-sequence-length
            #:nt-coords->aa-coords
            #:aa-coords->nt-coords
+           #:bio-subseq
 
            ;; nucleotide-sequence
            #:circular
            #:alphabet
+
+           #:direct-subseqs
+           #:direct-superseq
+           #:super-sequences
 
            #:shuffle-sequence
 

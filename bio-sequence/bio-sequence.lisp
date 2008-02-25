@@ -23,10 +23,17 @@
 
 (in-package #:clcb)
 
+(let ((counter 0))
+  (defun bio-sequence-counter ()
+    (incf counter))
+  (defun reset-bio-sequence-counter ()
+    (setf counter 0)))
+
 (defclass abstract-bio-sequence (molecule abstract-interval)
   ((id
     :accessor bio-sequence-id
     :initarg :id
+    :initform (format nil "unknown-seq-~d" (bio-sequence-counter))
     :documentation "Unique identifier of the sequence.  In cases where
     an sequence is read from a database, this will often be the
     primary key under which the sequence is filed.")
@@ -98,20 +105,25 @@
   (flet ((prefixed-class-name-symbol (prefix)
            (intern
             (concatenate 'string (string prefix) (string bio-seq-name)))))
-    `(progn
-       (defclass ,bio-seq-name
-           ,(if (some #'(lambda (x) (subtypep x 'abstract-bio-sequence))
-                      superclasses)
-                superclasses
-                (append superclasses '(abstract-bio-sequence)))
-         ,@slots-and-docs)
-       (defclass ,(prefixed-class-name-symbol 'trivial-) 
-           (,bio-seq-name trivial-bio-sequence)
-         ())
-       (defclass ,(prefixed-class-name-symbol 'fragmented-)
-           (,bio-seq-name fragmented-bio-sequence)
-         ())
-       (find-class ',bio-seq-name))))
+    (let ((export? (not (cdr (getf slots-and-docs :export)))))
+      `(progn
+         (defclass ,bio-seq-name
+             ,(if (some #'(lambda (x) (subtypep x 'abstract-bio-sequence))
+                        superclasses)
+                  superclasses
+                  (append superclasses '(abstract-bio-sequence)))
+           ,@slots-and-docs)
+         (defclass ,(prefixed-class-name-symbol 'trivial-) 
+             (,bio-seq-name trivial-bio-sequence)
+           ())
+         (defclass ,(prefixed-class-name-symbol 'fragmented-)
+             (,bio-seq-name fragmented-bio-sequence)
+           ())
+         ,(when export?
+                  `(export '(,bio-seq-name
+                             ,(prefixed-class-name-symbol 'trivial-) 
+                             ,(prefixed-class-name-symbol 'fragmented-))))
+         (find-class ',bio-seq-name)))))
 
 
 (define-bio-sequence bio-sequence-record ()
@@ -227,18 +239,23 @@
 ;;          args))
 
 
-
-(defgeneric bio-subseq (bio-sequence start &optional end)
+(defgeneric bio-subseq (bio-sequence start-or-interval &optional end)
   (:documentation "Return a slice of the bio-sequence from start to end.")
-  (:method ((seq trivial-bio-sequence) (start integer)
-            &optional (end (bio-sequence-length seq)))
-    (let ((new-seq (make-interval seq start end)))
+
+  (:method ((bioseq trivial-bio-sequence) (start integer) 
+            &optional (end (bio-sequence-length bioseq)))
+    (let ((new-seq (make-interval bioseq start end)))
       (setf (bio-sequence-seq new-seq)
-            (subseq (seq seq) (1- start) end))
-      (setf (direct-superseq new-seq) seq)
+            (subseq (seq bioseq) (1- start) end))
+      (setf (direct-superseq new-seq) bioseq)
       ;; Side effects... I'm not sure I like that.
-      #+nil(push new-seq (direct-subseqs seq))
-      new-seq)))
+      #+nil(push new-seq (direct-subseqs bioseq))
+      new-seq))
+
+  (:method ((bioseq trivial-bio-sequence) (interval integer-interval)
+            &optional end)
+    (declare (ignore end))
+    (bio-subseq bioseq (lower-number interval) (upper-number interval))))
 
 
 ;; (defmethod print-object ((seq trivial-bio-sequence) stream)
@@ -269,7 +286,9 @@
 ;;; Coordinates on bio-sequences
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (declaim (inline %aa->nt))
-(defun %aa->nt (int) (1+ (* 3 (1- int))))
+(defun %aa->nt (integer)
+  (declare (integer integer))
+  (1+ (* 3 (1- integer))))
 
 (defgeneric aa-coords->nt-coords (coordinate)
   (:documentation "Convert coordinates from amino acids to
@@ -295,25 +314,30 @@
                  (%aa->nt (lower-number interval))
                  (+ 2 (%aa->nt (upper-number interval)))))
 
-(defgeneric nt-coords->aa-coords (coord)
+
+(declaim (inline %nt->aa))
+(defun %nt->aa (integer)
+  (declare (integer integer))
+  (multiple-value-bind (aa-minus-1 rest) (truncate (1- integer) 3)
+    (values (1+ aa-minus-1) rest)))
+
+(defgeneric nt-coords->aa-coords (nt-coordinate)
   (:documentation "Convert from coordinates in nucleotides to
-   coordinates in amino acids.
-
-   Example:
-
-   * (mapcar #'nt-coords->aa-coords (list 1 2 3 4 5 6 7 8 9))
-
-   (1 1 1 2 2 2 3 3 3)"))
+   coordinates in amino acids.  Thereby, an interval of nucleotides is
+   mapped to the interval of _all_ amino acids which are at least
+   partly coded by this sequence.  If a single integer is given, a one
+   elemental interval is returned."))
 
 (defmethod nt-coords->aa-coords ((coord integer))
-  (multiple-value-bind (aa-1 rest) (truncate (1- coord) 3)
-    (values (1+ aa-1) rest)))
+  (bind (((:values aa-coord rest) (%nt->aa coord)))
+    (values (make-interval 'integer-interval aa-coord aa-coord )
+            rest)))
 
 (defmethod nt-coords->aa-coords ((interval integer-interval))
-  (bind:bind (((values start start-off)
-               (nt-coords->aa-coords (lower-bound interval)))
-              ((values end end-off)
-               (nt-coords->aa-coords (upper-bound interval))))
+  (bind (((:values start start-off)
+          (%nt->aa (lower-number interval)))
+         ((:values end end-off)
+          (%nt->aa (upper-number interval))))
     (values (make-interval interval  start end) start-off end-off)))
 
 

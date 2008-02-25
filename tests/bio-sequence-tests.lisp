@@ -24,17 +24,23 @@
 (in-package #:clcb-tests)
 
 (deftestsuite bio-sequence-tests (clcb-tests)
-  ((nt-seq (make-instance 'nucleotide-sequence
+  ((nt-seq (make-instance 'trivial-nucleotide-sequence
                            :id "nucleotide-test"
                            :seq "acttgaggaccatacat"))
-   (aa-seq (make-instance 'amino-acid-sequence
+   (aa-seq (make-instance 'trivial-amino-acid-sequence
                           :id "amino-acid-test"
                           :seq "TGHREQWMLYAGPIKDVH"))))
 
+;;; ------------------------------------
+;;; Coordinate transformations
 (deftestsuite coordinate-transformations (bio-sequence-tests)
-  ())
+  ()
+  (:equality-test #'(lambda (x y)
+                      (typecase x
+                        (integer-interval (interval-= x y))
+                        (integer (eql x y))))))
 
-
+;; aa->nt
 (addtest (coordinate-transformations)
   integer-aa->nt-1
   (ensure-same (aa-coords->nt-coords 1)
@@ -48,7 +54,47 @@
                :test #'interval-=))
 
 (addtest (coordinate-transformations)
-  interval-aa->nt
+  interval-aa->nt-1
   (ensure-same (aa-coords->nt-coords #[1,3])
                 #[1,9]
                 :test #'interval-=))
+
+(addtest (coordinate-transformations)
+  interval-aa->nt-2
+  (ensure-same (aa-coords->nt-coords #[3,10])
+                #[7,30]
+                :test #'interval-=))
+
+;; nt->aa
+(addtest (coordinate-transformations)
+  integer-nt->aa-1
+  (ensure-same (nt-coords->aa-coords 1)
+               (values #[1,1] 0)))
+
+(addtest (coordinate-transformations)
+  integer-nt->aa-2
+  (ensure-same (nt-coords->aa-coords #[8,30])
+               (values #[3,10] 1 2)))
+
+;; There and back again
+(addtest (coordinate-transformations)
+  aa->nt->aa
+  (ensure-same (nt-coords->aa-coords (aa-coords->nt-coords #[3,15]))
+               #[3,15]))
+
+
+;;; ------------------------------------
+;;; Subsequences
+(deftestsuite bio-subseqs (bio-sequence-tests)
+  ()
+  (:equality-test #'(lambda (x y)
+                      (and (string= (bio-sequence-seq x) (bio-sequence-seq y))
+                           (interval-= x y)))))
+
+(addtest (bio-subseqs)
+  trivial-subseq-nt
+  (ensure-same (bio-subseq nt-seq #[2,6])
+               (make-instance 'trivial-nucleotide-sequence
+                              :seq "cttga"
+                              :seq-start 2
+                              :seq-end   6)))
