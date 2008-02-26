@@ -37,35 +37,57 @@
   type `bio-sequence-name' to be either of type
   `trivial-${bio-sequence-name}' or `fragmented-${bio-sequence-name}'.
   Un-subclassed instances are impossible."
-  `(defmethod make-instance ((class (eql (find-class ',bio-sequence-name)))
-                             &rest initargs &key &allow-other-keys)
-     (declare (ignore class))
-     (let ((trivial-seq-p (some #'(lambda (key)
-                                    (getf initargs key))
-                                '(:seq-start :seq-end :lower :upper))))
-       (apply #'make-instance (if trivial-seq-p
-                                  ',trivial-bio-sequence-name
-                                  ',fragmented-bio-sequence-name)
-              initargs))))
+  `(progn
+     (defmethod make-instance ((class (eql (find-class ',bio-sequence-name)))
+                               &rest initargs &key &allow-other-keys)
+       (declare (ignore class))
+       (let ((fragmented-seq-p (some #'(lambda (key)
+                                         (getf initargs key))
+                                     '(:seq-fragments :intervals))))
+         (apply #'make-instance (if fragmented-seq-p
+                                    ',fragmented-bio-sequence-name
+                                   ',trivial-bio-sequence-name)
+                initargs)))))
 ;;;; =========================================================================
 ;;;; Symbol utilities
 ;;;; =========================================================================
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter *bio-sequence-types* 
+    `((:generic .    ,(string ""))
+      (:trivial .    ,(string '#:trivial-))
+      (:fragmented . ,(string '#:fragmented-))))
+  (defun %bio-sequence-types ()
+    (mapcar #'car *bio-sequence-types*))
+  (defun %bio-sequence-class-prefixes ()
+    (mapcar #'cdr *bio-sequence-types*))
+  (defun %bio-sequence-class-prefix (type)
+    (cdr (assoc type *bio-sequence-types*))))
+
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun concatenate-symbols (&rest symbols)
     (intern (apply #'concatenate 'string
                    (mapcar #'string symbols))))
 
 
-  (defun find-bio-sequence-class (class &optional (type :normal) (errorp t))
-    (declare (type (member :normal :direct :trivial :fragmented)))
+  (defun find-bio-sequence-class (class &optional (type :generic) (errorp t))
+    "Return the bio-sequence of type `type' for `class'."
+    ;; (declare (type (member #.(%bio-sequence-types) )))
     (if (typep class 'standard-class)
         (find-bio-sequence-class (class-name class) type)
-        (find-class
-         (ecase type
-           ((:normal :direct) class)
-           (:trivial (concatenate-symbols '#:trivial- class))
-           (:fragmented (concatenate-symbols '#:fragmented- class)))
-         errorp)))
+        (let ((class-name 
+               (iter
+                 (with cls-string = (string class))
+                 (for type-prefix in (%bio-sequence-class-prefixes))
+                 (for search-res = (search type-prefix cls-string
+                                           :test #'string-equal))
+                 (when (and search-res (zerop search-res))
+                   (setf cls-string (subseq cls-string (length type-prefix))))
+                 (finally (return cls-string)))))
+         (find-class (concatenate-symbols (%bio-sequence-class-prefix type)
+                                          class-name)
+                     errorp))))
+  
 
   (defun replace-bio-superclasses (superclasses type)
     "Replace elements of `superclasses' with a ${type}-bio-sequence if
@@ -101,7 +123,7 @@
          (fragmented-bio-sequence-name (prefixed-class '#:fragmented-))
          (trivial-superclasses         (superclasses :trivial))
          (fragmented-superclasses      (superclasses :fragmented)))
-     `(progn
+     `(eval-when (:compile-toplevel :load-toplevel :execute)
         (defclass ,bio-sequence-name
             ,(if (some #'(lambda (x) (subtypep x 'abstract-bio-sequence))
                        superclasses)
@@ -190,7 +212,7 @@
 
  (defclass fragmented-bio-sequence (abstract-bio-sequence
                                     abstract-multi-interval)
-   ((intervals
+   ((seq-fragments
      :accessor seq-fragments
      :accessor intervals  ; For compliance with the interval protokoll
      :initarg :seq-fragments
@@ -258,86 +280,83 @@
 
 ;; For now those are very similar to ensembl objects.  I might change
 ;; that later.
-(eval-when (:compile-toplevel :load-toplevel :execute)
- (define-bio-sequence transcript (nucleotide-sequence)
-   ((exons :accessor exons
-           :initarg :exons
-           :initform #()
-           :type sequence)
-    (protein :accessor protein
-             :initarg :protein
-             :initarg :translation
-             :documentation "The protein the transcript is coding for, if any."
-             :initform nil))
-   (:documentation "A transcript describes a RNA sequence that can be
+
+(define-bio-sequence transcript (nucleotide-sequence)
+  ((exons :accessor exons
+          :initarg :exons
+          :initform #()
+          :type sequence)
+   (protein :accessor protein
+            :initarg :protein
+            :initarg :translation
+            :documentation "The protein the transcript is coding for, if any."
+            :initform nil))
+  (:documentation "A transcript describes a RNA sequence that can be
     spliced into a mature mRNA.  Exons are the elements that make up
     the mRNA.  All sequence elements which are cut out in the splicing
     process are called introns and can be thought to be the relative
     complements of the exons within the transcript."))
 
 
- (define-bio-sequence exon (nucleotide-sequence)
-   ((transcript :accessor transcript
-                :initarg transcript
-                :documentation "The transcript corresponding to this exon.")
-    (circular :allocation :class
-              :initform nil))
-   (:documentation "Exons are those regions of the transcript of the
-    genomic DNA that leave the nucleus and are read out to form the
-    amino acid sequence. A single gene is very likely to have multiple
-    variants that are assembled from different exons. The exonic
-    regions from different transcript may overlap when mapped back
-    onto the genome."))
+(define-bio-sequence exon (nucleotide-sequence)
+  ((transcript :accessor transcript
+               :initarg transcript
+               :documentation "The transcript corresponding to this exon.")
+   (circular :allocation :class
+             :initform nil))
+  (:documentation "Exons are those regions of the transcript of the
+   genomic DNA that leave the nucleus and are read out to form the
+   amino acid sequence. A single gene is very likely to have multiple
+   variants that are assembled from different exons. The exonic
+   regions from different transcript may overlap when mapped back
+   onto the genome."))
 
+(define-bio-sequence protein (amino-acid-sequence)
+  ((transcript :initarg :transcript
+               :accessor transcript
+               :documentation "The transcript which codes for this protein.")
+   (features :initarg :features
+             :accessor protein-features
+             :documentation "Slot harboring the features of that
+            protein sequence. This may be post-translational
+            modifications or links to protein domain databases that
+            are manifested by a respective sequence similarity at
+            that particular region."))
+  (:documentation "Proteins are the class of molecules that most
+   biochemical functions are attributed to."))
 
- (define-bio-sequence protein (amino-acid-sequence)
-   ((transcript :initarg :transcript
-                :accessor transcript
-                :documentation "The transcript which codes for this protein.")
-    (features :initarg :features
-              :accessor protein-features
-              :documentation "Slot harboring the features of that
-             protein sequence. This may be post-translational
-             modifications or links to protein domain databases that
-             are manifested by a respective sequence similarity at
-             that particular region."))
-   (:documentation "Proteins are the class of molecules that most
-  biochemical functions are attributed to."))
+(define-bio-sequence protein-feature (feature)
+  ((protein :initarg protein
+            :accessor protein
+            :accessor translation
+            :documentation "The link back to the protein to which this
+           feature belongs.")
+   (feat-start :initarg :start
+               :accessor feat-start
+               :accessor lower-bound)
+   (feat-end :initarg :end
+             :accessor feat-end
+             :accessor upper-bound))
+  (:documentation "Whenever a fragment of a protein sequence is known
+ to be special, then this class, the protein feature, is how this
+ knowledge should be expressed formally. The name 'feature' is
+ derived from the term 'feature-table' as it is used in the
+ EMBL-formatted sequence databases like 'uniprot'. EnsEMBL and
+ UniProt collaborate on protein annotation."))
 
-
- (define-bio-sequence protein-feature (feature)
-   ((protein :initarg protein
-             :accessor protein
-             :accessor translation
-             :documentation "The link back to the protein to which this
-            feature belongs.")
-    (feat-start :initarg :start
-                :accessor feat-start
-                :accessor lower-bound)
-    (feat-end :initarg :end
-              :accessor feat-end
-              :accessor upper-bound))
-   (:documentation "Whenever a fragment of a protein sequence is known
-  to be special, then this class, the protein feature, is how this
-  knowledge should be expressed formally. The name 'feature' is
-  derived from the term 'feature-table' as it is used in the
-  EMBL-formatted sequence databases like 'uniprot'. EnsEMBL and
-  UniProt collaborate on protein annotation."))
-
-
- (define-bio-sequence transmembrane-helix (protein-feature)
-   ((sidedness :initarg nil
-               :documentation "With N-terminus inside and C-terminus
-	      outside, a membrane-spanning helix has an in-out
-	      topology. The alternative is an out-in topology. The
-	      default is nil. The sidedness is most difficult to
-	      predict."))
-   (:documentation "Membrane proteins are essential to understand for
-  the pharmaceutical industry and they are fascinating in their own
-  right. There are many things that one wants to know about
-  membrane-spanning regions in proteins. Their sidedness is of
-  concern, but also information about their aromatic ring or the
-  distribution of stop-signals around them.")))
+(define-bio-sequence transmembrane-helix (protein-feature)
+  ((sidedness :initarg nil
+              :documentation "With N-terminus inside and C-terminus
+              outside, a membrane-spanning helix has an in-out
+              topology. The alternative is an out-in topology. The
+              default is nil. The sidedness is most difficult to
+              predict."))
+  (:documentation "Membrane proteins are essential to understand for
+   the pharmaceutical industry and they are fascinating in their own
+   right. There are many things that one wants to know about
+   membrane-spanning regions in proteins. Their sidedness is of
+   concern, but also information about their aromatic ring or the
+   distribution of stop-signals around them."))
 
 ;;;; END: BIO-SEQUENCE CLASSES
 ;;;; =========================================================================
@@ -434,7 +453,17 @@
   (:method ((bioseq trivial-bio-sequence) (interval integer-interval)
             &optional end)
     (declare (ignore end))
-    (bio-subseq bioseq (lower-number interval) (upper-number interval))))
+    (bio-subseq bioseq (lower-number interval) (upper-number interval)))
+
+  (:method ((bioseq trivial-bio-sequence) (multint abstract-multi-interval)
+            &optional end)
+    (declare (ignore end))
+    (let ((new-seq (make-instance
+                    (find-bio-sequence-class (class-of bioseq) :fragmented)
+                    :seq-fragments (mapcar (curry #'bio-subseq bioseq)
+                                           (intervals multint)))))
+      (setf (direct-superseq new-seq) bioseq)
+      new-seq)))
 
 
 ;; (defmethod print-object ((seq trivial-bio-sequence) stream)

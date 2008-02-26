@@ -116,3 +116,13 @@
                               :seq "cttga"
                               :seq-start 2
                               :seq-end   6)))
+
+;; (addtest (bio-subseqs)
+;;   multi-interval-subseq-nt
+;;   (ensure-same (bio-subseq nt-seq (make-multi-interval #[1,4] #[7,13]))
+;;                (make-instance 'nucleotide-sequence
+;;                               :seq-fragments (list #[1,4] #[7,13]))
+;;                :test #'(lambda (x y)
+;;                          (every #'interval-=
+;;                                 (seq-fragments x)
+;;                                 (seq-fragments y)))))

@@ -40,9 +40,9 @@
      (:file "clcb-tests")
      (:file "utils-test")
      (:file "bio-sequence-tests")
-     (:file "fasta-io-tests")
-))))
+     (:file "fasta-io-tests")))))
 
 (defmethod perform ((o test-op) (c (eql (find-system :clcb-tests))))
-  (funcall (intern (symbol-name '#:run-clcb-tests) '#:clcb-tests)))
+  (funcall (intern (symbol-name '#:run-clcb-tests) 
+                   '#:clcb-tests)))
 
