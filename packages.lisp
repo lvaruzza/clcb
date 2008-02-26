@@ -25,7 +25,7 @@
 
 (defpackage clcb-utils
   (:documentation "Some simple utilities.")
-  (:use #:cl
+  (:use #:closer-common-lisp
         #:cl-ppcre
         #:iterate
         #:split-sequence
@@ -86,7 +86,7 @@
 
 
 (defpackage clcb
-  (:use #:cl
+  (:use #:closer-common-lisp
         #:cl-ppcre
         #:iterate
         #:alexandria

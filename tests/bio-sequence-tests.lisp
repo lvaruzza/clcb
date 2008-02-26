@@ -31,6 +31,24 @@
                           :id "amino-acid-test"
                           :seq "TGHREQWMLYAGPIKDVH"))))
 
+(deftestsuite class-hierarchies (bio-sequence-tests)
+  ()
+  (:tests
+   (transcript
+    (ensure (class-name (find-class 'clcb::transcript nil))))
+   (trivial-transcript
+    (ensure (class-name (find-class 'clcb::trivial-transcript nil))))
+   (fragmented-transcript
+    (ensure (class-name (find-class 'clcb::fragmented-transcript nil))))))
+
+(addtest (class-hierarchies)
+  trivial-nucleotide-superclass
+  (ensure (subtypep 'trivial-transcript 'trivial-nucleotide-sequence)))
+
+(addtest (class-hierarchies)
+  fragmented-nucleotide-superclass
+  (ensure (subtypep 'fragmented-transcript 'fragmented-nucleotide-sequence)))
+
 ;;; ------------------------------------
 ;;; Coordinate transformations
 (deftestsuite coordinate-transformations (bio-sequence-tests)

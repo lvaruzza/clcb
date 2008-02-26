@@ -40,7 +40,7 @@
     :depends-on ("iterate"
                  "cl-ppcre"
                  "split-sequence";; Why doesn't ppcre suffice?
-                 "moptilities"
+                 "closer-mop"
                  "alexandria"
 		 "metabang-bind"
                  "trivial-intervals"

@@ -43,12 +43,6 @@
      (:file "fasta-io-tests")
 ))))
 
-;; (defun run-cffi-tests (&key (compiled nil))
-;;   (funcall (intern (symbol-name '#:run-cffi-tests) '#:cffi-tests)
-;;            :compiled compiled))
-
-;; (defmethod perform ((o test-op) (c (eql (find-system :cffi-tests))))
-;;   (unless (and (run-cffi-tests :compiled nil)
-;;                (run-cffi-tests :compiled t))
-;;     (error "test-op failed.")))
+(defmethod perform ((o test-op) (c (eql (find-system :clcb-tests))))
+  (funcall (intern (symbol-name '#:run-clcb-tests) '#:clcb-tests)))
 

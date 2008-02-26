@@ -25,3 +25,9 @@
 
 (deftestsuite clcb-tests ()
   ())
+
+
+(defun run-clcb-tests ()
+  (let ((*test-print-test-case-names* t))
+    (run-tests :suite '#:clcb-tests)))
+
