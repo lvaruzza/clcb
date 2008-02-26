@@ -30,6 +30,8 @@
            #:upper-number
            #:interval-length
            #:make-interval
+           #:make-multi-interval
+           #:intervals
 
            ;; Important Classes
            #:abstract-interval
@@ -190,7 +192,7 @@
   forming a complement of an interval."))
 
 ;;; Multi Interval (= a set of disjunct intervals)
-(defclass multi-interval (abstract-interval)
+(defclass multi-interval (abstract-multi-interval)
   ((intervals :accessor intervals
               :initarg :intervals
               :type sequence))
