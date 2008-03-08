@@ -110,6 +110,11 @@
   normal defclass construct."
   (flet ((prefixed-class (prefix)
            (concatenate-symbols prefix bio-sequence-name))
+         (class-symbol (class)
+           (typecase class
+             (symbol class)
+             (standard-class (class-name class))
+             (standard-object (class-name (class-of class)))))
          (superclasses (type)
            (bind (((:values super found-one)
                    (replace-bio-superclasses superclasses type)))
@@ -121,8 +126,10 @@
         ((export? (not (cdr (getf slots-and-docs :export))))
          (trivial-bio-sequence-name    (prefixed-class '#:trivial-))
          (fragmented-bio-sequence-name (prefixed-class '#:fragmented-))
-         (trivial-superclasses         (superclasses :trivial))
-         (fragmented-superclasses      (superclasses :fragmented)))
+         (trivial-superclasses         (mapcar #'class-symbol
+                                               (superclasses :trivial)))
+         (fragmented-superclasses      (mapcar #'class-symbol
+                                               (superclasses :fragmented))))
      `(eval-when (:compile-toplevel :load-toplevel :execute)
         (defclass ,bio-sequence-name
             ,(if (some #'(lambda (x) (subtypep x 'abstract-bio-sequence))

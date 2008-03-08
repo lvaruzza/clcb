@@ -28,55 +28,54 @@
 (in-package :clcb-system)
 
 (defsystem clcb
-    :description "CLCB - Common Lisp stuff for computational biology."
-    :long-description
-    "CLCB is a small project initiated by Albert Krewinkel, mostly to teach
-     himself some lisp. Over time, CLCB has turned into a tool with some
-     competitive edge for research in computational biology."
-    :version "0.1"
-    :author "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
-    :maintainer "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
-    :licence "MIT"
-    :depends-on ("iterate"
-                 "cl-ppcre"
-                 "split-sequence";; Why doesn't ppcre suffice?
-                 "closer-mop"
-                 "alexandria"
-		 "metabang-bind"
-                 "trivial-intervals"
-		 )
-    :components
-    ((:doc-file "README")
-     (:static-file "LICENSE")
+  :description "CLCB - Common Lisp stuff for computational biology."
+  :long-description
+  "CLCB is a small project initiated by Albert Krewinkel, mostly to
+  teach himself some lisp.  Over time, CLCB has turned into a tool
+  with some competitive edge for research in computational biology."
+  :version "0.1"
+  :author "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
+  :maintainer "Albert Krewinkel <krewink@inb.uni-luebeck.de>"
+  :licence "MIT"
+  :depends-on ("iterate"
+               "cl-ppcre"
+               "split-sequence";; Why doesn't ppcre suffice?
+               "closer-mop"
+               "alexandria"
+               "metabang-bind"
+               "trivial-intervals")
+  :components
+  ((:doc-file "README")
+   (:static-file "LICENSE")
+   
+   (:file "config")
+   (:file "packages" :depends-on ("config"))
+   (:file "genetic-code" :depends-on ("packages" "config" "molecule"))
      
-     (:file "config")
-     (:file "packages" :depends-on ("config"))
-     (:file "genetic-code" :depends-on ("packages" "config" "molecule"))
-     
-     (:module "utils"
-              :components ((:file "math-utils")
-                           (:file "misc-utils")
-                           (:file "tables")
-                           (:file "file-utils")
-                           (:file "string-utils")
-                           #+nil(:file "interval"))
-              :depends-on ("packages"))
+   (:module "utils"
+            :components ((:file "math-utils")
+                         (:file "misc-utils")
+                         (:file "tables")
+                         (:file "file-utils")
+                         (:file "string-utils")
+                         #+nil(:file "interval"))
+            :depends-on ("packages"))
+   
+   (:module "data"
+            :components ((:static-file "amino-acids.txt")
+                         (:static-file "genetic-code.prt")))
+   
+   (:module "molecule"
+            :components ((:file "molecule")
+                         (:file "amino-acids")
+                         (:file "species")
+                         (:file "nucleotide"))
+            :depends-on ("utils" "config")
+            :serial t)
 
-     (:module "data"
-              :components ((:static-file "amino-acids.txt")
-                           (:static-file "genetic-code.prt")))
-
-     (:module "molecule"
-              :components ((:file "molecule")
-                           (:file "amino-acids")
-                           (:file "species")
-                           (:file "nucleotide"))
-              :depends-on ("utils" "config")
-              :serial t)
-
-     (:module "bio-sequence"
-              :components ((:file "bio-sequence"))
-              :depends-on ("packages" "utils" "molecule"))
-     (:module "seq-io"
-              :components ((:file "fasta"))
-              :depends-on ("packages"))))
+   (:module "bio-sequence"
+            :components ((:file "bio-sequence"))
+            :depends-on ("packages" "utils" "molecule"))
+   (:module "seq-io"
+            :components ((:file "fasta"))
+            :depends-on ("packages"))))
