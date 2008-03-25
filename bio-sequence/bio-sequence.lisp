@@ -490,7 +490,7 @@
   (:method ((seq trivial-bio-sequence)) (length (bio-sequence-seq seq))))
 
 
-(defclass feature (integer-interval)
+(define-bio-sequence feature ()
   ((feature-type :accessor feature-type
                  :initarg :feature-type))
   (:documentation "A property of interest that is referred to from a

@@ -47,20 +47,29 @@
    (hydropathy :accessor hydropathy :initarg :hydropathy :initform nil
                :type     clcb-utils::number-or-nil
 	       :documentation "The Kyte-Doolitle scoring of amino
-acids for their compatibility with polar water or apolar fatty
-acids."))
+	       acids for their compatibility with polar water or
+	       apolar fatty acids."))
   (:documentation "The data directory of CLCB describes the naturally
-occuring amino acids with respect to their notation (1-letter and
-3-letter codes) and biochemical properties. The individual lines are
-accessible as instances of this class."))
+  occuring amino acids with respect to their notation (1-letter and
+  3-letter codes) and biochemical properties. The individual lines are
+  accessible as instances of this class."))
 
 (defmethod print-object ((aa amino-acid) (s stream))
   (print-unreadable-object (aa s :type t :identity nil)
     (format s "~A" (3-letter-code aa))))
 
+;; (defmethod make-load-form ((aa amino-acid)  &optional environment)
+;;   (make-load-form-saving-slots 
+;;    aa
+;;    :environment environment
+;;    :slot-names (mapcar #'slot-definition-name
+;;                        (class-slots (find-class (class-of aa))))))
+
 
 (defun read-amino-acids (aa-table-file)
-  "CLCB comes with a text file that describes the most essential properties of amino acids. You may have your own. This function creates instances for the amino acids stored in that file."
+  "CLCB comes with a text file that describes the most essential
+properties of amino acids. You may have your own. This function
+creates instances for the amino acids stored in that file."
   (with-open-file (in aa-table-file)
     (read-objects-from-table in 'amino-acid)))
 
@@ -68,14 +77,8 @@ accessible as instances of this class."))
   (read-amino-acids
    (make-pathname :name "amino-acids" :type "txt"
                   :defaults *data-directory-pathname*))
-  "A global parameter with information about all naturally occurring amino acids.
-
-Example:
-
-* (car *amino-acids*)
-
-#<AMINO-ACID Ala>
-")
+  "A global parameter with information about all naturally occurring
+  amino acids.")
 
 (defparameter *1-letter-aa-hash* 
   (let ((1-letter-hash (make-hash-table)))
@@ -123,37 +126,35 @@ the alphabet becomes handy.
 ;;; Type definitions 
 ;;; FIXME: don't use, it would be too slow. (Defining those types was
 ;;; a nice exercise, though)
-(let* ((1-letter-codes (mapcar #'1-letter-code *amino-acids*))
-       (1-letter-codes-both-cases
-        (nconc (mapcar #'char-upcase 1-letter-codes)
-               (mapcar #'char-downcase 1-letter-codes)))
-       (3-letter-codes (mapcar #'3-letter-code *amino-acids*)))
- (defun 1-letter-code-p (x)
-   (find x 1-letter-codes-both-cases :test #'char=))
+;; (let* ((1-letter-codes (mapcar #'1-letter-code *amino-acids*))
+;;        (1-letter-codes-both-cases
+;;         (nconc (mapcar #'char-upcase 1-letter-codes)
+;;                (mapcar #'char-downcase 1-letter-codes)))
+;;        (3-letter-codes (mapcar #'3-letter-code *amino-acids*)))
+;;  (defun 1-letter-code-p (x)
+;;    (find x 1-letter-codes-both-cases :test #'char=))
 
- (defun 3-letter-code-p (x)
-   (when (typep x '(simple-array character *))
-    (find x 3-letter-codes :test #'string=))))
+;;  (defun 3-letter-code-p (x)
+;;    (when (typep x '(simple-array character *))
+;;     (find x 3-letter-codes :test #'string=))))
 
-(deftype 3-letter-code ()
-  `(satisfies 3-letter-code-p))
+;; (deftype 3-letter-code ()
+;;   `(satisfies 3-letter-code-p))
 
-(deftype 1-letter-code ()
-  `(satisfies 1-letter-code-p))
+;; (deftype 1-letter-code ()
+;;   `(satisfies 1-letter-code-p))
 
 ;;; END: type declarations ---------------------------------------------------
 
 
 (defgeneric get-amino-acid (identifier)
-  (:documentation
-   "Get an amino acid object corresponding to the given identifier.
-
-Example:
-
-* (get-amino-acid \"ala\")
-
-#<AMINO-ACID Ala>
-T")
+  (:documentation "Get an amino acid object corresponding to the given
+  identifier.
+       
+   ### Example:
+   * (get-amino-acid \"ala\")
+   #<AMINO-ACID Ala>
+   T")
 
   (:method ((char character)) (gethash char *1-letter-aa-hash*))
 

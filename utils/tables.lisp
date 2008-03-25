@@ -25,45 +25,36 @@
 
 ;;;; -------------------------------------------------------------------------
 ;;;; Some New Types 
+
+(defun normalize-type (type)
+  (if (and (typep type 'cons)
+           (null (cddr type))
+           (or (eql (car type) 'and)
+               (eql (car type) 'or)))
+      (second type)
+      type))
+
 (defun float-or-nil-p (x) 
-  "Indicates of the argument is a floating point number or nil. Admittedly, this is somewhat counterintuitive here.
-
-Example:
-* (FLOAT-OR-NIL-P 0)
-
-NIL
-* (FLOAT-OR-NIL-P 0.0)
-
-T
-* (FLOAT-OR-NIL-P 1)
-
-NIL
-* (FLOAT-OR-NIL-P 1.0)
-
-T
-* (null 0)
-
-NIL
-* (null nil)
-
-T"
+  "Indicates of the argument is a floating point number or
+nil. Admittedly, this is somewhat counterintuitive here."
   (or (null x) (floatp x)))
+
 (deftype float-or-nil () `(satisfies float-or-nil-p))
 
 (defun number-or-nil-p (x) 
   "True if the argumet is numeric.
 
-Examples:
+### Examples:
 * (number-or-nil-p 0)
-
 T
+
 * (number-or-nil-p 0.0)
-
 T
-* (number-or-nil-p \"0\")
 
+* (number-or-nil-p \"0\")
 NIL"
   (typep x '(or null number)))
+
 (deftype number-or-nil () `(satisfies number-or-nil-p))
 
 
@@ -195,17 +186,11 @@ chosen."
 ;;;; -------------------------------------------------------------------------
 (defun class->columns (class-specifier)
   "Create named columns with types according to the slots of the given class."
-  (flet ((slot-type (slot)
-           (getf (moptilities:slot-properties class-specifier slot)
-                 :type
-                 'string))
-         (slot-name (slot)
-           (string (getf (moptilities:slot-properties class-specifier slot)
-                         :name))))
-    (let ((slots (moptilities:slot-names class-specifier)))
-      (mapcar #'(lambda (slot)
-                  (make-column (slot-name slot) (slot-type slot)))
-              slots))))
+  (let ((slots (class-slots (ensure-class class-specifier))))
+    (mapcar #'(lambda (slot)
+                (make-column (slot-definition-name slot)
+                             (normalize-type (slot-definition-type slot))))
+            slots)))
 
 (defun nappend-line-to-table-data (table-data line)
   (vector-push-extend line table-data))
