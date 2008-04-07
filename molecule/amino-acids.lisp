@@ -24,7 +24,11 @@
 (in-package #:clcb)
 
 (defclass amino-acid (molecule)
-  ((1-letter-code
+  ((name
+    :type string)
+   (mol-weight
+    :initform nil                :type clcb-utils::number-or-nil)
+   (1-letter-code
     :accessor 1-letter-code     :initarg :1-letter-code 
     :initform #\X               :type    character
     :documentation "Single letter denoting an amino acid.")
@@ -35,7 +39,8 @@
    (isoelectric-point
     :accessor isoelectric-point :initarg :isoelectric-point
     :initform 7f0               :type    clcb-utils::number-or-nil
-    :documentation "The pH at which an amino acids becomes neutral.")
+    :documentation "The pH at which an amino acids stops moving in an
+    electic field.")
    (pk1COOH    :accessor pk1COOH    :initarg :pk1COOH    :initform nil
                :type     clcb-utils::number-or-nil)
    (pk2COOH    :accessor pk2COOH    :initarg :pk2COOH    :initform nil
@@ -58,12 +63,12 @@
   (print-unreadable-object (aa s :type t :identity nil)
     (format s "~A" (3-letter-code aa))))
 
-;; (defmethod make-load-form ((aa amino-acid)  &optional environment)
-;;   (make-load-form-saving-slots 
-;;    aa
-;;    :environment environment
-;;    :slot-names (mapcar #'slot-definition-name
-;;                        (class-slots (find-class (class-of aa))))))
+(defmethod make-load-form ((aa amino-acid)  &optional environment)
+  (make-load-form-saving-slots 
+   aa
+   :environment environment
+   :slot-names (mapcar #'slot-definition-name
+                       (class-slots (class-of aa)))))
 
 
 (defun read-amino-acids (aa-table-file)
@@ -74,7 +79,74 @@ creates instances for the amino acids stored in that file."
     (read-objects-from-table in 'amino-acid)))
 
 (defparameter *amino-acids*
-  (read-amino-acids
+  ;; My table reader code is too buggy, therefor the objects are initialized
+  ;; explicitly.
+  (list
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Alanine" :3-LETTER-CODE "Ala"
+                  :1-LETTER-CODE #\A :PK1COOH 2.3 :PK1NH2 9.9
+                  :ISOELECTRIC-POINT 6.1 :HYDROPATHY 1.8) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Arginine" :3-LETTER-CODE "Arg"
+                  :1-LETTER-CODE #\R :PK1COOH 2.81 :PK1NH2 9.09 :PK2NH2 13.2
+                  :ISOELECTRIC-POINT 11.76 :HYDROPATHY -4.5) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Asparagine" :3-LETTER-CODE "Asn"
+                  :1-LETTER-CODE #\N :PK1COOH 2.02 :PK1NH2 8.8
+                  :ISOELECTRIC-POINT 5.41 :HYDROPATHY -3.5) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Aspartic acid" :3-LETTER-CODE "Asp"
+                  :1-LETTER-CODE #\D :PK2COOH 1.88 :PK1COOH 3.65 :PK1NH2 9.6
+                  :ISOELECTRIC-POINT 2.85 :HYDROPATHY -3.5) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Cysteine" :3-LETTER-CODE "Cys"
+                  :1-LETTER-CODE #\C :PK2COOH 1.71 :PK1COOH 8.33 :PK1NH2
+                  10.78 :ISOELECTRIC-POINT 5.05 :HYDROPATHY 2.5) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Glutamic acid" :3-LETTER-CODE "Glu"
+                  :1-LETTER-CODE #\E :PK2COOH 2.19 :PK1COOH 4.25 :PK1NH2 9.67
+                  :ISOELECTRIC-POINT 3.22 :HYDROPATHY -3.5) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Glutamine" :3-LETTER-CODE "Gln"
+                  :1-LETTER-CODE #\Q :PK1COOH 2.17 :PK1NH2 9.13
+                  :ISOELECTRIC-POINT 5.65 :HYDROPATHY -3.5) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Glycine" :3-LETTER-CODE "Gly"
+                  :1-LETTER-CODE #\G :PK1COOH 2.21 :PK1NH2 9.15
+                  :ISOELECTRIC-POINT 5.97 :HYDROPATHY -0.4) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Histidine" :3-LETTER-CODE "His"
+                  :1-LETTER-CODE #\H :PK1COOH 1.78 :PK1NH2 8.97 :PK2NH2 5.97
+                  :ISOELECTRIC-POINT 7.47 :HYDROPATHY -3.2) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Isoleucine" :3-LETTER-CODE "Ile"
+                  :1-LETTER-CODE #\I :PK1COOH 2.32 :PK1NH2 9.76
+                  :ISOELECTRIC-POINT 5.94 :HYDROPATHY 4.5) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Leucine" :3-LETTER-CODE "Leu"
+                  :1-LETTER-CODE #\L :PK1COOH 2.4 :PK1NH2 9.6
+                  :ISOELECTRIC-POINT 5.98 :HYDROPATHY 3.8) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Lysine" :3-LETTER-CODE "Lys"
+                  :1-LETTER-CODE #\K :PK1COOH 2.2 :PK1NH2 8.9 :PK2NH2 10.28
+                  :ISOELECTRIC-POINT 9.59 :HYDROPATHY -3.9) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Methionine" :3-LETTER-CODE "Met"
+                  :1-LETTER-CODE #\M :PK1COOH 2.28 :PK1NH2 9.21
+                  :ISOELECTRIC-POINT 5.74 :HYDROPATHY 1.9) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Phenylalanine" :3-LETTER-CODE "Phe"
+                  :1-LETTER-CODE #\F :PK1COOH 2.58 :PK1NH2 9.24
+                  :ISOELECTRIC-POINT 5.84 :HYDROPATHY 2.8) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Proline" :3-LETTER-CODE "Pro"
+                  :1-LETTER-CODE #\P :PK1COOH 1.99 :PK1NH2 10.6
+                  :ISOELECTRIC-POINT 6.3 :HYDROPATHY -1.6) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Serine" :3-LETTER-CODE "Ser"
+                  :1-LETTER-CODE #\S :PK1COOH 2.21 :PK1NH2 9.15
+                  :ISOELECTRIC-POINT 5.68 :HYDROPATHY -0.8) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Threonine" :3-LETTER-CODE "Thr"
+                  :1-LETTER-CODE #\T :PK1COOH 2.1 :PK1NH2 9.12
+                  :ISOELECTRIC-POINT 5.6 :HYDROPATHY -0.7) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Tryptophan" :3-LETTER-CODE "Trp"
+                  :1-LETTER-CODE #\W :PK1COOH 2.15 :PK1NH2 9.12
+                  :ISOELECTRIC-POINT 5.64 :HYDROPATHY -0.9) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Tyrosine" :3-LETTER-CODE "Tyr"
+                  :1-LETTER-CODE #\Y :PK2COOH 2.2 :PK1COOH 9.11 :PK1NH2 10.07
+                  :ISOELECTRIC-POINT 5.66 :HYDROPATHY -1.3) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Valine" :3-LETTER-CODE "Val"
+                  :1-LETTER-CODE #\V :PK1COOH 2.3 :PK1NH2 9.6
+                  :ISOELECTRIC-POINT 5.96 :HYDROPATHY 4.2) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Selenocysteine" :3-LETTER-CODE "Sec"
+                  :1-LETTER-CODE #\U :PK1COOH 5.3) 
+   (MAKE-INSTANCE 'AMINO-ACID :NAME "Pyrrolysine" :3-LETTER-CODE "Pyl"
+                  :1-LETTER-CODE #\O))
+  #+nil(read-amino-acids
    (make-pathname :name "amino-acids" :type "txt"
                   :defaults *data-directory-pathname*))
   "A global parameter with information about all naturally occurring
